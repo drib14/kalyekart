@@ -153,3 +153,22 @@ async function updateFeaturedProductsCache() {
 		console.log("error in update cache function");
 	}
 }
+
+export const searchProducts = async (req, res) => {
+	try {
+		const { q } = req.query;
+
+		if (!q) {
+			return res.json([]);
+		}
+
+		const products = await Product.find({
+			name: { $regex: q, $options: "i" },
+		});
+
+		res.json(products);
+	} catch (error) {
+		console.log("Error in searchProducts controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
