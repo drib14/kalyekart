@@ -97,6 +97,31 @@ export const useUserStore = create((set, get) => ({
 			user: { ...state.user, ...updatedFields },
 		}));
 	},
+
+	forgotPassword: async (email) => {
+		set({ loading: true });
+		try {
+			const res = await axios.post("/auth/forgot-password", { email });
+			toast.success(res.data.message);
+			set({ loading: false });
+		} catch (error) {
+			set({ loading: false });
+			toast.error(error.response.data.message || "An error occurred");
+		}
+	},
+
+	resetPassword: async (token, password, callback) => {
+		set({ loading: true });
+		try {
+			const res = await axios.put(`/auth/reset-password/${token}`, { password });
+			toast.success(res.data.message);
+			set({ loading: false });
+			if (callback) callback();
+		} catch (error) {
+			set({ loading: false });
+			toast.error(error.response.data.message || "An error occurred");
+		}
+	},
 }));
 
 // TODO: Implement the axios interceptors for refreshing access token

@@ -1,7 +1,8 @@
 import { redis } from "../lib/redis.js";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import { sendWelcomeEmail } from "../lib/email.js";
+import { sendWelcomeEmail, sendPasswordResetEmail } from "../lib/email.js";
+import crypto from "crypto";
 
 const generateTokens = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -102,6 +103,60 @@ export const logout = async (req, res) => {
 		res.json({ message: "Logged out successfully" });
 	} catch (error) {
 		console.log("Error in logout controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const forgotPassword = async (req, res) => {
+	try {
+		const { email } = req.body;
+		const user = await User.findOne({ email });
+
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		const resetToken = crypto.randomBytes(20).toString("hex");
+		user.passwordResetToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+		user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+		await user.save();
+
+		try {
+			await sendPasswordResetEmail(user.email, resetToken);
+			res.json({ message: "Password reset email sent" });
+		} catch (error) {
+			user.passwordResetToken = undefined;
+			user.passwordResetExpires = undefined;
+			await user.save();
+			return res.status(500).json({ message: "Email could not be sent" });
+		}
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const resetPassword = async (req, res) => {
+	try {
+		const resetToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
+
+		const user = await User.findOne({
+			passwordResetToken: resetToken,
+			passwordResetExpires: { $gt: Date.now() },
+		});
+
+		if (!user) {
+			return res.status(400).json({ message: "Password reset token is invalid or has expired" });
+		}
+
+		user.password = req.body.password;
+		user.passwordResetToken = undefined;
+		user.passwordResetExpires = undefined;
+
+		await user.save();
+
+		res.json({ message: "Password updated successfully" });
+	} catch (error) {
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
