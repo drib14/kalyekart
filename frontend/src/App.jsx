@@ -13,8 +13,9 @@ import { useEffect } from "react";
 import LoadingSpinner from "./components/LoadingSpinner";
 import CartPage from "./pages/CartPage";
 import { useCartStore } from "./stores/useCartStore";
-import PurchaseSuccessPage from "./pages/PurchaseSuccessPage";
 import PurchaseCancelPage from "./pages/PurchaseCancelPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -52,11 +53,9 @@ function App() {
 					/>
 					<Route path='/category/:category' element={<CategoryPage />} />
 					<Route path='/cart' element={user ? <CartPage /> : <Navigate to='/login' />} />
-					<Route
-						path='/purchase-success'
-						element={user ? <PurchaseSuccessPage /> : <Navigate to='/login' />}
-					/>
 					<Route path='/purchase-cancel' element={user ? <PurchaseCancelPage /> : <Navigate to='/login' />} />
+					<Route path='/checkout' element={user ? <CheckoutPage /> : <Navigate to='/login' />} />
+					<Route path='/order-success' element={user ? <OrderSuccessPage /> : <Navigate to='/login' />} />
 				</Routes>
 			</div>
 			<Toaster />

@@ -1,6 +1,7 @@
 import { redis } from "../lib/redis.js";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import { sendWelcomeEmail } from "../lib/email.js";
 
 const generateTokens = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -48,6 +49,8 @@ export const signup = async (req, res) => {
 		await storeRefreshToken(user._id, refreshToken);
 
 		setCookies(res, accessToken, refreshToken);
+
+		await sendWelcomeEmail(user.email, user.name);
 
 		res.status(201).json({
 			_id: user._id,

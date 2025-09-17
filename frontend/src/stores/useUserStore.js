@@ -17,7 +17,14 @@ export const useUserStore = create((set, get) => ({
 
 		try {
 			const res = await axios.post("/auth/signup", { name, email, password });
-			set({ user: res.data, loading: false });
+			set({
+				user: {
+					...res.data,
+					address: res.data.address || {},
+					phoneNumber: res.data.phoneNumber || "",
+				},
+				loading: false,
+			});
 		} catch (error) {
 			set({ loading: false });
 			toast.error(error.response.data.message || "An error occurred");
@@ -29,7 +36,14 @@ export const useUserStore = create((set, get) => ({
 		try {
 			const res = await axios.post("/auth/login", { email, password });
 
-			set({ user: res.data, loading: false });
+			set({
+				user: {
+					...res.data,
+					address: res.data.address || {},
+					phoneNumber: res.data.phoneNumber || "",
+				},
+				loading: false,
+			});
 		} catch (error) {
 			set({ loading: false });
 			toast.error(error.response.data.message || "An error occurred");
@@ -49,7 +63,14 @@ export const useUserStore = create((set, get) => ({
 		set({ checkingAuth: true });
 		try {
 			const response = await axios.get("/auth/profile");
-			set({ user: response.data, checkingAuth: false });
+			set({
+				user: {
+					...response.data,
+					address: response.data.address || {},
+					phoneNumber: response.data.phoneNumber || "",
+				},
+				checkingAuth: false,
+			});
 		} catch (error) {
 			console.log(error.message);
 			set({ checkingAuth: false, user: null });
@@ -69,6 +90,12 @@ export const useUserStore = create((set, get) => ({
 			set({ user: null, checkingAuth: false });
 			throw error;
 		}
+	},
+
+	updateUser: (updatedFields) => {
+		set((state) => ({
+			user: { ...state.user, ...updatedFields },
+		}));
 	},
 }));
 

@@ -1,42 +1,8 @@
 import { ArrowRight, CheckCircle, HandHeart } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useCartStore } from "../stores/useCartStore";
-import axios from "../lib/axios";
 import Confetti from "react-confetti";
 
-const PurchaseSuccessPage = () => {
-	const [isProcessing, setIsProcessing] = useState(true);
-	const { clearCart } = useCartStore();
-	const [error, setError] = useState(null);
-
-	useEffect(() => {
-		const handleCheckoutSuccess = async (sessionId) => {
-			try {
-				await axios.post("/payments/checkout-success", {
-					sessionId,
-				});
-				clearCart();
-			} catch (error) {
-				console.log(error);
-			} finally {
-				setIsProcessing(false);
-			}
-		};
-
-		const sessionId = new URLSearchParams(window.location.search).get("session_id");
-		if (sessionId) {
-			handleCheckoutSuccess(sessionId);
-		} else {
-			setIsProcessing(false);
-			setError("No session ID found in the URL");
-		}
-	}, [clearCart]);
-
-	if (isProcessing) return "Processing...";
-
-	if (error) return `Error: ${error}`;
-
+const OrderSuccessPage = () => {
 	return (
 		<div className='h-screen flex items-center justify-center px-4'>
 			<Confetti
@@ -54,7 +20,7 @@ const PurchaseSuccessPage = () => {
 						<CheckCircle className='text-emerald-400 w-16 h-16 mb-4' />
 					</div>
 					<h1 className='text-2xl sm:text-3xl font-bold text-center text-emerald-400 mb-2'>
-						Purchase Successful!
+						Order Placed Successfully!
 					</h1>
 
 					<p className='text-gray-300 text-center mb-2'>
@@ -64,13 +30,9 @@ const PurchaseSuccessPage = () => {
 						Check your email for order details and updates.
 					</p>
 					<div className='bg-gray-700 rounded-lg p-4 mb-6'>
-						<div className='flex items-center justify-between mb-2'>
-							<span className='text-sm text-gray-400'>Order number</span>
-							<span className='text-sm font-semibold text-emerald-400'>#12345</span>
-						</div>
 						<div className='flex items-center justify-between'>
 							<span className='text-sm text-gray-400'>Estimated delivery</span>
-							<span className='text-sm font-semibold text-emerald-400'>3-5 business days</span>
+							<span className='text-sm font-semibold text-emerald-400'>1-2 business days</span>
 						</div>
 					</div>
 
@@ -96,4 +58,4 @@ const PurchaseSuccessPage = () => {
 		</div>
 	);
 };
-export default PurchaseSuccessPage;
+export default OrderSuccessPage;

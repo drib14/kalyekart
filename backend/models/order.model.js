@@ -31,9 +31,32 @@ const orderSchema = new mongoose.Schema(
 			required: true,
 			min: 0,
 		},
+		shippingAddress: {
+			street: { type: String, required: true },
+			city: { type: String, required: true },
+			province: { type: String, required: true },
+			zipCode: { type: String, required: true },
+			barangay: { type: String, required: true },
+		},
+		phoneNumber: {
+			type: String,
+			required: true,
+		},
+		paymentMethod: {
+			type: String,
+			required: true,
+			enum: ["COD", "Stripe", "PayMongo"],
+		},
+		status: {
+			type: String,
+			required: true,
+			enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"],
+			default: "Pending",
+		},
 		stripeSessionId: {
 			type: String,
 			unique: true,
+			sparse: true,
 		},
 	},
 	{ timestamps: true }
