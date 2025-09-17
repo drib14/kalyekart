@@ -25,6 +25,7 @@ export const sendWelcomeEmail = async (to, name) => {
 		console.log("Welcome email sent successfully.");
 	} catch (error) {
 		console.error("Error sending welcome email:", error);
+		throw error;
 	}
 };
 
@@ -60,6 +61,7 @@ export const sendOrderConfirmationEmail = async (to, order) => {
 		console.log("Order confirmation email sent successfully.");
 	} catch (error) {
 		console.error("Error sending order confirmation email:", error);
+		throw error;
 	}
 };
 
@@ -83,5 +85,6 @@ export const sendPasswordResetEmail = async (to, token) => {
 		console.log("Password reset email sent successfully.");
 	} catch (error) {
 		console.error("Error sending password reset email:", error);
+		throw error;
 	}
 };
