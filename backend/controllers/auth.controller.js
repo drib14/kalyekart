@@ -163,10 +163,15 @@ export const forgotPassword = async (req, res) => {
 		const code = crypto.randomInt(100000, 999999).toString();
 		await redis.set(`reset_code:${phoneNumber}`, code, "EX", 10 * 60); // 10 minutes
 
+		let toPhoneNumber = user.phoneNumber;
+		if (toPhoneNumber.startsWith("0")) {
+			toPhoneNumber = `+63${toPhoneNumber.substring(1)}`;
+		}
+
 		await twilioClient.messages.create({
 			body: `Your KalyeKart password reset code is: ${code}`,
 			from: process.env.TWILIO_PHONE_NUMBER,
-			to: user.phoneNumber,
+			to: toPhoneNumber,
 		});
 
 		res.json({ message: "Password reset code sent to your phone number" });
