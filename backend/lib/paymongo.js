@@ -1,3 +1,6 @@
-import Paymongo from "paymongo-node";
+import paymongo from 'paymongo-node';
+import dotenv from "dotenv";
 
-export const paymongo = new Paymongo(process.env.PAYMONGO_SECRET_KEY);
+dotenv.config();
+
+export const paymongoClient = paymongo(process.env.PAYMONGO_SECRET_KEY);

@@ -26,18 +26,39 @@ const CheckoutPage = () => {
 		},
 	});
 
-	const { mutate: createCheckout, isPending } = useMutation({
+	const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+	const { mutate: createPayment, isPending } = useMutation({
 		mutationFn: (data) => {
-			return axios.post("/payment/checkout", data);
+			return axios.post("/payment/create-payment", data);
 		},
-		onSuccess: (data) => {
-			if (data.data.checkout_url) {
-				window.location.href = data.data.checkout_url;
-			} else {
+		onSuccess: async (data) => {
+			if (paymentMethod === "cod") {
 				toast.success("Order placed successfully");
 				clearCart();
 				navigate("/purchase-success");
+				return;
 			}
+
+			// Handle PayMongo payment
+			const { clientKey, orderId } = data.data;
+			setIsProcessingPayment(true);
+
+			const paymongo = new window.Paymongo(import.meta.env.VITE_PAYMONGO_PUBLIC_KEY);
+			const { paymentIntentId, error } = await paymongo.authenticate(clientKey);
+
+			if (error) {
+				toast.error(error.message);
+				setIsProcessingPayment(false);
+				return;
+			}
+
+			await axios.post("/payment/verify-payment", { orderId, paymentIntentId });
+
+			toast.success("Payment successful!");
+			clearCart();
+			navigate("/purchase-success");
+			setIsProcessingPayment(false);
 		},
 		onError: (error) => {
 			toast.error(error.response.data.message);
@@ -54,7 +75,7 @@ const CheckoutPage = () => {
 			image: item.product.image,
 			description: item.product.description,
 		}));
-		createCheckout({ products, paymentMethod, billing, couponCode: coupon?.code });
+		createPayment({ products, paymentMethod, billing, couponCode: coupon?.code });
 	};
 
 	const handleBillingChange = (e) => {
@@ -223,9 +244,9 @@ const CheckoutPage = () => {
 									rounded-md shadow-sm text-lg font-medium text-white bg-emerald-600
 									 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2
 									  focus:ring-emerald-500 transition duration-150 ease-in-out disabled:opacity-50'
-									disabled={isPending || cart.length === 0}
+									disabled={isPending || cart.length === 0 || isProcessingPayment}
 								>
-									{isPending ? <LoadingSpinner /> : "Place Order"}
+									{isPending || isProcessingPayment ? <LoadingSpinner /> : "Place Order"}
 								</button>
 							</div>
 						</form>

@@ -5,17 +5,17 @@ import { toast } from "sonner";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { motion } from "framer-motion";
-import { Mail, ArrowRight } from "lucide-react";
+import { Phone, ArrowRight } from "lucide-react";
 
 const ForgotPasswordPage = () => {
-	const [email, setEmail] = useState("");
+	const [phoneNumber, setPhoneNumber] = useState("");
 
 	const { mutate: forgotPassword, isPending } = useMutation({
-		mutationFn: (email) => {
-			return axios.post("/auth/forgot-password", { email });
+		mutationFn: (phoneNumber) => {
+			return axios.post("/auth/forgot-password", { phoneNumber });
 		},
 		onSuccess: () => {
-			toast.success("Password reset code sent to your email");
+			toast.success("Password reset code sent to your phone");
 		},
 		onError: (error) => {
 			toast.error(error.response.data.message);
@@ -24,7 +24,7 @@ const ForgotPasswordPage = () => {
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		forgotPassword(email);
+		forgotPassword(phoneNumber);
 	};
 
 	return (
@@ -37,7 +37,7 @@ const ForgotPasswordPage = () => {
 			>
 				<h2 className='mt-6 text-center text-3xl font-extrabold text-emerald-400'>Forgot Password</h2>
 				<p className='mt-2 text-center text-sm text-gray-400'>
-					Enter your email and we'll send you a reset code.
+					Enter your phone number and we'll send you a reset code.
 				</p>
 			</motion.div>
 
@@ -50,24 +50,24 @@ const ForgotPasswordPage = () => {
 				<div className='bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10'>
 					<form onSubmit={handleSubmit} className='space-y-6'>
 						<div>
-							<label htmlFor='email' className='block text-sm font-medium text-gray-300'>
-								Email address
+							<label htmlFor='phoneNumber' className='block text-sm font-medium text-gray-300'>
+								Phone number
 							</label>
 							<div className='mt-1 relative rounded-md shadow-sm'>
 								<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-									<Mail className='h-5 w-5 text-gray-400' aria-hidden='true' />
+									<Phone className='h-5 w-5 text-gray-400' aria-hidden='true' />
 								</div>
 								<input
-									id='email'
-									type='email'
+									id='phoneNumber'
+									type='text'
 									required
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
+									value={phoneNumber}
+									onChange={(e) => setPhoneNumber(e.target.value)}
 									className=' block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600
 									rounded-md shadow-sm
 									 placeholder-gray-400 focus:outline-none focus:ring-emerald-500
 									 focus:border-emerald-500 sm:text-sm'
-									placeholder='you@example.com'
+									placeholder='09123456789'
 								/>
 							</div>
 						</div>

@@ -34,14 +34,19 @@ const setCookies = (res, accessToken, refreshToken) => {
 };
 
 export const signup = async (req, res) => {
-	const { email, password, name } = req.body;
+	const { email, password, name, phoneNumber } = req.body;
 	try {
 		const userExists = await User.findOne({ email });
-
 		if (userExists) {
-			return res.status(400).json({ message: "User already exists" });
+			return res.status(400).json({ message: "User with this email already exists" });
 		}
-		const user = await User.create({ name, email, password });
+
+		const phoneExists = await User.findOne({ phoneNumber });
+		if (phoneExists) {
+			return res.status(400).json({ message: "User with this phone number already exists" });
+		}
+
+		const user = await User.create({ name, email, password, phoneNumber });
 
 		// authenticate
 		const { accessToken, refreshToken } = generateTokens(user._id);
@@ -135,8 +140,8 @@ export const refreshToken = async (req, res) => {
 	}
 };
 
-import nodemailer from "nodemailer";
 import crypto from "crypto";
+import { twilioClient } from "../lib/twilio.js";
 
 export const getProfile = async (req, res) => {
 	try {
@@ -148,50 +153,39 @@ export const getProfile = async (req, res) => {
 
 export const forgotPassword = async (req, res) => {
 	try {
-		const { email } = req.body;
-		const user = await User.findOne({ email });
+		const { phoneNumber } = req.body;
+		const user = await User.findOne({ phoneNumber });
 
 		if (!user) {
-			return res.status(404).json({ message: "User not found" });
+			return res.status(404).json({ message: "User with this phone number not found" });
 		}
 
 		const code = crypto.randomInt(100000, 999999).toString();
-		await redis.set(`reset_code:${email}`, code, "EX", 10 * 60); // 10 minutes
+		await redis.set(`reset_code:${phoneNumber}`, code, "EX", 10 * 60); // 10 minutes
 
-		const transporter = nodemailer.createTransport({
-			service: "gmail",
-			auth: {
-				user: process.env.EMAIL_USER,
-				pass: process.env.EMAIL_PASS,
-			},
+		await twilioClient.messages.create({
+			body: `Your KalyeKart password reset code is: ${code}`,
+			from: process.env.TWILIO_PHONE_NUMBER,
+			to: user.phoneNumber,
 		});
 
-		const mailOptions = {
-			from: process.env.EMAIL_USER,
-			to: email,
-			subject: "Password Reset Code",
-			text: `Your password reset code is ${code}`,
-		};
-
-		await transporter.sendMail(mailOptions);
-
-		res.json({ message: "Password reset code sent to your email" });
+		res.json({ message: "Password reset code sent to your phone number" });
 	} catch (error) {
-		console.log("Error in forgotPassword controller", error.message);
+		console.error("Error in forgotPassword controller", error);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
 
 export const resetPassword = async (req, res) => {
 	try {
-		const { email, code, password } = req.body;
-		const storedCode = await redis.get(`reset_code:${email}`);
+		const { phoneNumber, code, password } = req.body;
+		const storedCode = await redis.get(`reset_code:${phoneNumber}`);
 
 		if (!storedCode || storedCode !== code) {
 			return res.status(400).json({ message: "Invalid or expired code" });
 		}
 
-		const user = await User.findOne({ email });
+		const user = await User.findOne({ phoneNumber });
 		if (!user) {
 			return res.status(404).json({ message: "User not found" });
 		}
@@ -199,11 +193,11 @@ export const resetPassword = async (req, res) => {
 		user.password = password;
 		await user.save();
 
-		await redis.del(`reset_code:${email}`);
+		await redis.del(`reset_code:${phoneNumber}`);
 
 		res.json({ message: "Password reset successfully" });
 	} catch (error) {
-		console.log("Error in resetPassword controller", error.message);
+		console.error("Error in resetPassword controller", error);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
