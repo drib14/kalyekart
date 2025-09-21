@@ -10,15 +10,11 @@ import Navbar from "./components/Navbar";
 import { Toaster } from "react-hot-toast";
 import { useUserStore } from "./stores/useUserStore";
 import { useEffect } from "react";
-import SecurityQuestionsModal from "./components/SecurityQuestionsModal";
 import LoadingSpinner from "./components/LoadingSpinner";
 import CartPage from "./pages/CartPage";
 import { useCartStore } from "./stores/useCartStore";
 import PurchaseSuccessPage from "./pages/PurchaseSuccessPage";
 import PurchaseCancelPage from "./pages/PurchaseCancelPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import AnswerSecurityQuestionsPage from "./pages/AnswerSecurityQuestionsPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -46,7 +42,6 @@ function App() {
 
 			<div className='relative z-50 pt-20'>
 				<Navbar />
-				{user && !user.hasSetSecurityQuestions && <SecurityQuestionsModal />}
 				<Routes>
 					<Route path='/' element={<HomePage />} />
 					<Route path='/signup' element={!user ? <SignUpPage /> : <Navigate to='/' />} />
@@ -62,12 +57,6 @@ function App() {
 						element={user ? <PurchaseSuccessPage /> : <Navigate to='/login' />}
 					/>
 					<Route path='/purchase-cancel' element={user ? <PurchaseCancelPage /> : <Navigate to='/login' />} />
-					<Route path='/forgot-password' element={!user ? <ForgotPasswordPage /> : <Navigate to='/' />} />
-					<Route
-						path='/answer-security-questions'
-						element={!user ? <AnswerSecurityQuestionsPage /> : <Navigate to='/' />}
-					/>
-					<Route path='/reset-password' element={!user ? <ResetPasswordPage /> : <Navigate to='/' />} />
 				</Routes>
 			</div>
 			<Toaster />
