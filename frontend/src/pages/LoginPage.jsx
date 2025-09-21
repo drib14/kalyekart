@@ -79,17 +79,6 @@ const LoginPage = () => {
 							</div>
 						</div>
 
-						<div className='flex items-center justify-between'>
-							<div className='text-sm'>
-								<Link
-									to='/forgot-password'
-									className='font-medium text-emerald-400 hover:text-emerald-300'
-								>
-									Forgot your password?
-								</Link>
-							</div>
-						</div>
-
 						<button
 							type='submit'
 							className='w-full flex justify-center py-2 px-4 border border-transparent 
@@ -112,6 +101,16 @@ const LoginPage = () => {
 						</button>
 					</form>
 
+					<div className='flex items-center justify-between mt-6'>
+						<div className='text-sm'>
+							<Link
+								to='/forgot-password'
+								className='font-medium text-emerald-400 hover:text-emerald-300'
+							>
+								Forgot your password?
+							</Link>
+						</div>
+					</div>
 					<p className='mt-8 text-center text-sm text-gray-400'>
 						Not a member?{" "}
 						<Link to='/signup' className='font-medium text-emerald-400 hover:text-emerald-300'>

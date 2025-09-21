@@ -1,21 +1,22 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { motion } from "framer-motion";
-import { Phone, Lock, Key, ArrowRight } from "lucide-react";
+import { Lock } from "lucide-react";
 
 const ResetPasswordPage = () => {
-	const [phoneNumber, setPhoneNumber] = useState("");
-	const [code, setCode] = useState("");
-	const [password, setPassword] = useState("");
 	const navigate = useNavigate();
+	const location = useLocation();
+	const { resetToken } = location.state || { resetToken: "" };
+
+	const [password, setPassword] = useState("");
 
 	const { mutate: resetPassword, isPending } = useMutation({
 		mutationFn: (data) => {
-			return axios.post("/auth/reset-password", data);
+			return axios.post("/auth/reset-password-with-token", data);
 		},
 		onSuccess: () => {
 			toast.success("Password reset successfully");
@@ -28,7 +29,7 @@ const ResetPasswordPage = () => {
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		resetPassword({ phoneNumber, code, password });
+		resetPassword({ resetToken, password });
 	};
 
 	return (
@@ -41,7 +42,7 @@ const ResetPasswordPage = () => {
 			>
 				<h2 className='mt-6 text-center text-3xl font-extrabold text-emerald-400'>Reset Password</h2>
 				<p className='mt-2 text-center text-sm text-gray-400'>
-					Enter your phone number, code, and new password.
+					Enter your new password.
 				</p>
 			</motion.div>
 
@@ -53,52 +54,6 @@ const ResetPasswordPage = () => {
 			>
 				<div className='bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10'>
 					<form onSubmit={handleSubmit} className='space-y-6'>
-						<div>
-							<label htmlFor='phoneNumber' className='block text-sm font-medium text-gray-300'>
-								Phone number
-							</label>
-							<div className='mt-1 relative rounded-md shadow-sm'>
-								<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-									<Phone className='h-5 w-5 text-gray-400' aria-hidden='true' />
-								</div>
-								<input
-									id='phoneNumber'
-									type='text'
-									required
-									value={phoneNumber}
-									onChange={(e) => setPhoneNumber(e.target.value)}
-									className=' block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600
-									rounded-md shadow-sm
-									 placeholder-gray-400 focus:outline-none focus:ring-emerald-500
-									 focus:border-emerald-500 sm:text-sm'
-									placeholder='09123456789'
-								/>
-							</div>
-						</div>
-
-						<div>
-							<label htmlFor='code' className='block text-sm font-medium text-gray-300'>
-								Reset Code
-							</label>
-							<div className='mt-1 relative rounded-md shadow-sm'>
-								<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-									<Key className='h-5 w-5 text-gray-400' aria-hidden='true' />
-								</div>
-								<input
-									id='code'
-									type='text'
-									required
-									value={code}
-									onChange={(e) => setCode(e.target.value)}
-									className=' block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600
-									rounded-md shadow-sm
-									 placeholder-gray-400 focus:outline-none focus:ring-emerald-500
-									 focus:border-emerald-500 sm:text-sm'
-									placeholder='123456'
-								/>
-							</div>
-						</div>
-
 						<div>
 							<label htmlFor='password' className='block text-sm font-medium text-gray-300'>
 								New Password
@@ -131,13 +86,6 @@ const ResetPasswordPage = () => {
 							{isPending ? <LoadingSpinner /> : "Reset Password"}
 						</button>
 					</form>
-
-					<p className='mt-8 text-center text-sm text-gray-400'>
-						Remember your password?{" "}
-						<Link to='/login' className='font-medium text-emerald-400 hover:text-emerald-300'>
-							Login now <ArrowRight className='inline h-4 w-4' />
-						</Link>
-					</p>
 				</div>
 			</motion.div>
 		</div>

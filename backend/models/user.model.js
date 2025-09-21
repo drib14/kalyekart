@@ -14,11 +14,6 @@ const userSchema = new mongoose.Schema(
 			lowercase: true,
 			trim: true,
 		},
-		phoneNumber: {
-			type: String,
-			required: [true, "Phone number is required"],
-			unique: true,
-		},
 		password: {
 			type: String,
 			required: [true, "Password is required"],
@@ -41,27 +36,59 @@ const userSchema = new mongoose.Schema(
 			enum: ["customer", "admin"],
 			default: "customer",
 		},
+		hasSetSecurityQuestions: {
+			type: Boolean,
+			default: false,
+		},
+		securityQuestions: [
+			{
+				question: {
+					type: String,
+					required: true,
+				},
+				answer: {
+					type: String,
+					required: true,
+				},
+			},
+		],
 	},
 	{
 		timestamps: true,
 	}
 );
 
-// Pre-save hook to hash password before saving to database
+// Pre-save hook to hash password and security answers before saving to database
 userSchema.pre("save", async function (next) {
-	if (!this.isModified("password")) return next();
-
-	try {
-		const salt = await bcrypt.genSalt(10);
-		this.password = await bcrypt.hash(this.password, salt);
-		next();
-	} catch (error) {
-		next(error);
+	if (this.isModified("password")) {
+		try {
+			const salt = await bcrypt.genSalt(10);
+			this.password = await bcrypt.hash(this.password, salt);
+		} catch (error) {
+			return next(error);
+		}
 	}
+
+	if (this.isModified("securityQuestions")) {
+		try {
+			for (let i = 0; i < this.securityQuestions.length; i++) {
+				const salt = await bcrypt.genSalt(10);
+				this.securityQuestions[i].answer = await bcrypt.hash(this.securityQuestions[i].answer, salt);
+			}
+		} catch (error) {
+			return next(error);
+		}
+	}
+
+	next();
 });
 
 userSchema.methods.comparePassword = async function (password) {
 	return bcrypt.compare(password, this.password);
+};
+
+userSchema.methods.compareSecurityAnswer = async function (answer, index) {
+	return bcrypt.compare(answer, this.securityQuestions[index].answer);
 };
 
 const User = mongoose.model("User", userSchema);

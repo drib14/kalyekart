@@ -34,19 +34,14 @@ const setCookies = (res, accessToken, refreshToken) => {
 };
 
 export const signup = async (req, res) => {
-	const { email, password, name, phoneNumber } = req.body;
+	const { email, password, name } = req.body;
 	try {
 		const userExists = await User.findOne({ email });
+
 		if (userExists) {
-			return res.status(400).json({ message: "User with this email already exists" });
+			return res.status(400).json({ message: "User already exists" });
 		}
-
-		const phoneExists = await User.findOne({ phoneNumber });
-		if (phoneExists) {
-			return res.status(400).json({ message: "User with this phone number already exists" });
-		}
-
-		const user = await User.create({ name, email, password, phoneNumber });
+		const user = await User.create({ name, email, password });
 
 		// authenticate
 		const { accessToken, refreshToken } = generateTokens(user._id);
@@ -59,6 +54,7 @@ export const signup = async (req, res) => {
 			name: user.name,
 			email: user.email,
 			role: user.role,
+			hasSetSecurityQuestions: user.hasSetSecurityQuestions,
 		});
 	} catch (error) {
 		console.log("Error in signup controller", error.message);
@@ -81,6 +77,7 @@ export const login = async (req, res) => {
 				name: user.name,
 				email: user.email,
 				role: user.role,
+				hasSetSecurityQuestions: user.hasSetSecurityQuestions,
 			});
 		} else {
 			res.status(400).json({ message: "Invalid email or password" });
@@ -104,6 +101,96 @@ export const logout = async (req, res) => {
 		res.json({ message: "Logged out successfully" });
 	} catch (error) {
 		console.log("Error in logout controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const setSecurityQuestions = async (req, res) => {
+	try {
+		const { securityQuestions } = req.body;
+		const userId = req.user._id;
+
+		const user = await User.findById(userId);
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		user.securityQuestions = securityQuestions;
+		user.hasSetSecurityQuestions = true;
+		await user.save();
+
+		res.json({ message: "Security questions set successfully" });
+	} catch (error) {
+		console.error("Error setting security questions:", error);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const getSecurityQuestions = async (req, res) => {
+	try {
+		const { email } = req.params;
+		const user = await User.findOne({ email });
+
+		if (!user || !user.hasSetSecurityQuestions) {
+			return res.status(404).json({ message: "User not found or security questions not set" });
+		}
+
+		const questions = user.securityQuestions.map((q) => q.question);
+		res.json({ questions });
+	} catch (error) {
+		console.error("Error getting security questions:", error);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const verifySecurityAnswers = async (req, res) => {
+	try {
+		const { email, answers } = req.body;
+		const user = await User.findOne({ email });
+
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		if (answers.length !== user.securityQuestions.length) {
+			return res.status(400).json({ message: "Incorrect number of answers" });
+		}
+
+		for (let i = 0; i < answers.length; i++) {
+			const isMatch = await user.compareSecurityAnswer(answers[i], i);
+			if (!isMatch) {
+				return res.status(400).json({ message: "One or more answers are incorrect" });
+			}
+		}
+
+		const resetToken = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "10m" });
+		res.json({ message: "Answers verified successfully", resetToken });
+	} catch (error) {
+		console.error("Error verifying security answers:", error);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const resetPasswordWithToken = async (req, res) => {
+	try {
+		const { resetToken, password } = req.body;
+		if (!resetToken) {
+			return res.status(400).json({ message: "Reset token is required" });
+		}
+
+		const decoded = jwt.verify(resetToken, process.env.ACCESS_TOKEN_SECRET);
+		const user = await User.findById(decoded.userId);
+
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		user.password = password;
+		await user.save();
+
+		res.json({ message: "Password has been reset successfully" });
+	} catch (error) {
+		console.error("Error resetting password with token:", error);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
@@ -140,69 +227,10 @@ export const refreshToken = async (req, res) => {
 	}
 };
 
-import crypto from "crypto";
-import { twilioClient } from "../lib/twilio.js";
-
 export const getProfile = async (req, res) => {
 	try {
 		res.json(req.user);
 	} catch (error) {
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
-};
-
-export const forgotPassword = async (req, res) => {
-	try {
-		const { phoneNumber } = req.body;
-		const user = await User.findOne({ phoneNumber });
-
-		if (!user) {
-			return res.status(404).json({ message: "User with this phone number not found" });
-		}
-
-		const code = crypto.randomInt(100000, 999999).toString();
-		await redis.set(`reset_code:${phoneNumber}`, code, "EX", 10 * 60); // 10 minutes
-
-		let toPhoneNumber = user.phoneNumber;
-		if (toPhoneNumber.startsWith("0")) {
-			toPhoneNumber = `+63${toPhoneNumber.substring(1)}`;
-		}
-
-		await twilioClient.messages.create({
-			body: `Your KalyeKart password reset code is: ${code}`,
-			from: process.env.TWILIO_PHONE_NUMBER,
-			to: toPhoneNumber,
-		});
-
-		res.json({ message: "Password reset code sent to your phone number" });
-	} catch (error) {
-		console.error("Error in forgotPassword controller", error);
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
-};
-
-export const resetPassword = async (req, res) => {
-	try {
-		const { phoneNumber, code, password } = req.body;
-		const storedCode = await redis.get(`reset_code:${phoneNumber}`);
-
-		if (!storedCode || storedCode !== code) {
-			return res.status(400).json({ message: "Invalid or expired code" });
-		}
-
-		const user = await User.findOne({ phoneNumber });
-		if (!user) {
-			return res.status(404).json({ message: "User not found" });
-		}
-
-		user.password = password;
-		await user.save();
-
-		await redis.del(`reset_code:${phoneNumber}`);
-
-		res.json({ message: "Password reset successfully" });
-	} catch (error) {
-		console.error("Error in resetPassword controller", error);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
