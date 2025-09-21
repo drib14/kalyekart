@@ -13,6 +13,7 @@
 	"type": "module",
 	"license": "ISC",
 	"dependencies": {
+		"@tanstack/react-query": "^5.89.0",
 		"axios": "^1.12.2",
 		"bcryptjs": "^2.4.3",
 		"cloudinary": "^2.4.0",
