@@ -135,10 +135,75 @@ export const refreshToken = async (req, res) => {
 	}
 };
 
+import nodemailer from "nodemailer";
+import crypto from "crypto";
+
 export const getProfile = async (req, res) => {
 	try {
 		res.json(req.user);
 	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const forgotPassword = async (req, res) => {
+	try {
+		const { email } = req.body;
+		const user = await User.findOne({ email });
+
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		const code = crypto.randomInt(100000, 999999).toString();
+		await redis.set(`reset_code:${email}`, code, "EX", 10 * 60); // 10 minutes
+
+		const transporter = nodemailer.createTransport({
+			service: "gmail",
+			auth: {
+				user: process.env.EMAIL_USER,
+				pass: process.env.EMAIL_PASS,
+			},
+		});
+
+		const mailOptions = {
+			from: process.env.EMAIL_USER,
+			to: email,
+			subject: "Password Reset Code",
+			text: `Your password reset code is ${code}`,
+		};
+
+		await transporter.sendMail(mailOptions);
+
+		res.json({ message: "Password reset code sent to your email" });
+	} catch (error) {
+		console.log("Error in forgotPassword controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const resetPassword = async (req, res) => {
+	try {
+		const { email, code, password } = req.body;
+		const storedCode = await redis.get(`reset_code:${email}`);
+
+		if (!storedCode || storedCode !== code) {
+			return res.status(400).json({ message: "Invalid or expired code" });
+		}
+
+		const user = await User.findOne({ email });
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		user.password = password;
+		await user.save();
+
+		await redis.del(`reset_code:${email}`);
+
+		res.json({ message: "Password reset successfully" });
+	} catch (error) {
+		console.log("Error in resetPassword controller", error.message);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };

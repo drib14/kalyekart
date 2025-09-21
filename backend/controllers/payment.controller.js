@@ -1,55 +1,70 @@
 import Coupon from "../models/coupon.model.js";
 import Order from "../models/order.model.js";
 import { stripe } from "../lib/stripe.js";
+import { paymongo } from "../lib/paymongo.js";
 
 export const createCheckoutSession = async (req, res) => {
-	try {
-		const { products, couponCode } = req.body;
+	const { products, couponCode, paymentMethod, billing } = req.body;
 
-		if (!Array.isArray(products) || products.length === 0) {
-			return res.status(400).json({ error: "Invalid or empty products array" });
+	if (!Array.isArray(products) || products.length === 0) {
+		return res.status(400).json({ error: "Invalid or empty products array" });
+	}
+
+	let totalAmount = products.reduce((acc, product) => acc + product.price * product.quantity, 0);
+
+	let coupon = null;
+	if (couponCode) {
+		coupon = await Coupon.findOne({ code: couponCode, userId: req.user._id, isActive: true });
+		if (coupon) {
+			totalAmount -= (totalAmount * coupon.discountPercentage) / 100;
 		}
+	}
 
-		let totalAmount = 0;
-
-		const lineItems = products.map((product) => {
-			const amount = Math.round(product.price * 100); // stripe wants u to send in the format of cents
-			totalAmount += amount * product.quantity;
-
-			return {
-				price_data: {
-					currency: "php",
-					product_data: {
-						name: product.name,
-						images: [product.image],
-					},
-					unit_amount: amount,
-				},
-				quantity: product.quantity || 1,
-			};
+	if (paymentMethod === "cod") {
+		// Handle Cash on Delivery
+		const newOrder = new Order({
+			user: req.user._id,
+			products: products.map((p) => ({
+				product: p._id,
+				quantity: p.quantity,
+				price: p.price,
+			})),
+			totalAmount,
+			paymentMethod: "cod",
+			billing,
 		});
 
-		let coupon = null;
-		if (couponCode) {
-			coupon = await Coupon.findOne({ code: couponCode, userId: req.user._id, isActive: true });
-			if (coupon) {
-				totalAmount -= Math.round((totalAmount * coupon.discountPercentage) / 100);
-			}
-		}
+		await newOrder.save();
+		return res.status(201).json({ message: "Order placed successfully", orderId: newOrder._id });
+	}
 
-		const session = await stripe.checkout.sessions.create({
-			payment_method_types: ["card"],
-			line_items: lineItems,
-			mode: "payment",
-			success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+	const lineItems = products.map((product) => ({
+		currency: "PHP",
+		amount: Math.round(product.price * 100), // amount in cents
+		description: product.description,
+		name: product.name,
+		quantity: product.quantity,
+	}));
+
+	try {
+		const session = await paymongo.checkout.create({
+			success_url: `${process.env.CLIENT_URL}/purchase-success`,
 			cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
-			discounts: coupon
-				? [
-						{
-							coupon: await createStripeCoupon(coupon.discountPercentage),
-						},
-				  ]
-				: [],
+			line_items: lineItems,
+			payment_method_types: ["card", "gcash", "paymaya"],
+			billing: {
+				name: billing.name,
+				email: billing.email,
+				phone: billing.phone,
+				address: {
+					line1: billing.address.line1,
+					city: billing.address.city,
+					state: billing.address.state,
+					postal_code: billing.address.postal_code,
+					country: "PH",
+				},
+			},
+
 			metadata: {
 				userId: req.user._id.toString(),
 				couponCode: couponCode || "",
@@ -66,66 +81,52 @@ export const createCheckoutSession = async (req, res) => {
 		if (totalAmount >= 20000) {
 			await createNewCoupon(req.user._id);
 		}
-		res.status(200).json({ id: session.id, totalAmount: totalAmount / 100 });
+
+		res.status(200).json({ checkout_url: session.checkout_url });
 	} catch (error) {
 		console.error("Error processing checkout:", error);
 		res.status(500).json({ message: "Error processing checkout", error: error.message });
 	}
 };
 
-export const checkoutSuccess = async (req, res) => {
+export const paymongoWebhook = async (req, res) => {
 	try {
-		const { sessionId } = req.body;
-		const session = await stripe.checkout.sessions.retrieve(sessionId);
+		// NOTE: Add webhook signature verification in production
+		const event = req.body;
+		if (event.data.attributes.type === "checkout.session.payment.paid") {
+			const session = event.data.attributes.data;
+			const metadata = session.attributes.metadata;
+			const payment = session.attributes.payments[0];
 
-		if (session.payment_status === "paid") {
-			if (session.metadata.couponCode) {
+			if (metadata.couponCode) {
 				await Coupon.findOneAndUpdate(
-					{
-						code: session.metadata.couponCode,
-						userId: session.metadata.userId,
-					},
-					{
-						isActive: false,
-					}
+					{ code: metadata.couponCode, userId: metadata.userId },
+					{ isActive: false }
 				);
 			}
 
-			// create a new Order
-			const products = JSON.parse(session.metadata.products);
+			const products = JSON.parse(metadata.products);
 			const newOrder = new Order({
-				user: session.metadata.userId,
+				user: metadata.userId,
 				products: products.map((product) => ({
 					product: product.id,
 					quantity: product.quantity,
 					price: product.price,
 				})),
-				totalAmount: session.amount_total / 100, // convert from cents to dollars,
-				stripeSessionId: sessionId,
+				totalAmount: payment.attributes.amount / 100,
+				paymentMethod: payment.attributes.source.type,
+				paymongoCheckoutId: session.id,
+				billing: session.attributes.billing,
 			});
 
 			await newOrder.save();
-
-			res.status(200).json({
-				success: true,
-				message: "Payment successful, order created, and coupon deactivated if used.",
-				orderId: newOrder._id,
-			});
 		}
+		res.status(200).json({ received: true });
 	} catch (error) {
-		console.error("Error processing successful checkout:", error);
-		res.status(500).json({ message: "Error processing successful checkout", error: error.message });
+		console.error("Error processing PayMongo webhook:", error);
+		res.status(500).json({ message: "Error processing webhook" });
 	}
 };
-
-async function createStripeCoupon(discountPercentage) {
-	const coupon = await stripe.coupons.create({
-		percent_off: discountPercentage,
-		duration: "once",
-	});
-
-	return coupon.id;
-}
 
 async function createNewCoupon(userId) {
 	await Coupon.findOneAndDelete({ userId });

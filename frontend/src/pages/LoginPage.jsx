@@ -79,6 +79,17 @@ const LoginPage = () => {
 							</div>
 						</div>
 
+						<div className='flex items-center justify-between'>
+							<div className='text-sm'>
+								<Link
+									to='/forgot-password'
+									className='font-medium text-emerald-400 hover:text-emerald-300'
+								>
+									Forgot your password?
+								</Link>
+							</div>
+						</div>
+
 						<button
 							type='submit'
 							className='w-full flex justify-center py-2 px-4 border border-transparent 

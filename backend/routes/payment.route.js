@@ -1,10 +1,12 @@
 import express from "express";
+import { createCheckoutSession, paymongoWebhook } from "../controllers/payment.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
-import { checkoutSuccess, createCheckoutSession } from "../controllers/payment.controller.js";
 
 const router = express.Router();
 
-router.post("/create-checkout-session", protectRoute, createCheckoutSession);
-router.post("/checkout-success", protectRoute, checkoutSuccess);
+router.post("/checkout", protectRoute, createCheckoutSession);
+
+// Webhook from PayMongo, should not be protected
+router.post("/paymongo-webhook", paymongoWebhook);
 
 export default router;
