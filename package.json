@@ -24,6 +24,7 @@
 		"mongoose": "^8.5.3",
 		"nodemailer": "^7.0.6",
 		"paymongo-node": "^10.17.0",
+		"sonner": "^2.0.7",
 		"stripe": "^16.12.0"
 	},
 	"devDependencies": {
