@@ -10,6 +10,7 @@ import Navbar from "./components/Navbar";
 import { Toaster } from "react-hot-toast";
 import { useUserStore } from "./stores/useUserStore";
 import { useEffect } from "react";
+import SecurityQuestionsModal from "./components/SecurityQuestionsModal";
 import LoadingSpinner from "./components/LoadingSpinner";
 import CartPage from "./pages/CartPage";
 import { useCartStore } from "./stores/useCartStore";
@@ -45,6 +46,7 @@ function App() {
 
 			<div className='relative z-50 pt-20'>
 				<Navbar />
+				{user && !user.hasSetSecurityQuestions && <SecurityQuestionsModal />}
 				<Routes>
 					<Route path='/' element={<HomePage />} />
 					<Route path='/signup' element={!user ? <SignUpPage /> : <Navigate to='/' />} />
