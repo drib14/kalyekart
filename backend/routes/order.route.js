@@ -15,8 +15,8 @@ import upload from "../middleware/multer.middleware.js";
 const router = express.Router();
 
 router.get("/", protectRoute, getOrders);
-router.get("/:orderId", protectRoute, getOrderById);
 router.get("/all", protectRoute, adminRoute, getAllOrders);
+router.get("/:orderId", protectRoute, getOrderById);
 router.post("/cod", protectRoute, createCodOrder);
 router.put("/:orderId/cancel", protectRoute, cancelOrder);
 router.post("/:orderId/refund", protectRoute, upload.single("proof"), requestRefund);
