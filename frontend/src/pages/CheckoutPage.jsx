@@ -14,8 +14,12 @@ const CheckoutPage = () => {
 	const { user } = useUserStore();
 	const navigate = useNavigate();
 
-	const [shippingAddress, setShippingAddress] = useState("123 Kalye Serye, Barangay Walang Forever, Cebu City");
-	const [contactNumber, setContactNumber] = useState("09123456789");
+	const [fullName, setFullName] = useState("");
+	const [streetAddress, setStreetAddress] = useState("");
+	const [city, setCity] = useState("");
+	const [province, setProvince] = useState("");
+	const [postalCode, setPostalCode] = useState("");
+	const [contactNumber, setContactNumber] = useState("");
 	const [isAddonsModalOpen, setIsAddonsModalOpen] = useState(false);
 
 	const { mutate: createCodOrder, isPending } = useMutation({
@@ -39,6 +43,15 @@ const CheckoutPage = () => {
 			price: item.product.price,
 			quantity: item.quantity,
 		}));
+
+		const shippingAddress = {
+			fullName,
+			streetAddress,
+			city,
+			province,
+			postalCode,
+		};
+
 		createCodOrder({ products, shippingAddress, contactNumber, couponCode: coupon?.code });
 	};
 
@@ -60,19 +73,75 @@ const CheckoutPage = () => {
 				<div className='grid md:grid-cols-2 gap-8'>
 					<div className='bg-gray-800 p-8 rounded-lg shadow-lg'>
 						<h2 className='text-2xl font-bold text-white mb-6'>Shipping Information</h2>
-						<form onSubmit={handleSubmit} className='space-y-6'>
+						<form onSubmit={handleSubmit} className='space-y-4'>
 							<div>
-								<label htmlFor='shippingAddress' className='block text-sm font-medium text-gray-300 mb-1'>
-									Shipping Address
+								<label htmlFor='fullName' className='block text-sm font-medium text-gray-300 mb-1'>
+									Full Name
 								</label>
-								<textarea
-									id='shippingAddress'
-									rows={4}
+								<input
+									id='fullName'
+									type='text'
 									required
-									value={shippingAddress}
-									onChange={(e) => setShippingAddress(e.target.value)}
-									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm'
-									placeholder='Enter your full address (Cebu-based)'
+									value={fullName}
+									onChange={(e) => setFullName(e.target.value)}
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+								/>
+							</div>
+							<div>
+								<label
+									htmlFor='streetAddress'
+									className='block text-sm font-medium text-gray-300 mb-1'
+								>
+									Street Address
+								</label>
+								<input
+									id='streetAddress'
+									type='text'
+									required
+									value={streetAddress}
+									onChange={(e) => setStreetAddress(e.target.value)}
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+								/>
+							</div>
+							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+								<div>
+									<label htmlFor='city' className='block text-sm font-medium text-gray-300 mb-1'>
+										City
+									</label>
+									<input
+										id='city'
+										type='text'
+										required
+										value={city}
+										onChange={(e) => setCity(e.target.value)}
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+									/>
+								</div>
+								<div>
+									<label htmlFor='province' className='block text-sm font-medium text-gray-300 mb-1'>
+										Province
+									</label>
+									<input
+										id='province'
+										type='text'
+										required
+										value={province}
+										onChange={(e) => setProvince(e.target.value)}
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+									/>
+								</div>
+							</div>
+							<div>
+								<label htmlFor='postalCode' className='block text-sm font-medium text-gray-300 mb-1'>
+									Postal Code
+								</label>
+								<input
+									id='postalCode'
+									type='text'
+									required
+									value={postalCode}
+									onChange={(e) => setPostalCode(e.target.value)}
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
 								/>
 							</div>
 							<div>
@@ -85,7 +154,7 @@ const CheckoutPage = () => {
 									required
 									value={contactNumber}
 									onChange={(e) => setContactNumber(e.target.value)}
-									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm'
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
 									placeholder='09123456789'
 								/>
 							</div>
