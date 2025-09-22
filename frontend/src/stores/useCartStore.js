@@ -4,15 +4,15 @@ import { toast } from "react-hot-toast";
 
 export const useCartStore = create((set, get) => ({
 	cart: [],
-	coupon: null,
+	availableCoupon: null,
+	appliedCoupon: null,
 	total: 0,
 	subtotal: 0,
-	isCouponApplied: false,
 
 	getMyCoupon: async () => {
 		try {
 			const response = await axios.get("/coupons");
-			set({ coupon: response.data });
+			set({ availableCoupon: response.data });
 		} catch (error) {
 			console.error("Error fetching coupon:", error);
 		}
@@ -20,7 +20,7 @@ export const useCartStore = create((set, get) => ({
 	applyCoupon: async (code) => {
 		try {
 			const response = await axios.post("/coupons/validate", { code });
-			set({ coupon: response.data, isCouponApplied: true });
+			set({ appliedCoupon: response.data });
 			get().calculateTotals();
 			toast.success("Coupon applied successfully");
 		} catch (error) {
@@ -28,7 +28,7 @@ export const useCartStore = create((set, get) => ({
 		}
 	},
 	removeCoupon: () => {
-		set({ coupon: null, isCouponApplied: false });
+		set({ appliedCoupon: null });
 		get().calculateTotals();
 		toast.success("Coupon removed");
 	},
@@ -46,7 +46,7 @@ export const useCartStore = create((set, get) => ({
 	clearCart: async () => {
 		try {
 			const res = await axios.delete("/cart");
-			set({ cart: res.data, coupon: null, total: 0, subtotal: 0 });
+			set({ cart: res.data, appliedCoupon: null, availableCoupon: null, total: 0, subtotal: 0 });
 		} catch (error) {
 			toast.error(error.response?.data?.message || "Failed to clear cart");
 		}
@@ -84,12 +84,12 @@ export const useCartStore = create((set, get) => ({
 		}
 	},
 	calculateTotals: () => {
-		const { cart, coupon } = get();
+		const { cart, appliedCoupon } = get();
 		const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 		let total = subtotal;
 
-		if (coupon) {
-			const discount = subtotal * (coupon.discountPercentage / 100);
+		if (appliedCoupon) {
+			const discount = subtotal * (appliedCoupon.discountPercentage / 100);
 			total = subtotal - discount;
 		}
 
