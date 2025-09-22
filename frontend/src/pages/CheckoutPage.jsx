@@ -20,7 +20,6 @@ const CheckoutPage = () => {
 	const [province, setProvince] = useState("");
 	const [postalCode, setPostalCode] = useState("");
 	const [contactNumber, setContactNumber] = useState("");
-	const [isAddonsModalOpen, setIsAddonsModalOpen] = useState(false);
 
 	const { mutate: createCodOrder, isPending } = useMutation({
 		mutationFn: (data) => {
@@ -57,12 +56,11 @@ const CheckoutPage = () => {
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		setIsAddonsModalOpen(true);
+		handlePlaceOrder();
 	};
 
 	return (
 		<main className='container my-10'>
-			{isAddonsModalOpen && <AddonsModal onClose={handlePlaceOrder} />}
 			<motion.div
 				className='max-w-4xl mx-auto'
 				initial={{ opacity: 0, y: 20 }}

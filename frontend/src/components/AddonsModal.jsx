@@ -55,7 +55,7 @@ const AddonsModal = ({ onClose }) => {
 					onClick={onClose}
 					className='w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-md'
 				>
-					Continue to Checkout
+					Close
 				</button>
 			</div>
 		</div>

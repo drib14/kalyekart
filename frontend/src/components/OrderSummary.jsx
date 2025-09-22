@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { useCartStore } from "../stores/useCartStore";
 import { Link, useNavigate } from "react-router-dom";
-import { MoveRight } from "lucide-react";
+import { MoveRight, Gift } from "lucide-react";
 
-const OrderSummary = () => {
+const OrderSummary = ({ onOpenAddons }) => {
 	const { total, subtotal, coupon, isCouponApplied } = useCartStore();
 	const navigate = useNavigate();
 
@@ -50,6 +50,16 @@ const OrderSummary = () => {
 						<dd className='text-base font-bold text-emerald-400'>₱{formattedTotal}</dd>
 					</dl>
 				</div>
+
+				<motion.button
+					className='flex w-full items-center justify-center rounded-lg border border-dashed border-emerald-500 px-5 py-2.5 text-sm font-medium text-emerald-400 hover:bg-emerald-500/10 focus:outline-none focus:ring-4 focus:ring-emerald-300/50'
+					whileHover={{ scale: 1.05 }}
+					whileTap={{ scale: 0.95 }}
+					onClick={onOpenAddons}
+				>
+					<Gift size={16} className='mr-2' />
+					Add a Gift
+				</motion.button>
 
 				<motion.button
 					className='flex w-full items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300'
