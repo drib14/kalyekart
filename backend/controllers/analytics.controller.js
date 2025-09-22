@@ -8,6 +8,11 @@ export const getAnalyticsData = async () => {
 
 	const salesData = await Order.aggregate([
 		{
+			$match: {
+				status: "delivered",
+			},
+		},
+		{
 			$group: {
 				_id: null, // it groups all documents together,
 				totalSales: { $sum: 1 },
@@ -35,6 +40,7 @@ export const getDailySalesData = async (startDate, endDate) => {
 						$gte: startDate,
 						$lte: endDate,
 					},
+					status: "delivered",
 				},
 			},
 			{
@@ -84,3 +90,57 @@ function getDatesInRange(startDate, endDate) {
 
 	return dates;
 }
+
+export const getCancelledOrdersAnalytics = async () => {
+	const cancelledData = await Order.aggregate([
+		{
+			$match: {
+				status: "cancelled",
+			},
+		},
+		{
+			$group: {
+				_id: null,
+				totalCancelledOrders: { $sum: 1 },
+				totalCancelledRevenue: { $sum: "$totalAmount" },
+			},
+		},
+	]);
+
+	const { totalCancelledOrders, totalCancelledRevenue } = cancelledData[0] || {
+		totalCancelledOrders: 0,
+		totalCancelledRevenue: 0,
+	};
+
+	return {
+		totalCancelledOrders,
+		totalCancelledRevenue,
+	};
+};
+
+export const getRefundedOrdersAnalytics = async () => {
+	const refundedData = await Order.aggregate([
+		{
+			$match: {
+				"refundRequest.status": "approved",
+			},
+		},
+		{
+			$group: {
+				_id: null,
+				totalRefundedOrders: { $sum: 1 },
+				totalRefundedRevenue: { $sum: "$totalAmount" },
+			},
+		},
+	]);
+
+	const { totalRefundedOrders, totalRefundedRevenue } = refundedData[0] || {
+		totalRefundedOrders: 0,
+		totalRefundedRevenue: 0,
+	};
+
+	return {
+		totalRefundedOrders,
+		totalRefundedRevenue,
+	};
+};
