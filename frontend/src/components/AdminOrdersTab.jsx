@@ -3,11 +3,13 @@ import axios from "../lib/axios";
 import { toast } from "sonner";
 import { useState } from "react";
 import LoadingSpinner from "./LoadingSpinner";
+import { UserCircle, ChevronDown } from "lucide-react";
 
 const AdminOrdersTab = () => {
-    const [activeSubTab, setActiveSubTab] = useState("All");
+	const [activeSubTab, setActiveSubTab] = useState("All");
+	const [expandedOrderId, setExpandedOrderId] = useState(null);
 
-    const subTabs = ["All", "Cancelled", "Refunds"];
+	const subTabs = ["All", "Cancelled", "Refunds"];
 
 	const {
 		data: orders,
@@ -84,12 +86,15 @@ const AdminOrdersTab = () => {
 				{filteredOrders?.map((order) => (
 					<div key={order._id} className='bg-gray-800 p-6 rounded-lg shadow-lg'>
 						<div className='flex justify-between items-start'>
-							<div>
-								<p className='text-lg font-bold text-white'>Order ID: {order._id}</p>
-								<p className='text-sm text-gray-400'>User: {order.user.name}</p>
-								<p className='text-sm text-gray-400'>
-									Placed on: {new Date(order.createdAt).toLocaleDateString()}
-								</p>
+							<div className='flex items-center gap-4'>
+								<UserCircle className='w-12 h-12 text-gray-500' />
+								<div>
+									<p className='text-lg font-bold text-white'>Order ID: {order._id}</p>
+									<p className='text-sm text-gray-400'>User: {order.user.name}</p>
+									<p className='text-sm text-gray-400'>
+										Placed on: {new Date(order.createdAt).toLocaleDateString()}
+									</p>
+								</div>
 							</div>
 							<div
 								className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -105,9 +110,9 @@ const AdminOrdersTab = () => {
 						</div>
 						<div className='mt-4'>
 							{order.products.map((item) => (
-								<div key={item.product._id} className='flex items-center justify-between py-2'>
+								<div key={item.product?._id} className='flex items-center justify-between py-2'>
 									<div>
-										<p className='font-medium text-white'>{item.product.name}</p>
+										<p className='font-medium text-white'>{item.product?.name || "Product not found"}</p>
 										<p className='text-sm text-gray-400'>
 											{item.quantity} x ₱{item.price.toFixed(2)}
 										</p>
@@ -123,7 +128,39 @@ const AdminOrdersTab = () => {
 							<p>Total</p>
 							<p>₱{order.totalAmount.toFixed(2)}</p>
 						</div>
+
+						{/* Collapsible Details Section */}
+						{expandedOrderId === order._id && (
+							<div className='mt-4 border-t border-gray-700 pt-4'>
+								<h3 className='text-lg font-bold text-white mb-2'>Shipping Details</h3>
+								<div className='text-sm text-gray-300'>
+									<p>
+										<strong>Address:</strong> {order.shippingAddress.streetAddress}, {order.shippingAddress.city},{" "}
+										{order.shippingAddress.province}, {order.shippingAddress.postalCode}
+									</p>
+									<p>
+										<strong>Contact:</strong> {order.contactNumber}
+									</p>
+								</div>
+							</div>
+						)}
+
 						<div className='mt-4 flex justify-between items-center'>
+							<div>
+								<button
+									onClick={() =>
+										setExpandedOrderId(expandedOrderId === order._id ? null : order._id)
+									}
+									className='flex items-center text-sm text-emerald-400 hover:underline'
+								>
+									{expandedOrderId === order._id ? "Hide Details" : "View Details"}
+									<ChevronDown
+										className={`ml-1 h-4 w-4 transition-transform ${
+											expandedOrderId === order._id ? "rotate-180" : ""
+										}`}
+									/>
+								</button>
+							</div>
 							<div>
 								<label htmlFor={`status-${order._id}`} className='text-sm text-gray-400 mr-2'>
 									Order Status:
