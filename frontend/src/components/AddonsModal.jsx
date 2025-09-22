@@ -10,7 +10,7 @@ const AddonsModal = ({ onClose }) => {
 		isLoading,
 		isError,
 	} = useQuery({
-		queryKey: ["products"],
+		queryKey: ["addon-products"],
 		queryFn: async () => {
 			const res = await axios.get("/products");
 			return res.data;
