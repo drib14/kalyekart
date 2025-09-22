@@ -2,8 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, Upload, Loader } from "lucide-react";
 import { useProductStore } from "../stores/useProductStore";
-
-const categories = ["jeans", "t-shirts", "shoes", "glasses", "jackets", "suits", "bags"];
+import { categories } from "../data/categories";
 
 const CreateProductForm = () => {
 	const [newProduct, setNewProduct] = useState({
@@ -117,11 +116,16 @@ const CreateProductForm = () => {
 					>
 						<option value=''>Select a category</option>
 						{categories.map((category) => (
-							<option key={category} value={category}>
-								{category}
+							<option key={category.id} value={category.id}>
+								{category.name}
 							</option>
 						))}
 					</select>
+					<div className='mt-2'>
+						<p className='text-xs text-gray-400'>
+							Available categories: {categories.map((c) => c.name).join(", ")}
+						</p>
+					</div>
 				</div>
 
 				<div className='mt-1 flex items-center'>
