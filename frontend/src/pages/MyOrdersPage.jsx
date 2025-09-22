@@ -4,6 +4,7 @@ import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { toast } from "sonner";
 import { useState } from "react";
+import { UserCircle } from "lucide-react";
 import CancelOrderModal from "../components/CancelOrderModal";
 import RequestRefundModal from "../components/RequestRefundModal";
 import OrdersTab from "../components/OrdersTab";
@@ -84,13 +85,14 @@ const MyOrdersPage = () => {
 					{activeTab === "profile" && (
 						<div>
 							<h2 className='text-2xl font-bold text-white mb-4'>User Information</h2>
-							<div className='bg-gray-800 p-6 rounded-lg shadow-lg'>
-								<p className='text-lg'>
-									<span className='font-bold text-gray-400'>Name:</span> {user.fullName}
-								</p>
-								<p className='text-lg'>
-									<span className='font-bold text-gray-400'>Email:</span> {user.email}
-								</p>
+							<div className='bg-gray-800 p-6 rounded-lg shadow-lg flex items-center gap-6'>
+								<div className='w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center'>
+									<UserCircle className='w-20 h-20 text-gray-500' />
+								</div>
+								<div>
+									<p className='text-2xl font-bold text-white'>{user.name}</p>
+									<p className='text-lg text-gray-400'>{user.email}</p>
+								</div>
 							</div>
 						</div>
 					)}
