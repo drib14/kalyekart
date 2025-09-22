@@ -5,13 +5,7 @@ import { uploadOnCloudinary } from "../lib/cloudinary.js";
 export const getOrders = async (req, res) => {
 	try {
 		const userId = req.user._id;
-		const orders = await Order.find({ user: userId }).populate({
-			path: "products",
-			populate: {
-				path: "product",
-				model: "Product",
-			},
-		});
+		const orders = await Order.find({ user: userId }).populate("products.product");
 		res.status(200).json(orders);
 	} catch (error) {
 		console.error("Error getting orders:", error);
@@ -130,15 +124,7 @@ export const requestRefund = async (req, res) => {
 
 export const getAllOrders = async (req, res) => {
 	try {
-		const orders = await Order.find()
-			.populate("user", "name email")
-			.populate({
-				path: "products",
-				populate: {
-					path: "product",
-					model: "Product",
-				},
-			});
+		const orders = await Order.find().populate("user", "fullName email").populate("products.product");
 		res.status(200).json(orders);
 	} catch (error) {
 		console.error("Error getting all orders:", error);
