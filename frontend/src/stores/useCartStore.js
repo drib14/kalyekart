@@ -45,7 +45,7 @@ export const useCartStore = create((set, get) => ({
 	},
 	clearCart: async () => {
 		try {
-			const res = await axios.delete("/cart");
+			const res = await axios.delete("/cart/all/clear");
 			set({ cart: res.data, coupon: null, total: 0, subtotal: 0 });
 		} catch (error) {
 			toast.error(error.response?.data?.message || "Failed to clear cart");
@@ -63,7 +63,7 @@ export const useCartStore = create((set, get) => ({
 	},
 	removeFromCart: async (productId) => {
 		try {
-			const res = await axios.delete(`/cart`, { data: { productId } });
+			const res = await axios.delete(`/cart/${productId}`);
 			set({ cart: res.data });
 			get().calculateTotals();
 		} catch (error) {

@@ -7,12 +7,15 @@ import { useState } from "react";
 import CancelOrderModal from "../components/CancelOrderModal";
 import RequestRefundModal from "../components/RequestRefundModal";
 import OrdersTab from "../components/OrdersTab";
+import Pagination from "../components/Pagination";
 
 const MyOrdersPage = () => {
 	const { user } = useUserStore();
 	const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 	const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
 	const [selectedOrder, setSelectedOrder] = useState(null);
+	const [currentPage, setCurrentPage] = useState(1);
+	const itemsPerPage = 10;
 
 	const {
 		data: orders,
@@ -42,6 +45,17 @@ const MyOrdersPage = () => {
 		setIsRefundModalOpen(true);
 	};
 
+	const totalPages = orders ? Math.ceil(orders.length / itemsPerPage) : 0;
+	const handlePageChange = (pageNumber) => {
+		if (pageNumber > 0 && pageNumber <= totalPages) {
+			setCurrentPage(pageNumber);
+		}
+	};
+
+	const indexOfLastItem = currentPage * itemsPerPage;
+	const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+	const currentOrders = orders ? orders.slice(indexOfFirstItem, indexOfLastItem) : [];
+
 	return (
 		<main className='container my-10'>
 			{isCancelModalOpen && (
@@ -60,7 +74,18 @@ const MyOrdersPage = () => {
 			)}
 			<h1 className='text-3xl font-extrabold text-emerald-400 mb-8 text-center'>My Orders</h1>
 			<div className='max-w-4xl mx-auto'>
-				<OrdersTab orders={orders} openCancelModal={openCancelModal} openRefundModal={openRefundModal} />
+				<OrdersTab
+					orders={currentOrders}
+					openCancelModal={openCancelModal}
+					openRefundModal={openRefundModal}
+				/>
+				{totalPages > 1 && (
+					<Pagination
+						currentPage={currentPage}
+						totalPages={totalPages}
+						onPageChange={handlePageChange}
+					/>
+				)}
 			</div>
 		</main>
 	);

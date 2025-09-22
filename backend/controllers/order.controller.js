@@ -5,9 +5,11 @@ import { uploadOnCloudinary } from "../lib/cloudinary.js";
 export const getOrders = async (req, res) => {
 	try {
 		const userId = req.user._id;
-		const orders = await Order.find({ user: userId }).populate({
-			path: "products",
-			populate: {
+		const orders = await Order.find({ user: userId })
+			.sort({ createdAt: -1 })
+			.populate({
+				path: "products",
+				populate: {
 				path: "product",
 				model: "Product",
 			},

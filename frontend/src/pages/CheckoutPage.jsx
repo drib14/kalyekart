@@ -67,7 +67,7 @@ const CheckoutPage = () => {
 				transition={{ duration: 0.5 }}
 			>
 				<h1 className='text-3xl font-extrabold text-emerald-400 mb-8 text-center'>Checkout</h1>
-				<div className='grid md:grid-cols-2 gap-8'>
+				<div className='grid md:grid-cols-2 md:gap-4 lg:gap-8'>
 					<div className='bg-gray-800 p-8 rounded-lg shadow-lg'>
 						<h2 className='text-2xl font-bold text-white mb-6'>Shipping Information</h2>
 						<form onSubmit={handleSubmit} className='space-y-4'>
