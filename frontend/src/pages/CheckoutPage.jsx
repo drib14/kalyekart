@@ -14,8 +14,8 @@ const CheckoutPage = () => {
 	const { user } = useUserStore();
 	const navigate = useNavigate();
 
-	const [shippingAddress, setShippingAddress] = useState("");
-	const [contactNumber, setContactNumber] = useState("");
+	const [shippingAddress, setShippingAddress] = useState("123 Kalye Serye, Barangay Walang Forever, Cebu City");
+	const [contactNumber, setContactNumber] = useState("09123456789");
 	const [isAddonsModalOpen, setIsAddonsModalOpen] = useState(false);
 
 	const { mutate: createCodOrder, isPending } = useMutation({
