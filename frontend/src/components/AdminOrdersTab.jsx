@@ -86,7 +86,7 @@ const AdminOrdersTab = () => {
 						<div className='flex justify-between items-start'>
 							<div>
 								<p className='text-lg font-bold text-white'>Order ID: {order._id}</p>
-								<p className='text-sm text-gray-400'>User: {order.user.fullName}</p>
+								<p className='text-sm text-gray-400'>User: {order.user.name}</p>
 								<p className='text-sm text-gray-400'>
 									Placed on: {new Date(order.createdAt).toLocaleDateString()}
 								</p>
