@@ -5,7 +5,13 @@ import { uploadOnCloudinary } from "../lib/cloudinary.js";
 export const getOrders = async (req, res) => {
 	try {
 		const userId = req.user._id;
-		const orders = await Order.find({ user: userId }).populate("products.product");
+		const orders = await Order.find({ user: userId }).populate({
+			path: "products",
+			populate: {
+				path: "product",
+				model: "Product",
+			},
+		});
 		res.status(200).json(orders);
 	} catch (error) {
 		console.error("Error getting orders:", error);
@@ -124,7 +130,15 @@ export const requestRefund = async (req, res) => {
 
 export const getAllOrders = async (req, res) => {
 	try {
-		const orders = await Order.find().populate("user", "fullName email").populate("products.product");
+		const orders = await Order.find()
+			.populate("user", "name email")
+			.populate({
+				path: "products",
+				populate: {
+					path: "product",
+					model: "Product",
+				},
+			});
 		res.status(200).json(orders);
 	} catch (error) {
 		console.error("Error getting all orders:", error);
@@ -156,7 +170,7 @@ export const updateOrderStatus = async (req, res) => {
 export const updateRefundStatus = async (req, res) => {
 	try {
 		const { orderId } = req.params;
-		const { status } = req.body;
+		const { status, rejectionReason } = req.body;
 
 		const order = await Order.findById(orderId);
 
@@ -169,6 +183,9 @@ export const updateRefundStatus = async (req, res) => {
 		}
 
 		order.refundRequest.status = status;
+		if (status === "rejected" && rejectionReason) {
+			order.refundRequest.rejectionReason = rejectionReason;
+		}
 		await order.save();
 
 		res.status(200).json({ message: "Refund status updated successfully" });

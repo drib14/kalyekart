@@ -1,6 +1,4 @@
 const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
-	// This component now only displays the list.
-	// The parent `MyOrdersPage` handles the modals.
 
 	return (
 		<div>

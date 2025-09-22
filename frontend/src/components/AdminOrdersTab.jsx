@@ -8,6 +8,7 @@ import { UserCircle, ChevronDown } from "lucide-react";
 const AdminOrdersTab = () => {
 	const [activeSubTab, setActiveSubTab] = useState("All");
 	const [expandedOrderId, setExpandedOrderId] = useState(null);
+	const [rejectionReason, setRejectionReason] = useState("");
 
 	const subTabs = ["All", "Cancelled", "Refunds"];
 
@@ -39,8 +40,8 @@ const AdminOrdersTab = () => {
 	});
 
 	const { mutate: updateRefundStatus } = useMutation({
-		mutationFn: ({ orderId, status }) => {
-			return axios.put(`/orders/${orderId}/refund/status`, { status });
+		mutationFn: ({ orderId, status, rejectionReason }) => {
+			return axios.put(`/orders/${orderId}/refund/status`, { status, rejectionReason });
 		},
 		onSuccess: () => {
 			toast.success("Refund status updated successfully");
@@ -181,6 +182,11 @@ const AdminOrdersTab = () => {
 								<div>
 									<h3 className='text-lg font-bold text-white'>Refund Request</h3>
 									<p>Reason: {order.refundRequest.reason}</p>
+									{order.refundRequest.rejectionReason && (
+										<p className='text-sm text-red-400'>
+											Rejection Reason: {order.refundRequest.rejectionReason}
+										</p>
+									)}
 									<a
 										href={order.refundRequest.proof}
 										target='_blank'
@@ -189,24 +195,42 @@ const AdminOrdersTab = () => {
 									>
 										View Proof
 									</a>
-									<div className='flex gap-2 mt-2'>
-										<button
-											onClick={() =>
-												updateRefundStatus({ orderId: order._id, status: "approved" })
-											}
-											className='bg-green-600 hover:bg-green-700 text-white py-1 px-2 rounded-md'
-										>
-											Approve
-										</button>
-										<button
-											onClick={() =>
-												updateRefundStatus({ orderId: order._id, status: "rejected" })
-											}
-											className='bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded-md'
-										>
-											Reject
-										</button>
-									</div>
+
+									{order.refundRequest.status === "pending" && (
+										<div className='mt-2'>
+											<div className='flex gap-2'>
+												<button
+													onClick={() =>
+														updateRefundStatus({ orderId: order._id, status: "approved" })
+													}
+													className='bg-green-600 hover:bg-green-700 text-white py-1 px-2 rounded-md text-xs'
+												>
+													Approve
+												</button>
+												<button
+													onClick={() => {
+														if (rejectionReason) {
+															updateRefundStatus({
+																orderId: order._id,
+																status: "rejected",
+																rejectionReason,
+															});
+														} else {
+															toast.error("Please provide a reason for rejection.");
+														}
+													}}
+													className='bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded-md text-xs'
+												>
+													Reject
+												</button>
+											</div>
+											<textarea
+												placeholder='Reason for rejection...'
+												onChange={(e) => setRejectionReason(e.target.value)}
+												className='mt-2 w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm'
+											/>
+										</div>
+									)}
 								</div>
 							)}
 						</div>

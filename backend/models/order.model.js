@@ -70,6 +70,7 @@ const orderSchema = new mongoose.Schema(
 				type: String,
 				enum: ["pending", "approved", "rejected"],
 			},
+			rejectionReason: String,
 		},
 	},
 	{ timestamps: true }

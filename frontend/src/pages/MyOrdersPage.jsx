@@ -93,7 +93,9 @@ const MyOrdersPage = () => {
 							</div>
 						</div>
 					)}
-					{activeTab === "orders" && <OrdersTab orders={orders} />}
+					{activeTab === "orders" && (
+						<OrdersTab orders={orders} openCancelModal={openCancelModal} openRefundModal={openRefundModal} />
+					)}
 				</div>
 			</div>
 		</main>
