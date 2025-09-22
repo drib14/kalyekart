@@ -70,9 +70,16 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 												key={item.product._id}
 												className='flex items-center justify-between'
 											>
-												<p className='font-medium text-white truncate'>
-													{item.product.name}
-												</p>
+												<div className='flex items-center gap-2'>
+													<img
+														src={item.product.image}
+														alt={item.product.name}
+														className='w-10 h-10 object-cover rounded-md'
+													/>
+													<p className='font-medium text-white truncate'>
+														{item.product.name}
+													</p>
+												</div>
 												<p className='text-sm text-gray-400'>x{item.quantity}</p>
 											</div>
 										))}
