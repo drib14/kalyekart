@@ -79,18 +79,6 @@ const MyOrdersPage = () => {
 					>
 						Orders
 					</button>
-					{user.role === "admin" && (
-						<button
-							className={`py-2 px-4 ${
-								activeTab === "admin"
-									? "border-b-2 border-emerald-400 text-emerald-400"
-									: "text-gray-400"
-							}`}
-							onClick={() => setActiveTab("admin")}
-						>
-							Admin
-						</button>
-					)}
 				</div>
 				<div className='mt-8'>
 					{activeTab === "profile" && (
@@ -109,7 +97,6 @@ const MyOrdersPage = () => {
 					{activeTab === "orders" && (
 						<OrdersTab orders={orders} openCancelModal={openCancelModal} openRefundModal={openRefundModal} />
 					)}
-					{activeTab === "admin" && <AdminOrdersTab />}
 				</div>
 			</div>
 		</main>
