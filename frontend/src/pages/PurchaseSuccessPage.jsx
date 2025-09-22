@@ -29,7 +29,6 @@ const PurchaseSuccessPage = () => {
 			handleCheckoutSuccess(sessionId);
 		} else {
 			setIsProcessing(false);
-			setError("No session ID found in the URL");
 		}
 	}, [clearCart]);
 
