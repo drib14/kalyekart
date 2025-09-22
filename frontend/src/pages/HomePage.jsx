@@ -39,7 +39,7 @@ const HomePage = () => {
 						Filter by category
 					</p>
 
-					<div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-8 mb-12'>
+					<div className='flex items-center justify-start gap-2 mb-12 overflow-x-auto pb-4'>
 						{allCategories.map((category) => (
 							<CategoryTab
 								key={category.id}

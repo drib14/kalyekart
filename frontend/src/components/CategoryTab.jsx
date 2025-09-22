@@ -2,29 +2,16 @@ const CategoryTab = ({ category, onClick, isActive }) => {
 	return (
 		<button
 			onClick={onClick}
-			className={`relative group flex flex-col items-center justify-center gap-2 p-2 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 ${
-				isActive ? "bg-emerald-600/30 shadow-lg" : "bg-gray-800/50 hover:bg-gray-700/80"
+			className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-t-lg border-b-2 transition-all duration-300 ease-in-out ${
+				isActive
+					? "bg-gray-800 border-emerald-400"
+					: "bg-gray-900 border-transparent hover:bg-gray-800/50"
 			}`}
 		>
-			<div className='w-20 h-20 rounded-full overflow-hidden border-2 border-transparent group-hover:border-emerald-400 transition-all duration-300'>
-				<img
-					src={category.imageUrl}
-					alt={category.name}
-					className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 ${
-						isActive ? "scale-110" : ""
-					}`}
-				/>
-			</div>
-			<span
-				className={`text-base font-semibold transition-colors duration-300 ${
-					isActive ? "text-emerald-300" : "text-gray-200 group-hover:text-white"
-				}`}
-			>
+			<img src={category.imageUrl} alt={category.name} className='w-5 h-5 object-cover rounded-full' />
+			<span className={`text-sm font-medium ${isActive ? "text-emerald-400" : "text-gray-300"}`}>
 				{category.name}
 			</span>
-			{isActive && (
-				<div className='absolute top-0 right-0 w-3 h-3 bg-emerald-400 rounded-full shadow-md animate-pulse'></div>
-			)}
 		</button>
 	);
 };
