@@ -3,7 +3,7 @@ import { useProductStore } from "../stores/useProductStore";
 import { categories } from "../data/categories";
 import ProductDetailModal from "../components/ProductDetailModal";
 import CustomerProductsGrid from "../components/CustomerProductsGrid";
-import CategoryItem from "../components/CategoryItem";
+import CategoryTab from "../components/CategoryTab";
 
 const HomePage = () => {
 	const { fetchAllProducts, products } = useProductStore();
@@ -25,7 +25,7 @@ const HomePage = () => {
 	const filteredProducts =
 		activeCategory === "All" ? products : products.filter((p) => p.category === activeCategory);
 
-	const allCategories = [{ name: "All", id: "all" }, ...categories];
+	const allCategories = [{ name: "All", id: "all", imageUrl: "/logo.jpg" }, ...categories];
 
 	return (
 		<>
@@ -39,9 +39,9 @@ const HomePage = () => {
 						Filter by category
 					</p>
 
-					<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12'>
+					<div className='flex items-center justify-center gap-4 sm:gap-8 mb-12 overflow-x-auto pb-4'>
 						{allCategories.map((category) => (
-							<CategoryItem
+							<CategoryTab
 								key={category.id}
 								category={category}
 								onClick={() => setActiveCategory(category.name)}
