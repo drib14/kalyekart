@@ -27,8 +27,7 @@ const CheckoutPage = () => {
 		},
 		onSuccess: () => {
 			toast.success("Order placed successfully");
-			clearCart();
-			navigate("/purchase-success");
+			navigate("/purchase-success", { state: { cod: true } });
 		},
 		onError: (error) => {
 			toast.error(error.response.data.message);

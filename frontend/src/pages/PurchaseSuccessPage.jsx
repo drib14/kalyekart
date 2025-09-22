@@ -1,6 +1,6 @@
 import { ArrowRight, CheckCircle, HandHeart } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useCartStore } from "../stores/useCartStore";
 import axios from "../lib/axios";
 import Confetti from "react-confetti";
@@ -9,6 +9,8 @@ const PurchaseSuccessPage = () => {
 	const [isProcessing, setIsProcessing] = useState(true);
 	const { clearCart } = useCartStore();
 	const [error, setError] = useState(null);
+	const location = useLocation();
+	const isCod = location.state?.cod;
 
 	useEffect(() => {
 		const handleCheckoutSuccess = async (sessionId) => {
@@ -19,6 +21,7 @@ const PurchaseSuccessPage = () => {
 				clearCart();
 			} catch (error) {
 				console.log(error);
+				setError(error.response?.data?.message || "An error occurred during payment verification.");
 			} finally {
 				setIsProcessing(false);
 			}
@@ -27,11 +30,15 @@ const PurchaseSuccessPage = () => {
 		const sessionId = new URLSearchParams(window.location.search).get("session_id");
 		if (sessionId) {
 			handleCheckoutSuccess(sessionId);
+		} else if (isCod) {
+			// This is a COD order.
+			clearCart();
+			setIsProcessing(false);
 		} else {
 			setIsProcessing(false);
 			setError("No session ID found in the URL");
 		}
-	}, [clearCart]);
+	}, [clearCart, isCod]);
 
 	if (isProcessing) return "Processing...";
 
@@ -54,11 +61,13 @@ const PurchaseSuccessPage = () => {
 						<CheckCircle className='text-emerald-400 w-16 h-16 mb-4' />
 					</div>
 					<h1 className='text-2xl sm:text-3xl font-bold text-center text-emerald-400 mb-2'>
-						Purchase Successful!
+						{isCod ? "Order Placed Successfully!" : "Purchase Successful!"}
 					</h1>
 
 					<p className='text-gray-300 text-center mb-2'>
-						Thank you for your order. {"We're"} processing it now.
+						{isCod
+							? "Your order will be delivered to you soon."
+							: "Thank you for your order. We're processing it now."}
 					</p>
 					<p className='text-emerald-400 text-center text-sm mb-6'>
 						Check your email for order details and updates.
