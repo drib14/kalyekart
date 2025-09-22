@@ -39,67 +39,66 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 			{orders?.length === 0 ? (
 				<p className='text-center text-gray-400'>You have no orders yet.</p>
 			) : (
-				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
 					{orders?.map((order) => {
 						const effectiveStatus = getEffectiveStatus(order);
 						return (
 							<Link
 								to={`/order/${order._id}`}
 								key={order._id}
-								className='block bg-gray-800 p-4 rounded-lg shadow-lg hover:bg-gray-700 transition-colors duration-200 flex flex-col'
+								className='block bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition-colors duration-200 flex flex-col'
 							>
 								<div className='flex-grow'>
-									<div className='flex justify-between items-start mb-2'>
+									<div className='flex justify-between items-start mb-4'>
 										<div>
-											<p className='text-sm font-bold text-white truncate max-w-xs'>
+											<p className='text-lg font-bold text-white truncate'>
 												Order #{order._id.substring(0, 8)}...
 											</p>
-											<p className='text-xs text-gray-400'>
+											<p className='text-sm text-gray-400'>
 												{new Date(order.createdAt).toLocaleDateString()}
 											</p>
 										</div>
 										<div
-											className={`px-2 py-1 rounded-full text-xs font-medium ${effectiveStatus.color}`}
+											className={`px-3 py-1 rounded-full text-sm font-medium ${effectiveStatus.color}`}
 										>
 											{effectiveStatus.text}
 										</div>
 									</div>
-									<div className='border-t border-gray-700 my-2' />
-									<div className='space-y-1'>
+									<div className='space-y-2'>
 										{order.products.map((item) => (
 											<div
 												key={item.product._id}
-												className='flex items-center justify-between text-sm'
+												className='flex items-center justify-between'
 											>
-												<p className='font-medium text-white truncate max-w-[120px]'>
+												<p className='font-medium text-white truncate'>
 													{item.product.name}
 												</p>
-												<p className='text-gray-400'>x{item.quantity}</p>
+												<p className='text-sm text-gray-400'>x{item.quantity}</p>
 											</div>
 										))}
 									</div>
 								</div>
-								<div className='mt-auto pt-2'>
-									<div className='border-t border-gray-700 my-2' />
-									<div className='flex justify-between items-center font-bold text-white'>
+								<div className='mt-auto pt-4'>
+									<div className='border-t border-gray-700 my-4' />
+									<div className='flex justify-between items-center font-bold text-white text-lg'>
 										<p>Total</p>
 										<p>₱{order.totalAmount.toFixed(2)}</p>
 									</div>
-									<div className='flex justify-end gap-2 mt-2 flex-wrap'>
+									<div className='flex justify-end gap-4 mt-4 flex-wrap'>
 										{order.status === "pending" && (
 											<button
 												onClick={(e) => handleButtonClick(e, () => openCancelModal(order))}
-												className='bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded-md text-sm z-10 relative'
+												className='bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md text-sm z-10 relative'
 											>
-												Cancel
+												Cancel Order
 											</button>
 										)}
 										{order.status === "delivered" && !order.refundRequest && (
 											<button
 												onClick={(e) => handleButtonClick(e, () => openRefundModal(order))}
-												className='bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-md text-sm z-10 relative'
+												className='bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm z-10 relative'
 											>
-												Refund
+												Request Refund
 											</button>
 										)}
 									</div>
