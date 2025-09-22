@@ -4,19 +4,15 @@ import { useCartStore } from "../stores/useCartStore";
 
 const GiftCouponCard = () => {
 	const [userInputCode, setUserInputCode] = useState("");
-	const { availableCoupon, appliedCoupon, applyCoupon, getMyCoupon, removeCoupon } = useCartStore();
+	const { coupon, isCouponApplied, applyCoupon, getMyCoupon, removeCoupon } = useCartStore();
 
 	useEffect(() => {
 		getMyCoupon();
 	}, [getMyCoupon]);
 
 	useEffect(() => {
-		if (appliedCoupon) {
-			setUserInputCode(appliedCoupon.code);
-		} else if (availableCoupon) {
-			setUserInputCode(availableCoupon.code);
-		}
-	}, [availableCoupon, appliedCoupon]);
+		if (coupon) setUserInputCode(coupon.code);
+	}, [coupon]);
 
 	const handleApplyCoupon = () => {
 		if (!userInputCode) return;
@@ -55,21 +51,20 @@ const GiftCouponCard = () => {
 
 				<motion.button
 					type='button'
-					className='flex w-full items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300 disabled:opacity-50'
+					className='flex w-full items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300'
 					whileHover={{ scale: 1.05 }}
 					whileTap={{ scale: 0.95 }}
 					onClick={handleApplyCoupon}
-					disabled={!!appliedCoupon}
 				>
 					Apply Code
 				</motion.button>
 			</div>
-			{appliedCoupon && (
+			{isCouponApplied && coupon && (
 				<div className='mt-4'>
-					<h3 className='text-lg font-medium text-emerald-400'>Applied Coupon</h3>
+					<h3 className='text-lg font-medium text-gray-300'>Applied Coupon</h3>
 
-					<p className='mt-2 text-sm text-gray-300'>
-						{appliedCoupon.code} - {appliedCoupon.discountPercentage}% off
+					<p className='mt-2 text-sm text-gray-400'>
+						{coupon.code} - {coupon.discountPercentage}% off
 					</p>
 
 					<motion.button
@@ -86,11 +81,11 @@ const GiftCouponCard = () => {
 				</div>
 			)}
 
-			{availableCoupon && !appliedCoupon && (
+			{coupon && (
 				<div className='mt-4'>
 					<h3 className='text-lg font-medium text-gray-300'>Your Available Coupon:</h3>
 					<p className='mt-2 text-sm text-gray-400'>
-						{availableCoupon.code} - {availableCoupon.discountPercentage}% off
+						{coupon.code} - {coupon.discountPercentage}% off
 					</p>
 				</div>
 			)}

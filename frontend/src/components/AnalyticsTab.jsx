@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import axios from "../lib/axios";
-import { Users, Package, ShoppingCart, DollarSign, XCircle, Undo2 } from "lucide-react";
+import { Users, Package, ShoppingCart, DollarSign } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const AnalyticsTab = () => {
@@ -10,14 +10,6 @@ const AnalyticsTab = () => {
 		products: 0,
 		totalSales: 0,
 		totalRevenue: 0,
-	});
-	const [cancelledOrdersData, setCancelledOrdersData] = useState({
-		totalCancelledOrders: 0,
-		totalCancelledRevenue: 0,
-	});
-	const [refundedOrdersData, setRefundedOrdersData] = useState({
-		totalRefundedOrders: 0,
-		totalRefundedRevenue: 0,
 	});
 	const [isLoading, setIsLoading] = useState(true);
 	const [dailySalesData, setDailySalesData] = useState([]);
@@ -28,8 +20,6 @@ const AnalyticsTab = () => {
 				const response = await axios.get("/analytics");
 				setAnalyticsData(response.data.analyticsData);
 				setDailySalesData(response.data.dailySalesData);
-				setCancelledOrdersData(response.data.cancelledOrdersData);
-				setRefundedOrdersData(response.data.refundedOrdersData);
 			} catch (error) {
 				console.error("Error fetching analytics data:", error);
 			} finally {
@@ -46,7 +36,7 @@ const AnalyticsTab = () => {
 
 	return (
 		<div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-			<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
+			<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
 				<AnalyticsCard
 					title='Total Users'
 					value={analyticsData.users.toLocaleString()}
@@ -70,18 +60,6 @@ const AnalyticsTab = () => {
 					value={`₱${analyticsData.totalRevenue.toLocaleString()}`}
 					icon={DollarSign}
 					color='from-emerald-500 to-lime-700'
-				/>
-				<AnalyticsCard
-					title='Cancelled Orders'
-					value={cancelledOrdersData.totalCancelledOrders.toLocaleString()}
-					icon={XCircle}
-					color='from-red-500 to-orange-700'
-				/>
-				<AnalyticsCard
-					title='Refunded Orders'
-					value={refundedOrdersData.totalRefundedOrders.toLocaleString()}
-					icon={Undo2}
-					color='from-blue-500 to-indigo-700'
 				/>
 			</div>
 			<motion.div
