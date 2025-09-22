@@ -7,6 +7,33 @@ import { UserCircle, ChevronDown } from "lucide-react";
 import RejectionReasonModal from "./RejectionReasonModal";
 import ProofViewerModal from "./ProofViewerModal";
 
+const getEffectiveStatus = (order) => {
+	if (order.refundRequest) {
+		switch (order.refundRequest.status) {
+			case "pending":
+				return { text: "Refund Requested", color: "bg-blue-500 text-blue-900" };
+			case "approved":
+				return { text: "Refunded", color: "bg-purple-500 text-purple-900" };
+			case "rejected":
+				return { text: "Refund Rejected", color: "bg-gray-500 text-gray-900" };
+		}
+	}
+	switch (order.status) {
+		case "pending":
+			return { text: "Pending", color: "bg-yellow-500 text-yellow-900" };
+		case "processing":
+			return { text: "Processing", color: "bg-cyan-500 text-cyan-900" };
+		case "shipped":
+			return { text: "Shipped", color: "bg-indigo-500 text-indigo-900" };
+		case "delivered":
+			return { text: "Delivered", color: "bg-green-500 text-green-900" };
+		case "cancelled":
+			return { text: "Cancelled", color: "bg-red-500 text-red-900" };
+		default:
+			return { text: order.status, color: "bg-gray-500 text-gray-900" };
+	}
+};
+
 const AdminOrdersTab = () => {
 	const [activeSubTab, setActiveSubTab] = useState("All");
 	const [expandedOrderId, setExpandedOrderId] = useState(null);
@@ -104,150 +131,151 @@ const AdminOrdersTab = () => {
 				</div>
 				<h2 className='text-2xl font-bold text-white mb-4'>All Orders</h2>
 				<div className='space-y-6'>
-					{filteredOrders?.map((order) => (
-						<div key={order._id} className='bg-gray-800 p-6 rounded-lg shadow-lg'>
-							<div className='flex justify-between items-start'>
-								<div className='flex items-center gap-4'>
-									{order.user.profilePicture ? (
-										<img
-											src={order.user.profilePicture}
-											alt={order.user.name}
-											className='w-12 h-12 rounded-full object-cover'
-										/>
-									) : (
-										<UserCircle className='w-12 h-12 text-gray-500' />
-									)}
-									<div>
-										<p className='text-lg font-bold text-white'>{order.user.name}</p>
-										<p className='text-sm text-gray-400'>Order ID: {order._id}</p>
-										<p className='text-sm text-gray-400'>
-											Placed on: {new Date(order.createdAt).toLocaleDateString()}
-										</p>
-									</div>
-								</div>
-								<div
-									className={`px-3 py-1 rounded-full text-sm font-medium ${
-										order.status === "pending"
-											? "bg-yellow-500 text-yellow-900"
-											: order.status === "delivered"
-											? "bg-green-500 text-green-900"
-											: "bg-red-500 text-red-900"
-									}`}
-								>
-									{order.status}
-								</div>
-							</div>
-							<div className='mt-4'>
-								{order.products.map((item) => (
-									<div key={item.product?._id} className='flex items-center justify-between py-2'>
+					{filteredOrders?.map((order) => {
+						const effectiveStatus = getEffectiveStatus(order);
+						return (
+							<div key={order._id} className='bg-gray-800 p-6 rounded-lg shadow-lg'>
+								<div className='flex justify-between items-start'>
+									<div className='flex items-center gap-4'>
+										{order.user.profilePicture ? (
+											<img
+												src={order.user.profilePicture}
+												alt={order.user.name}
+												className='w-12 h-12 rounded-full object-cover'
+											/>
+										) : (
+											<UserCircle className='w-12 h-12 text-gray-500' />
+										)}
 										<div>
-											<p className='font-medium text-white'>{item.product?.name || "Product not found"}</p>
+											<p className='text-lg font-bold text-white'>{order.user.name}</p>
+											<p className='text-sm text-gray-400'>Order ID: {order._id}</p>
 											<p className='text-sm text-gray-400'>
-												{item.quantity} x ₱{item.price.toFixed(2)}
-											</p>
-										</div>
-										<p className='font-medium text-white'>
-											₱{(item.quantity * item.price).toFixed(2)}
-										</p>
-									</div>
-								))}
-							</div>
-							<div className='border-t border-gray-700 my-4' />
-							<div className='flex justify-between items-center font-bold text-white'>
-								<p>Total</p>
-								<p>₱{order.totalAmount.toFixed(2)}</p>
-							</div>
-
-							{expandedOrderId === order._id && (
-								<div className='mt-4 border-t border-gray-700 pt-4 space-y-4'>
-									<div>
-										<h3 className='text-lg font-bold text-white mb-2'>Shipping Details</h3>
-										<div className='text-sm text-gray-300'>
-											<p>
-												<strong>Address:</strong> {order.shippingAddress.streetAddress}, {order.shippingAddress.city},{" "}
-												{order.shippingAddress.province}, {order.shippingAddress.postalCode}
-											</p>
-											<p>
-												<strong>Contact:</strong> {order.contactNumber}
+												Placed on: {new Date(order.createdAt).toLocaleDateString()}
 											</p>
 										</div>
 									</div>
-
-									{order.refundRequest && (
-										<div>
-											<h3 className='text-lg font-bold text-white'>Refund Request</h3>
-											<p>Reason: {order.refundRequest.reason}</p>
-											{order.refundRequest.rejectionReason && (
-												<p className='text-sm text-red-400'>
-													Rejection Reason: {order.refundRequest.rejectionReason}
+									<div className={`px-3 py-1 rounded-full text-sm font-medium ${effectiveStatus.color}`}>
+										{effectiveStatus.text}
+									</div>
+								</div>
+								<div className='mt-4'>
+									{order.products.map((item) => (
+										<div key={item.product?._id} className='flex items-center justify-between py-2'>
+											<div>
+												<p className='font-medium text-white'>{item.product?.name || "Product not found"}</p>
+												<p className='text-sm text-gray-400'>
+													{item.quantity} x ₱{item.price.toFixed(2)}
 												</p>
-											)}
-											<button
-												onClick={() => setProofViewerUrl(order.refundRequest.proof)}
-												className='text-emerald-400 hover:underline text-sm'
-											>
-												View Proof
-											</button>
-
-											{order.refundRequest.status === "pending" && (
-												<div className='mt-2 flex gap-2'>
-													<button
-														onClick={() =>
-															updateRefundStatus({ orderId: order._id, status: "approved" })
-														}
-														className='bg-green-600 hover:bg-green-700 text-white py-1 px-2 rounded-md text-xs'
-													>
-														Approve
-													</button>
-													<button
-														onClick={() => setRejectionModalOrder(order)}
-														className='bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded-md text-xs'
-													>
-														Reject
-													</button>
-												</div>
-											)}
+											</div>
+											<p className='font-medium text-white'>
+												₱{(item.quantity * item.price).toFixed(2)}
+											</p>
 										</div>
-									)}
+									))}
 								</div>
-							)}
+								<div className='border-t border-gray-700 my-4' />
+								<div className='flex justify-between items-center font-bold text-white'>
+									<p>Total</p>
+									<p>₱{order.totalAmount.toFixed(2)}</p>
+								</div>
 
-							<div className='mt-4 flex justify-between items-center'>
-								<div>
-									<button
-										onClick={() =>
-											setExpandedOrderId(expandedOrderId === order._id ? null : order._id)
-										}
-										className='flex items-center text-sm text-emerald-400 hover:underline'
-									>
-										{expandedOrderId === order._id ? "Hide Details" : "View Details"}
-										<ChevronDown
-											className={`ml-1 h-4 w-4 transition-transform ${
-												expandedOrderId === order._id ? "rotate-180" : ""
-											}`}
-										/>
-									</button>
-								</div>
-								<div>
-									<label htmlFor={`status-${order._id}`} className='text-sm text-gray-400 mr-2'>
-										Order Status:
-									</label>
-									<select
-										id={`status-${order._id}`}
-										value={order.status}
-										onChange={(e) => updateOrderStatus({ orderId: order._id, status: e.target.value })}
-										className='bg-gray-700 border border-gray-600 rounded-md shadow-sm'
-									>
-										<option value='pending'>Pending</option>
-										<option value='processing'>Processing</option>
-										<option value='shipped'>Shipped</option>
-										<option value='delivered'>Delivered</option>
-										<option value='cancelled'>Cancelled</option>
-									</select>
+								{expandedOrderId === order._id && (
+									<div className='mt-4 border-t border-gray-700 pt-4 space-y-4'>
+										<div>
+											<h3 className='text-lg font-bold text-white mb-2'>Shipping Details</h3>
+											<div className='text-sm text-gray-300'>
+												<p>
+													<strong>Address:</strong> {order.shippingAddress.streetAddress}, {order.shippingAddress.city},{" "}
+													{order.shippingAddress.province}, {order.shippingAddress.postalCode}
+												</p>
+												<p>
+													<strong>Contact:</strong> {order.contactNumber}
+												</p>
+											</div>
+										</div>
+
+										{order.refundRequest && (
+											<div className="bg-gray-700 p-4 rounded-lg">
+												<h3 className='text-lg font-bold text-white mb-2'>Refund Request</h3>
+												<div className="flex justify-between items-center">
+													<p>Reason: {order.refundRequest.reason}</p>
+													<span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getEffectiveStatus(order).color}`}>
+														{order.refundRequest.status}
+													</span>
+												</div>
+
+												{order.refundRequest.rejectionReason && (
+													<p className='text-sm text-red-400 mt-2'>
+														Rejection Reason: {order.refundRequest.rejectionReason}
+													</p>
+												)}
+												<button
+													onClick={() => setProofViewerUrl(order.refundRequest.proof)}
+													className='text-emerald-400 hover:underline text-sm mt-2'
+												>
+													View Proof
+												</button>
+
+												{order.refundRequest.status === "pending" && (
+													<div className='mt-4 flex gap-2'>
+														<button
+															onClick={() =>
+																updateRefundStatus({ orderId: order._id, status: "approved" })
+															}
+															className='bg-green-600 hover:bg-green-700 text-white py-1 px-2 rounded-md text-xs'
+														>
+															Approve
+														</button>
+														<button
+															onClick={() => setRejectionModalOrder(order)}
+															className='bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded-md text-xs'
+														>
+															Reject
+														</button>
+													</div>
+												)}
+											</div>
+										)}
+									</div>
+								)}
+
+								<div className='mt-4 flex justify-between items-center'>
+									<div>
+										<button
+											onClick={() =>
+												setExpandedOrderId(expandedOrderId === order._id ? null : order._id)
+											}
+											className='flex items-center text-sm text-emerald-400 hover:underline'
+										>
+											{expandedOrderId === order._id ? "Hide Details" : "View Details"}
+											<ChevronDown
+												className={`ml-1 h-4 w-4 transition-transform ${
+													expandedOrderId === order._id ? "rotate-180" : ""
+												}`}
+											/>
+										</button>
+									</div>
+									<div>
+										<label htmlFor={`status-${order._id}`} className='text-sm text-gray-400 mr-2'>
+											Order Status:
+										</label>
+										<select
+											id={`status-${order._id}`}
+											value={order.status}
+											onChange={(e) => updateOrderStatus({ orderId: order._id, status: e.target.value })}
+											className='bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+										>
+											<option value='pending'>Pending</option>
+											<option value='processing'>Processing</option>
+											<option value='shipped'>Shipped</option>
+											<option value='delivered'>Delivered</option>
+											<option value='cancelled'>Cancelled</option>
+										</select>
+									</div>
 								</div>
 							</div>
-						</div>
-					))}
+						)
+					})}
 				</div>
 			</div>
 		</>

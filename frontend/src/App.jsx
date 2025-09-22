@@ -23,6 +23,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import AdminProfilePage from "./pages/AdminProfilePage";
 import CustomerProfilePage from "./pages/CustomerProfilePage";
+import OrderDetailPage from "./pages/OrderDetailPage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -82,6 +83,7 @@ function App() {
 						path='/profile/customer'
 						element={user?.role === "customer" ? <CustomerProfilePage /> : <Navigate to='/login' />}
 					/>
+					<Route path='/order/:orderId' element={user ? <OrderDetailPage /> : <Navigate to='/login' />} />
 				</Routes>
 			</div>
 			<Toaster />

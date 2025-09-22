@@ -131,7 +131,7 @@ export const requestRefund = async (req, res) => {
 export const getAllOrders = async (req, res) => {
 	try {
 		const orders = await Order.find()
-			.populate("user", "name email")
+			.populate("user", "name email profilePicture")
 			.populate({
 				path: "products",
 				populate: {
@@ -192,5 +192,34 @@ export const updateRefundStatus = async (req, res) => {
 	} catch (error) {
 		console.error("Error updating refund status:", error);
 		res.status(500).json({ message: "Error updating refund status", error: error.message });
+	}
+};
+
+export const getOrderById = async (req, res) => {
+	try {
+		const { orderId } = req.params;
+		const userId = req.user._id;
+		const userRole = req.user.role;
+
+		const order = await Order.findById(orderId)
+			.populate("user", "name email")
+			.populate({
+				path: "products.product",
+				model: "Product",
+			});
+
+		if (!order) {
+			return res.status(404).json({ message: "Order not found" });
+		}
+
+		// Check if the user is the owner of the order or an admin
+		if (order.user._id.toString() !== userId.toString() && userRole !== "admin") {
+			return res.status(403).json({ message: "Not authorized to view this order" });
+		}
+
+		res.status(200).json(order);
+	} catch (error) {
+		console.error("Error getting order by ID:", error);
+		res.status(500).json({ message: "Error getting order by ID", error: error.message });
 	}
 };
