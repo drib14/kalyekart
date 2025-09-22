@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import axios from "../lib/axios";
-import { Users, Package, ShoppingCart, DollarSign } from "lucide-react";
+import { Users, Package, ShoppingCart, DollarSign, XCircle, Undo2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const AnalyticsTab = () => {
@@ -10,14 +10,18 @@ const AnalyticsTab = () => {
 		products: 0,
 		totalSales: 0,
 		totalRevenue: 0,
+		cancelledOrders: 0,
+		refundedOrders: 0,
 	});
 	const [isLoading, setIsLoading] = useState(true);
 	const [dailySalesData, setDailySalesData] = useState([]);
+	const [filter, setFilter] = useState("weekly");
 
 	useEffect(() => {
 		const fetchAnalyticsData = async () => {
+			setIsLoading(true);
 			try {
-				const response = await axios.get("/analytics");
+				const response = await axios.get(`/analytics?filter=${filter}`);
 				setAnalyticsData(response.data.analyticsData);
 				setDailySalesData(response.data.dailySalesData);
 			} catch (error) {
@@ -28,15 +32,17 @@ const AnalyticsTab = () => {
 		};
 
 		fetchAnalyticsData();
-	}, []);
+	}, [filter]);
 
 	if (isLoading) {
 		return <div>Loading...</div>;
 	}
 
+	const filters = ["overall", "daily", "weekly", "yearly"];
+
 	return (
 		<div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-			<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
+			<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8'>
 				<AnalyticsCard
 					title='Total Users'
 					value={analyticsData.users.toLocaleString()}
@@ -61,7 +67,36 @@ const AnalyticsTab = () => {
 					icon={DollarSign}
 					color='from-emerald-500 to-lime-700'
 				/>
+				<AnalyticsCard
+					title='Cancelled Orders'
+					value={analyticsData.cancelledOrders.toLocaleString()}
+					icon={XCircle}
+					color='from-red-500 to-orange-700'
+				/>
+				<AnalyticsCard
+					title='Refunded Orders'
+					value={analyticsData.refundedOrders.toLocaleString()}
+					icon={Undo2}
+					color='from-purple-500 to-indigo-700'
+				/>
 			</div>
+
+			<div className='flex justify-center mb-8'>
+				<div className='flex items-center bg-gray-800/60 rounded-lg p-1'>
+					{filters.map((f) => (
+						<button
+							key={f}
+							onClick={() => setFilter(f)}
+							className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+								filter === f ? "bg-emerald-600 text-white" : "text-gray-300 hover:bg-gray-700"
+							}`}
+						>
+							{f.charAt(0).toUpperCase() + f.slice(1)}
+						</button>
+					))}
+				</div>
+			</div>
+
 			<motion.div
 				className='bg-gray-800/60 rounded-lg p-6 shadow-lg'
 				initial={{ opacity: 0, y: 20 }}
@@ -71,7 +106,7 @@ const AnalyticsTab = () => {
 				<ResponsiveContainer width='100%' height={400}>
 					<LineChart data={dailySalesData}>
 						<CartesianGrid strokeDasharray='3 3' />
-						<XAxis dataKey='name' stroke='#D1D5DB' />
+						<XAxis dataKey='date' stroke='#D1D5DB' />
 						<YAxis yAxisId='left' stroke='#D1D5DB' />
 						<YAxis yAxisId='right' orientation='right' stroke='#D1D5DB' />
 						<Tooltip />

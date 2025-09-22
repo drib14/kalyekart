@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const getEffectiveStatus = (order) => {
 	if (order.refundRequest) {
 		switch (order.refundRequest.status) {
@@ -25,9 +27,6 @@ const getEffectiveStatus = (order) => {
 	}
 };
 
-
-import { Link } from "react-router-dom";
-
 const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 	const handleButtonClick = (e, callback) => {
 		e.stopPropagation();
@@ -40,7 +39,7 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 			{orders?.length === 0 ? (
 				<p className='text-center text-gray-400'>You have no orders yet.</p>
 			) : (
-				<div className='space-y-6'>
+				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6'>
 					{orders?.map((order) => {
 						const effectiveStatus = getEffectiveStatus(order);
 						return (

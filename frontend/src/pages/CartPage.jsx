@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
 import CartItem from "../components/CartItem";
 import PeopleAlsoBought from "../components/PeopleAlsoBought";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import OrderSummary from "../components/OrderSummary";
 import GiftCouponCard from "../components/GiftCouponCard";
 import AddonsModal from "../components/AddonsModal";
@@ -12,6 +12,15 @@ import AddonsModal from "../components/AddonsModal";
 const CartPage = () => {
 	const { cart } = useCartStore();
 	const [isAddonsModalOpen, setIsAddonsModalOpen] = useState(false);
+
+	useEffect(() => {
+		if (cart.length > 0) {
+			const timer = setTimeout(() => {
+				setIsAddonsModalOpen(true);
+			}, 1000); // 1 second delay
+			return () => clearTimeout(timer);
+		}
+	}, [cart.length]);
 
 	return (
 		<>
@@ -44,7 +53,7 @@ const CartPage = () => {
 								animate={{ opacity: 1, x: 0 }}
 								transition={{ duration: 0.5, delay: 0.4 }}
 							>
-								<OrderSummary onOpenAddons={() => setIsAddonsModalOpen(true)} />
+								<OrderSummary />
 								<GiftCouponCard />
 							</motion.div>
 						)}

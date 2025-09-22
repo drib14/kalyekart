@@ -3,18 +3,24 @@ import Product from "../models/product.model.js";
 import User from "../models/user.model.js";
 
 export const getAnalyticsData = async () => {
-	const totalUsers = await User.countDocuments();
+	const totalUsers = await User.countDocuments({ role: "customer" });
 	const totalProducts = await Product.countDocuments();
 
 	const salesData = await Order.aggregate([
 		{
+			$match: { status: "delivered" },
+		},
+		{
 			$group: {
-				_id: null, // it groups all documents together,
+				_id: null,
 				totalSales: { $sum: 1 },
 				totalRevenue: { $sum: "$totalAmount" },
 			},
 		},
 	]);
+
+	const cancelledOrders = await Order.countDocuments({ status: "cancelled" });
+	const refundedOrders = await Order.countDocuments({ "refundRequest.status": "approved" });
 
 	const { totalSales, totalRevenue } = salesData[0] || { totalSales: 0, totalRevenue: 0 };
 
@@ -23,6 +29,8 @@ export const getAnalyticsData = async () => {
 		products: totalProducts,
 		totalSales,
 		totalRevenue,
+		cancelledOrders,
+		refundedOrders,
 	};
 };
 
@@ -31,6 +39,7 @@ export const getDailySalesData = async (startDate, endDate) => {
 		const dailySalesData = await Order.aggregate([
 			{
 				$match: {
+					status: "delivered",
 					createdAt: {
 						$gte: startDate,
 						$lte: endDate,

@@ -1,15 +1,39 @@
 import express from "express";
 import { adminRoute, protectRoute } from "../middleware/auth.middleware.js";
 import { getAnalyticsData, getDailySalesData } from "../controllers/analytics.controller.js";
+import Order from "../models/order.model.js";
 
 const router = express.Router();
 
 router.get("/", protectRoute, adminRoute, async (req, res) => {
 	try {
+		const { filter } = req.query;
 		const analyticsData = await getAnalyticsData();
 
-		const endDate = new Date();
-		const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+		let startDate,
+			endDate = new Date();
+
+		switch (filter) {
+			case "overall":
+				const firstOrder = await Order.findOne().sort({ createdAt: 1 });
+				startDate = firstOrder ? firstOrder.createdAt : new Date();
+				break;
+			case "daily":
+				startDate = new Date();
+				startDate.setHours(0, 0, 0, 0);
+				break;
+			case "weekly":
+				startDate = new Date();
+				startDate.setDate(startDate.getDate() - 7);
+				break;
+			case "yearly":
+				startDate = new Date(new Date().getFullYear(), 0, 1);
+				break;
+			default:
+				// Default to weekly
+				startDate = new Date();
+				startDate.setDate(startDate.getDate() - 7);
+		}
 
 		const dailySalesData = await getDailySalesData(startDate, endDate);
 
