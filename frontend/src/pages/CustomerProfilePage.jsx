@@ -10,8 +10,9 @@ const CustomerProfilePage = () => {
 	const { user, setUser } = useUserStore();
 	const [name, setName] = useState(user?.name || "");
 	const [email, setEmail] = useState(user?.email || "");
+	const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
 	const [profilePicture, setProfilePicture] = useState(null);
-	const [previewUrl, setPreviewUrl] = useState(user?.profilePicture || "https://via.placeholder.com/150");
+	const [previewUrl, setPreviewUrl] = useState(user?.profilePicture || null);
 	const fileInputRef = useRef(null);
 
 	const { mutate: updateProfile, isPending } = useMutation({
@@ -42,6 +43,7 @@ const CustomerProfilePage = () => {
 		const formData = new FormData();
 		formData.append("name", name);
 		formData.append("email", email);
+		formData.append("phoneNumber", phoneNumber);
 		if (profilePicture) {
 			formData.append("profilePicture", profilePicture);
 		}
@@ -59,11 +61,15 @@ const CustomerProfilePage = () => {
 					{/* Header */}
 					<div className='flex flex-col sm:flex-row items-center gap-6 mb-8'>
 						<div className='relative'>
-							<img
-								src={previewUrl}
-								alt='Customer'
-								className='w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-emerald-500 object-cover'
-							/>
+							{previewUrl ? (
+								<img
+									src={previewUrl}
+									alt='Customer'
+									className='w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-emerald-500 object-cover'
+								/>
+							) : (
+								<User className='w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-emerald-500 bg-gray-700 p-4' />
+							)}
 							<input
 								type='file'
 								ref={fileInputRef}
@@ -75,6 +81,7 @@ const CustomerProfilePage = () => {
 								type='button'
 								onClick={() => fileInputRef.current.click()}
 								className='absolute bottom-0 right-0 bg-emerald-600 p-2 rounded-full hover:bg-emerald-700'
+								title='Change profile picture'
 							>
 								<Camera size={18} />
 							</button>
@@ -109,6 +116,16 @@ const CustomerProfilePage = () => {
 										className='w-full bg-gray-700 rounded-md p-2'
 									/>
 								</div>
+								<div>
+									<label className='block text-sm font-medium text-gray-400 mb-1'>Phone Number</label>
+									<input
+										type='tel'
+										value={phoneNumber}
+										onChange={(e) => setPhoneNumber(e.target.value)}
+										className='w-full bg-gray-700 rounded-md p-2'
+										placeholder='e.g., 09123456789'
+									/>
+								</div>
 							</div>
 						</div>
 
@@ -127,16 +144,6 @@ const CustomerProfilePage = () => {
 							<div className='space-y-3'>
 								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><ShoppingBag className="mr-2"/> View Recent Orders</button>
 								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><Heart className="mr-2"/> Favorite Items</button>
-							</div>
-						</div>
-
-						{/* Account Settings */}
-						<div className='bg-gray-800 p-6 rounded-lg'>
-							<h2 className='text-xl font-semibold mb-4 flex items-center'><Settings className="mr-2"/> Account Settings</h2>
-							<div className='space-y-3'>
-								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><Lock className="mr-2"/> Change Password</button>
-								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><Bell className="mr-2"/> Manage Notifications</button>
-								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><HelpCircle className="mr-2"/> Support Center</button>
 							</div>
 						</div>
 					</div>

@@ -23,6 +23,19 @@ const userSchema = new mongoose.Schema(
 			type: String,
 			default: "",
 		},
+		phoneNumber: {
+			type: String,
+		},
+		// Admin-specific fields
+		storeName: {
+			type: String,
+		},
+		storeAddress: {
+			type: String,
+		},
+		operatingHours: {
+			type: String,
+		},
 		cartItems: [
 			{
 				quantity: {

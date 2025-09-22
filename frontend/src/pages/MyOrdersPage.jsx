@@ -10,7 +10,6 @@ import OrdersTab from "../components/OrdersTab";
 
 const MyOrdersPage = () => {
 	const { user } = useUserStore();
-	const [activeTab, setActiveTab] = useState("orders");
 	const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 	const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
 	const [selectedOrder, setSelectedOrder] = useState(null);
@@ -59,44 +58,9 @@ const MyOrdersPage = () => {
 					refetchOrders={refetchOrders}
 				/>
 			)}
-			<h1 className='text-3xl font-extrabold text-emerald-400 mb-8 text-center'>My Account</h1>
+			<h1 className='text-3xl font-extrabold text-emerald-400 mb-8 text-center'>My Orders</h1>
 			<div className='max-w-4xl mx-auto'>
-				<div className='flex border-b border-gray-700'>
-					<button
-						className={`py-2 px-4 ${
-							activeTab === "profile" ? "border-b-2 border-emerald-400 text-emerald-400" : "text-gray-400"
-						}`}
-						onClick={() => setActiveTab("profile")}
-					>
-						Profile
-					</button>
-					<button
-						className={`py-2 px-4 ${
-							activeTab === "orders" ? "border-b-2 border-emerald-400 text-emerald-400" : "text-gray-400"
-						}`}
-						onClick={() => setActiveTab("orders")}
-					>
-						Orders
-					</button>
-				</div>
-				<div className='mt-8'>
-					{activeTab === "profile" && (
-						<div>
-							<h2 className='text-2xl font-bold text-white mb-4'>User Information</h2>
-							<div className='bg-gray-800 p-6 rounded-lg shadow-lg'>
-								<p className='text-lg'>
-									<span className='font-bold text-gray-400'>Name:</span> {user.name}
-								</p>
-								<p className='text-lg'>
-									<span className='font-bold text-gray-400'>Email:</span> {user.email}
-								</p>
-							</div>
-						</div>
-					)}
-					{activeTab === "orders" && (
-						<OrdersTab orders={orders} openCancelModal={openCancelModal} openRefundModal={openRefundModal} />
-					)}
-				</div>
+				<OrdersTab orders={orders} openCancelModal={openCancelModal} openRefundModal={openRefundModal} />
 			</div>
 		</main>
 	);

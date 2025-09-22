@@ -16,6 +16,7 @@ const ForgotPasswordPage = () => {
 			return axios.get(`/auth/get-security-questions/${email}`);
 		},
 		onSuccess: (data) => {
+			toast.success("Security questions found! Redirecting...");
 			navigate("/answer-security-questions", { state: { email, questions: data.data.questions } });
 		},
 		onError: (error) => {

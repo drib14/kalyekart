@@ -18,6 +18,7 @@ const AnswerSecurityQuestionsPage = () => {
 			return axios.post("/auth/verify-security-answers", data);
 		},
 		onSuccess: (data) => {
+			toast.success("Answers verified! Redirecting to reset password...");
 			navigate("/reset-password", { state: { resetToken: data.data.resetToken } });
 		},
 		onError: (error) => {

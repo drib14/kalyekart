@@ -1,17 +1,20 @@
 import { useState, useRef } from "react";
-import { User, Building, Mail, Phone, Clock, Banknote, Settings, BarChart, Lock, Bell, Users, Camera, Save } from "lucide-react";
+import { User, Building, Mail, Phone, Clock, BarChart, Camera, Save, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { useUserStore } from "../stores/useUserStore";
 import { useMutation } from "@tanstack/react-query";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
+import EditBusinessInfoModal from "../components/EditBusinessInfoModal";
 
 const AdminProfilePage = () => {
 	const { user, setUser } = useUserStore();
 	const [name, setName] = useState(user?.name || "");
 	const [email, setEmail] = useState(user?.email || "");
+	const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
 	const [profilePicture, setProfilePicture] = useState(null);
-	const [previewUrl, setPreviewUrl] = useState(user?.profilePicture || "https://via.placeholder.com/150");
+	const [previewUrl, setPreviewUrl] = useState(user?.profilePicture || null);
+	const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
 	const fileInputRef = useRef(null);
 
 	const { mutate: updateProfile, isPending } = useMutation({
@@ -42,6 +45,7 @@ const AdminProfilePage = () => {
 		const formData = new FormData();
 		formData.append("name", name);
 		formData.append("email", email);
+		formData.append("phoneNumber", phoneNumber);
 		if (profilePicture) {
 			formData.append("profilePicture", profilePicture);
 		}
@@ -59,11 +63,15 @@ const AdminProfilePage = () => {
 					{/* Header */}
 					<div className='flex flex-col sm:flex-row items-center gap-6 mb-8'>
 						<div className='relative'>
-							<img
-								src={previewUrl}
-								alt='Admin'
-								className='w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-emerald-500 object-cover'
-							/>
+							{previewUrl ? (
+								<img
+									src={previewUrl}
+									alt='Admin'
+									className='w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-emerald-500 object-cover'
+								/>
+							) : (
+								<User className='w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-emerald-500 bg-gray-700 p-4' />
+							)}
 							<input
 								type='file'
 								ref={fileInputRef}
@@ -75,6 +83,7 @@ const AdminProfilePage = () => {
 								type='button'
 								onClick={() => fileInputRef.current.click()}
 								className='absolute bottom-0 right-0 bg-emerald-600 p-2 rounded-full hover:bg-emerald-700'
+								title='Change profile picture'
 							>
 								<Camera size={18} />
 							</button>
@@ -112,10 +121,11 @@ const AdminProfilePage = () => {
 								<div>
 									<label className='block text-sm font-medium text-gray-400 mb-1'>Phone</label>
 									<input
-										type='text'
-										placeholder='(123) 456-7890'
+										type='tel'
+										value={phoneNumber}
+										onChange={(e) => setPhoneNumber(e.target.value)}
+										placeholder='e.g., 09123456789'
 										className='w-full bg-gray-700 rounded-md p-2'
-										disabled // For now
 									/>
 								</div>
 							</div>
@@ -123,29 +133,23 @@ const AdminProfilePage = () => {
 
 						{/* Business Info */}
 						<div className='bg-gray-800 p-6 rounded-lg'>
-							<h2 className='text-xl font-semibold mb-4 flex items-center'><Building className="mr-2"/> Business Info</h2>
+							<div className='flex justify-between items-center mb-4'>
+								<h2 className='text-xl font-semibold flex items-center'><Building className="mr-2"/> Business Info</h2>
+								<button type="button" onClick={() => setIsBusinessModalOpen(true)} className="text-emerald-400 hover:text-emerald-300">
+									<Edit size={18} />
+								</button>
+							</div>
 							<div className='space-y-3'>
-								<p><strong>Store Name:</strong> E-commerce Store</p>
-								<p><strong>Address:</strong> 123 Main St, Anytown, USA</p>
-								<p><Clock className="inline mr-2"/> 9:00 AM - 5:00 PM</p>
+								<p><strong>Store Name:</strong> {user?.storeName || "Not set"}</p>
+								<p><strong>Address:</strong> {user?.storeAddress || "Not set"}</p>
+								<p><Clock className="inline mr-2"/> {user?.operatingHours || "Not set"}</p>
 							</div>
 						</div>
 
 						{/* Quick Stats */}
-						<div className='bg-gray-800 p-6 rounded-lg'>
+						<div className='bg-gray-800 p-6 rounded-lg md:col-span-2'>
 							<h2 className='text-xl font-semibold mb-4 flex items-center'><BarChart className="mr-2"/> Quick Stats</h2>
 							<p className='text-gray-500 italic'>Coming soon...</p>
-						</div>
-
-						{/* Account Settings */}
-						<div className='bg-gray-800 p-6 rounded-lg'>
-							<h2 className='text-xl font-semibold mb-4 flex items-center'><Settings className="mr-2"/> Account Settings</h2>
-							<div className='space-y-3'>
-								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><Lock className="mr-2"/> Change Password</button>
-								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><Bell className="mr-2"/> Notification Preferences</button>
-								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><Users className="mr-2"/> Manage Team Members</button>
-								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><Banknote className="mr-2"/> Payment Settings</button>
-							</div>
 						</div>
 					</div>
 
@@ -159,6 +163,7 @@ const AdminProfilePage = () => {
 						</button>
 					</div>
 				</form>
+				{isBusinessModalOpen && <EditBusinessInfoModal onClose={() => setIsBusinessModalOpen(false)} />}
 			</div>
 		</div>
 	);

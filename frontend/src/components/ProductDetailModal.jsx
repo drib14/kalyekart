@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Heart, Minus, Plus, ShoppingCart, CheckCircle } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { useCartStore } from "../stores/useCartStore";
 import { useNavigate } from "react-router-dom";
 
