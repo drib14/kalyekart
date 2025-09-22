@@ -8,7 +8,7 @@ const ProofViewerModal = ({ proofUrl, onClose }) => {
 			<div className='bg-gray-900 p-4 rounded-lg shadow-xl max-w-4xl w-full relative'>
 				<button
 					onClick={onClose}
-					className='absolute -top-4 -right-4 bg-gray-700 rounded-full p-1 text-white hover:bg-red-600'
+					className='absolute top-2 right-2 sm:-top-4 sm:-right-4 bg-gray-700 rounded-full p-1 text-white hover:bg-red-600 z-10'
 				>
 					<X size={24} />
 				</button>

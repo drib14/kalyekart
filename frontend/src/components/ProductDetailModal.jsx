@@ -30,29 +30,33 @@ const ProductDetailModal = ({ product, onClose }) => {
 	};
 
 	return (
-		<div className='fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4'>
-			<div className='bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full relative'>
+		<div className='fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-2 sm:p-4'>
+			<div className='bg-gray-800 rounded-lg shadow-xl max-w-sm sm:max-w-3xl w-full relative max-h-[90vh] overflow-y-auto'>
 				<button
 					onClick={onClose}
-					className='absolute top-4 right-4 text-gray-400 hover:text-white'
+					className='absolute top-2 right-2 text-gray-400 hover:text-white z-10'
 				>
 					<X size={24} />
 				</button>
 
-				<div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+				<div className='grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6'>
 					<div className='p-4'>
-						<img src={product.image} alt={product.name} className='w-full h-auto object-cover rounded-lg' />
+						<img
+							src={product.image}
+							alt={product.name}
+							className='w-full h-auto max-h-96 object-cover rounded-lg'
+						/>
 					</div>
 
-					<div className='p-6 flex flex-col justify-between'>
+					<div className='p-4 md:p-6 flex flex-col justify-between'>
 						<div>
-							<h2 className='text-3xl font-bold text-white mb-2'>{product.name}</h2>
-							<p className='text-gray-400 mb-4'>{product.description}</p>
+							<h2 className='text-2xl md:text-3xl font-bold text-white mb-2'>{product.name}</h2>
+							<p className='text-gray-400 mb-4 text-sm'>{product.description}</p>
 							<div className='flex items-center justify-between mb-4'>
-								<p className='text-4xl font-extrabold text-emerald-400'>₱{product.price}</p>
+								<p className='text-3xl md:text-4xl font-extrabold text-emerald-400'>₱{product.price}</p>
 								<button onClick={handleFavoriteClick}>
 									<Heart
-										size={28}
+										size={24}
 										className={`transition-colors ${
 											isFavorite ? "text-red-500 fill-current" : "text-gray-500"
 										}`}

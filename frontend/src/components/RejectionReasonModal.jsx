@@ -10,9 +10,9 @@ const RejectionReasonModal = ({ onSubmit, onClose, isPending }) => {
 	};
 
 	return (
-		<div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center'>
-			<div className='bg-gray-800 p-8 rounded-lg shadow-lg max-w-lg w-full'>
-				<h2 className='text-2xl font-bold text-white mb-6'>Rejection Reason</h2>
+		<div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
+			<div className='bg-gray-800 p-6 sm:p-8 rounded-lg shadow-lg max-w-lg w-full'>
+				<h2 className='text-xl sm:text-2xl font-bold text-white mb-6'>Rejection Reason</h2>
 				<form onSubmit={handleSubmit}>
 					<textarea
 						rows={4}
