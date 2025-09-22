@@ -21,6 +21,8 @@ import AnswerSecurityQuestionsPage from "./pages/AnswerSecurityQuestionsPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
+import AdminProfilePage from "./pages/AdminProfilePage";
+import CustomerProfilePage from "./pages/CustomerProfilePage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -72,6 +74,14 @@ function App() {
 					<Route path='/reset-password' element={!user ? <ResetPasswordPage /> : <Navigate to='/' />} />
 					<Route path='/checkout' element={user ? <CheckoutPage /> : <Navigate to='/login' />} />
 					<Route path='/my-orders' element={user ? <MyOrdersPage /> : <Navigate to='/login' />} />
+					<Route
+						path='/profile/admin'
+						element={user?.role === "admin" ? <AdminProfilePage /> : <Navigate to='/login' />}
+					/>
+					<Route
+						path='/profile/customer'
+						element={user?.role === "customer" ? <CustomerProfilePage /> : <Navigate to='/login' />}
+					/>
 				</Routes>
 			</div>
 			<Toaster />

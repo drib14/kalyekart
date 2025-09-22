@@ -108,10 +108,18 @@ const AdminOrdersTab = () => {
 						<div key={order._id} className='bg-gray-800 p-6 rounded-lg shadow-lg'>
 							<div className='flex justify-between items-start'>
 								<div className='flex items-center gap-4'>
-									<UserCircle className='w-12 h-12 text-gray-500' />
+									{order.user.profilePicture ? (
+										<img
+											src={order.user.profilePicture}
+											alt={order.user.name}
+											className='w-12 h-12 rounded-full object-cover'
+										/>
+									) : (
+										<UserCircle className='w-12 h-12 text-gray-500' />
+									)}
 									<div>
-										<p className='text-lg font-bold text-white'>Order ID: {order._id}</p>
-										<p className='text-sm text-gray-400'>User: {order.user.name}</p>
+										<p className='text-lg font-bold text-white'>{order.user.name}</p>
+										<p className='text-sm text-gray-400'>Order ID: {order._id}</p>
 										<p className='text-sm text-gray-400'>
 											Placed on: {new Date(order.createdAt).toLocaleDateString()}
 										</p>

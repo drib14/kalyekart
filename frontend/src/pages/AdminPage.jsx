@@ -40,14 +40,15 @@ const AdminPage = () => {
 						<button
 							key={tab.id}
 							onClick={() => setActiveTab(tab.id)}
-							className={`flex items-center px-4 py-2 mx-2 rounded-md transition-colors duration-200 ${
+							className={`flex items-center justify-center sm:justify-start px-3 sm:px-4 py-2 mx-1 sm:mx-2 rounded-md transition-colors duration-200 ${
 								activeTab === tab.id
 									? "bg-emerald-600 text-white"
 									: "bg-gray-700 text-gray-300 hover:bg-gray-600"
 							}`}
+							title={tab.label} // Tooltip for icon-only buttons
 						>
-							<tab.icon className='mr-2 h-5 w-5' />
-							{tab.label}
+							<tab.icon className='h-5 w-5 sm:mr-2' />
+							<span className='hidden sm:inline'>{tab.label}</span>
 						</button>
 					))}
 				</div>

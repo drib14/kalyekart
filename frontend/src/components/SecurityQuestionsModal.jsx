@@ -57,24 +57,28 @@ const SecurityQuestionsModal = () => {
 	}
 
 	return (
-		<div className='fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50'>
-			<div className='bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-lg'>
-				<h2 className='text-2xl font-bold text-emerald-400 mb-4'>Set Up Your Security Questions</h2>
-				<p className='text-gray-400 mb-2'>
+		<div className='fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4'>
+			<div className='bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-sm sm:max-w-md md:max-w-lg max-h-[90vh] overflow-y-auto'>
+				<h2 className='text-xl sm:text-2xl font-bold text-emerald-400 mb-2'>
+					Set Up Your Security Questions
+				</h2>
+				<p className='text-gray-400 text-sm mb-2'>
 					This is a required step to ensure you can recover your account if you forget your password.
 				</p>
-				<p className='text-sm text-yellow-400 mb-6'>
+				<p className='text-xs sm:text-sm text-yellow-400 mb-4'>
 					Warning: Please remember your answers. You will need them to recover your password.
 				</p>
-				<form onSubmit={handleSubmit} className='space-y-4'>
+				<form onSubmit={handleSubmit} className='space-y-3'>
 					{questions.map((q, index) => (
-						<div key={index} className='space-y-2'>
-							<label className='block text-sm font-medium text-gray-300'>Question {index + 1}</label>
+						<div key={index} className='space-y-1'>
+							<label className='block text-xs sm:text-sm font-medium text-gray-300'>
+								Question {index + 1}
+							</label>
 							<select
 								value={q.question}
 								onChange={(e) => handleQuestionChange(index, e.target.value)}
 								required
-								className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm'
+								className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 text-sm'
 							>
 								<option value='' disabled>
 									Select a question
@@ -85,13 +89,13 @@ const SecurityQuestionsModal = () => {
 									</option>
 								))}
 							</select>
-							<label className='block text-sm font-medium text-gray-300'>Answer</label>
+							<label className='block text-xs sm:text-sm font-medium text-gray-300'>Answer</label>
 							<input
 								type='text'
 								value={q.answer}
 								onChange={(e) => handleAnswerChange(index, e.target.value)}
 								required
-								className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm'
+								className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 text-sm'
 							/>
 						</div>
 					))}

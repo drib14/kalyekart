@@ -33,6 +33,12 @@ const Navbar = () => {
 									My Orders
 								</Link>
 								<Link
+									to={isAdmin ? "/profile/admin" : "/profile/customer"}
+									className='text-gray-300 hover:text-emerald-400 transition duration-300 ease-in-out'
+								>
+									Profile
+								</Link>
+								<Link
 									to={"/cart"}
 									className='relative group text-gray-300 hover:text-emerald-400 transition duration-300
 							ease-in-out'
