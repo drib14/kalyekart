@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import CategoryItem from "../components/CategoryItem";
 import { useProductStore } from "../stores/useProductStore";
 import { categories } from "../data/categories";
 import ProductDetailModal from "../components/ProductDetailModal";
-import ProductsList from "../components/ProductsList";
+import CustomerProductsGrid from "../components/CustomerProductsGrid";
+import CategoryItem from "../components/CategoryItem";
 
 const HomePage = () => {
 	const { fetchAllProducts, products } = useProductStore();
@@ -25,7 +25,7 @@ const HomePage = () => {
 	const filteredProducts =
 		activeCategory === "All" ? products : products.filter((p) => p.category === activeCategory);
 
-	const allCategories = [{ name: "All", imageUrl: "/logo.jpg", id: "all" }, ...categories];
+	const allCategories = [{ name: "All", id: "all" }, ...categories];
 
 	return (
 		<>
@@ -50,7 +50,7 @@ const HomePage = () => {
 						))}
 					</div>
 
-					<ProductsList products={filteredProducts} onCardClick={handleCardClick} />
+					<CustomerProductsGrid products={filteredProducts} onCardClick={handleCardClick} />
 				</div>
 			</div>
 		</>
