@@ -1,5 +1,5 @@
 import toast from "react-hot-toast";
-import { ShoppingCart, Heart, Share2 } from "lucide-react";
+import { ShoppingCart, Heart, ShoppingBag } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
 import { useCartStore } from "../stores/useCartStore";
 
@@ -61,7 +61,7 @@ const ProductCard = ({ product, onCardClick }) => {
 						className='rounded-lg bg-gray-600 p-2.5 text-white hover:bg-gray-500'
 						onClick={handleFeatureComingSoon}
 					>
-						<Share2 size={20} />
+						<ShoppingBag size={20} />
 					</button>
 				</div>
 			</div>
