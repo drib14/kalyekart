@@ -2,14 +2,7 @@ import { useEffect } from "react";
 import CategoryItem from "../components/CategoryItem";
 import { useProductStore } from "../stores/useProductStore";
 import FeaturedProducts from "../components/FeaturedProducts";
-
-const categories = [
-	{ href: "/fried-vegetables", name: "Fried Vegetables", imageUrl: "/jeans.jpg" },
-	{ href: "/fried-seafood", name: "Fried Seafood", imageUrl: "/tshirts.jpg" },
-	{ href: "/fried-meat", name: "Fried Meat", imageUrl: "/shoes.jpg" },
-	{ href: "/extra", name: "Extra", imageUrl: "/glasses.png" },
-	{ href: "/drinks", name: "Drinks", imageUrl: "/jackets.jpg" },
-];
+import { categories } from "../data/categories";
 
 const HomePage = () => {
 	const { fetchFeaturedProducts, products, isLoading } = useProductStore();
