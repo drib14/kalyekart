@@ -2,10 +2,13 @@ import toast from "react-hot-toast";
 import { ShoppingCart, Heart, ShoppingBag } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
 import { useCartStore } from "../stores/useCartStore";
+import { useNavigate } from "react-router-dom";
 
 const ProductCard = ({ product, onCardClick }) => {
 	const { user } = useUserStore();
 	const { addToCart } = useCartStore();
+	const navigate = useNavigate();
+
 	const handleAddToCart = (e) => {
 		e.stopPropagation(); // Prevent modal from opening when clicking add to cart
 		if (!user) {
@@ -15,6 +18,16 @@ const ProductCard = ({ product, onCardClick }) => {
 			// add to cart
 			addToCart(product);
 		}
+	};
+
+	const handleCheckout = (e) => {
+		e.stopPropagation();
+		if (!user) {
+			toast.error("Please login to checkout", { id: "login" });
+			return;
+		}
+		addToCart(product);
+		navigate("/checkout");
 	};
 
 	const handleFeatureComingSoon = (e) => {
@@ -59,7 +72,7 @@ const ProductCard = ({ product, onCardClick }) => {
 					</button>
 					<button
 						className='rounded-lg bg-gray-600 p-2.5 text-white hover:bg-gray-500'
-						onClick={handleFeatureComingSoon}
+						onClick={handleCheckout}
 					>
 						<ShoppingBag size={20} />
 					</button>
