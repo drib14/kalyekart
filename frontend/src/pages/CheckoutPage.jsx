@@ -7,6 +7,7 @@ import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import AddonsModal from "../components/AddonsModal";
 
 const CheckoutPage = () => {
 	const { cart, clearCart, subtotal, total, coupon } = useCartStore();
@@ -15,6 +16,7 @@ const CheckoutPage = () => {
 
 	const [shippingAddress, setShippingAddress] = useState("");
 	const [contactNumber, setContactNumber] = useState("");
+	const [isAddonsModalOpen, setIsAddonsModalOpen] = useState(false);
 
 	const { mutate: createCodOrder, isPending } = useMutation({
 		mutationFn: (data) => {
@@ -30,8 +32,7 @@ const CheckoutPage = () => {
 		},
 	});
 
-	const handleSubmit = (e) => {
-		e.preventDefault();
+	const handlePlaceOrder = () => {
 		const products = cart.map((item) => ({
 			_id: item.product._id,
 			name: item.product.name,
@@ -41,8 +42,14 @@ const CheckoutPage = () => {
 		createCodOrder({ products, shippingAddress, contactNumber, couponCode: coupon?.code });
 	};
 
+	const handleSubmit = (e) => {
+		e.preventDefault();
+		setIsAddonsModalOpen(true);
+	};
+
 	return (
 		<main className='container my-10'>
+			{isAddonsModalOpen && <AddonsModal onClose={handlePlaceOrder} />}
 			<motion.div
 				className='max-w-4xl mx-auto'
 				initial={{ opacity: 0, y: 20 }}
