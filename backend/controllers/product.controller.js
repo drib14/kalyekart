@@ -72,6 +72,18 @@ export const deleteProduct = async (req, res) => {
 			return res.status(404).json({ message: "Product not found" });
 		}
 
+		// The user might want to restore the product, so we are not deleting the image from cloudinary.
+		// If a hard-delete feature is implemented in the future, this code can be used.
+		// if (product.image) {
+		// 	const publicId = product.image.split("/").pop().split(".")[0];
+		// 	try {
+		// 		await cloudinary.uploader.destroy(`products/${publicId}`);
+		// 		console.log("deleted image from cloduinary");
+		// 	} catch (error) {
+		// 		console.log("error deleting image from cloduinary", error);
+		// 	}
+		// }
+
 		product.isDeleted = true;
 		await product.save();
 
