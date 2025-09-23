@@ -26,10 +26,22 @@ const orderSchema = new mongoose.Schema(
 				},
 			},
 		],
+		subtotal: {
+			type: Number,
+			required: true,
+		},
+		deliveryFee: {
+			type: Number,
+			required: true,
+		},
 		totalAmount: {
 			type: Number,
 			required: true,
 			min: 0,
+		},
+		coupon: {
+			code: String,
+			discountPercentage: Number,
 		},
 		shippingAddress: {
 			fullName: { type: String, required: true },

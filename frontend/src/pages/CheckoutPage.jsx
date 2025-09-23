@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "../lib/axios";
@@ -7,19 +7,66 @@ import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import AddonsModal from "../components/AddonsModal";
+import { cebuAddresses } from "../data/cebuAddresses";
 
 const CheckoutPage = () => {
-	const { cart, clearCart, subtotal, total, coupon } = useCartStore();
+	const { cart, subtotal, total, coupon } = useCartStore();
 	const { user } = useUserStore();
 	const navigate = useNavigate();
 
-	const [fullName, setFullName] = useState("");
+	const [fullName, setFullName] = useState(user?.name || "");
 	const [streetAddress, setStreetAddress] = useState("");
 	const [city, setCity] = useState("");
-	const [province, setProvince] = useState("");
+	const [province, setProvince] = useState("Cebu");
 	const [postalCode, setPostalCode] = useState("");
-	const [contactNumber, setContactNumber] = useState("");
+	const [contactNumber, setContactNumber] = useState(user?.phoneNumber || "");
+	const [deliveryFee, setDeliveryFee] = useState(0);
+	const [finalTotal, setFinalTotal] = useState(total);
+
+	const storeLocation = cebuAddresses.find((addr) => addr.isStore);
+
+	const haversineDistance = (coords1, coords2) => {
+		const toRad = (x) => (x * Math.PI) / 180;
+		const R = 6371; // Earth radius in km
+
+		const dLat = toRad(coords2.lat - coords1.lat);
+		const dLon = toRad(coords2.lng - coords1.lng);
+		const lat1 = toRad(coords1.lat);
+		const lat2 = toRad(coords2.lat);
+
+		const a =
+			Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+			Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+		return R * c; // Distance in km
+	};
+
+	useEffect(() => {
+		if (city) {
+			const selectedCity = cebuAddresses.find((addr) => addr.name === city);
+			if (selectedCity) {
+				const distance = haversineDistance(storeLocation, selectedCity);
+				let fee = 0;
+				if (distance <= 10) {
+					// Zone 1: Inside Cebu City
+					fee = 15 + distance * 2; // ₱15 base + ₱2/km
+				} else if (distance > 10 && distance <= 20) {
+					// Zone 2: Outside Cebu City
+					fee = 25 + distance * 3; // ₱25 base + ₱3/km
+				} else {
+					// Zone 3: Different municipalities
+					fee = 50 + distance * 4; // ₱50 base + ₱4/km
+				}
+				setDeliveryFee(fee);
+			}
+		} else {
+			setDeliveryFee(0);
+		}
+	}, [city, storeLocation]);
+
+	useEffect(() => {
+		setFinalTotal(total + deliveryFee);
+	}, [total, deliveryFee]);
 
 	const { mutate: createCodOrder, isPending } = useMutation({
 		mutationFn: (data) => {
@@ -50,7 +97,14 @@ const CheckoutPage = () => {
 			postalCode,
 		};
 
-		createCodOrder({ products, shippingAddress, contactNumber, couponCode: coupon?.code });
+		createCodOrder({
+			products,
+			shippingAddress,
+			contactNumber,
+			couponCode: coupon?.code,
+			deliveryFee,
+			totalAmount: finalTotal,
+		});
 	};
 
 	const handleSubmit = (e) => {
@@ -103,16 +157,24 @@ const CheckoutPage = () => {
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
 									<label htmlFor='city' className='block text-sm font-medium text-gray-300 mb-1'>
-										City
+										City / Municipality
 									</label>
-									<input
+									<select
 										id='city'
-										type='text'
 										required
 										value={city}
 										onChange={(e) => setCity(e.target.value)}
 										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
-									/>
+									>
+										<option value=''>Select a city</option>
+										{cebuAddresses
+											.filter((addr) => !addr.isStore)
+											.map((addr) => (
+												<option key={addr.name} value={addr.name}>
+													{addr.name}
+												</option>
+											))}
+									</select>
 								</div>
 								<div>
 									<label htmlFor='province' className='block text-sm font-medium text-gray-300 mb-1'>
@@ -125,6 +187,7 @@ const CheckoutPage = () => {
 										value={province}
 										onChange={(e) => setProvince(e.target.value)}
 										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+										disabled
 									/>
 								</div>
 							</div>
@@ -206,9 +269,13 @@ const CheckoutPage = () => {
 									<span>-{coupon.discountPercentage}%</span>
 								</div>
 							)}
+							<div className='flex justify-between text-gray-300'>
+								<span>Delivery Fee</span>
+								<span>₱{deliveryFee.toFixed(2)}</span>
+							</div>
 							<div className='flex justify-between font-bold text-xl text-white pt-2'>
 								<span>Total</span>
-								<span>₱{total.toFixed(2)}</span>
+								<span>₱{finalTotal.toFixed(2)}</span>
 							</div>
 						</div>
 					</div>

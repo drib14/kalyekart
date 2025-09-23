@@ -57,7 +57,9 @@ export const useCartStore = create((set, get) => ({
 			const res = await axios.post("/cart", { productId: product._id });
 			set({ cart: res.data });
 			get().calculateTotals();
-			toast.success("Product added to cart");
+			toast.success("Product added to cart", {
+				description: `${product.name} has been added to your cart.`,
+			});
 		} catch (error) {
 			toast.error(error.response?.data?.message || "An error occurred");
 		}

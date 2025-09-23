@@ -23,20 +23,24 @@ export const getOrders = async (req, res) => {
 
 export const createCodOrder = async (req, res) => {
 	try {
-		const { products, couponCode, shippingAddress, contactNumber } = req.body;
+		const { products, couponCode, shippingAddress, contactNumber, deliveryFee, totalAmount } = req.body;
 		const userId = req.user._id;
 
 		if (!Array.isArray(products) || products.length === 0) {
 			return res.status(400).json({ error: "Invalid or empty products array" });
 		}
 
-		let totalAmount = products.reduce((acc, product) => acc + product.price * product.quantity, 0);
+		const subtotal = products.reduce((acc, product) => acc + product.price * product.quantity, 0);
+		let couponDetails = null;
 
 		if (couponCode) {
 			const coupon = await Coupon.findOne({ code: couponCode, userId, isActive: true });
 			if (coupon) {
-				totalAmount -= (totalAmount * coupon.discountPercentage) / 100;
 				await Coupon.findOneAndUpdate({ code: couponCode, userId }, { isActive: false });
+				couponDetails = {
+					code: coupon.code,
+					discountPercentage: coupon.discountPercentage,
+				};
 			}
 		}
 
@@ -47,7 +51,10 @@ export const createCodOrder = async (req, res) => {
 				quantity: p.quantity,
 				price: p.price,
 			})),
+			subtotal,
+			deliveryFee,
 			totalAmount,
+			coupon: couponDetails,
 			shippingAddress,
 			contactNumber,
 			paymentMethod: "cod",
