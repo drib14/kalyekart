@@ -28,27 +28,22 @@ const OrderSummary = () => {
 			<div className='space-y-4'>
 				<div className='space-y-2'>
 					<dl className='flex items-center justify-between gap-4'>
-						<dt className='text-base font-normal text-gray-300'>Original price</dt>
+						<dt className='text-base font-normal text-gray-300'>Subtotal</dt>
 						<dd className='text-base font-medium text-white'>₱{formattedSubtotal}</dd>
 					</dl>
 
-					{savings > 0 && (
+					{isCouponApplied && savings > 0 && (
 						<dl className='flex items-center justify-between gap-4'>
-							<dt className='text-base font-normal text-gray-300'>Savings</dt>
+							<dt className='text-base font-normal text-gray-300'>Coupon Discount</dt>
 							<dd className='text-base font-medium text-emerald-400'>-₱{formattedSavings}</dd>
 						</dl>
 					)}
 
-					{coupon && isCouponApplied && (
-						<dl className='flex items-center justify-between gap-4'>
-							<dt className='text-base font-normal text-gray-300'>Coupon ({coupon.code})</dt>
-							<dd className='text-base font-medium text-emerald-400'>-{coupon.discountPercentage}%</dd>
-						</dl>
-					)}
 					<dl className='flex items-center justify-between gap-4 border-t border-gray-600 pt-2'>
-						<dt className='text-base font-bold text-white'>Total</dt>
+						<dt className='text-base font-bold text-white'>Subtotal (after discount)</dt>
 						<dd className='text-base font-bold text-emerald-400'>₱{formattedTotal}</dd>
 					</dl>
+					<p className='text-xs text-gray-400 text-center'>Delivery fee will be calculated at checkout.</p>
 				</div>
 
 				<motion.button
