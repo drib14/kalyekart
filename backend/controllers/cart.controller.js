@@ -71,7 +71,9 @@ export const removeItemFromCart = async (req, res) => {
 
 export const clearCart = async (req, res) => {
 	try {
-		const user = await User.findByIdAndUpdate(req.user._id, { $set: { cartItems: [] } }, { new: true });
+		const user = req.user;
+		user.cartItems = [];
+		await user.save();
 		res.json(user.cartItems);
 	} catch (error) {
 		res.status(500).json({ message: "Server error", error: error.message });

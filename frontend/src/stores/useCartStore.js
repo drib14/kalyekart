@@ -47,9 +47,8 @@ export const useCartStore = create((set, get) => ({
 		try {
 			const res = await axios.delete("/cart/all/clear");
 			set({ cart: res.data, coupon: null, total: 0, subtotal: 0 });
-			toast.success("Cart cleared");
 		} catch (error) {
-			toast.error(error.response?.data?.message || "Failed to clear cart");
+			console.error("Failed to clear cart:", error);
 		}
 	},
 	addToCart: async (product) => {
@@ -57,9 +56,7 @@ export const useCartStore = create((set, get) => ({
 			const res = await axios.post("/cart", { productId: product._id });
 			set({ cart: res.data });
 			get().calculateTotals();
-			toast.success("Product added to cart", {
-				description: `${product.name} has been added to your cart.`,
-			});
+			toast.success("Product added to cart");
 		} catch (error) {
 			toast.error(error.response?.data?.message || "An error occurred");
 		}

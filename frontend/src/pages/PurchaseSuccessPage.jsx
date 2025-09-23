@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useCartStore } from "../stores/useCartStore";
 import axios from "../lib/axios";
 import Confetti from "react-confetti";
+import { toast } from "sonner";
 
 const PurchaseSuccessPage = () => {
 	const [isProcessing, setIsProcessing] = useState(true);
@@ -27,18 +28,24 @@ const PurchaseSuccessPage = () => {
 			}
 		};
 
-		const sessionId = new URLSearchParams(window.location.search).get("session_id");
-		if (sessionId) {
-			handleCheckoutSuccess(sessionId);
-		} else if (isCod) {
-			// This is a COD order.
-			clearCart();
+		const processOrder = async () => {
+			const sessionId = new URLSearchParams(window.location.search).get("session_id");
+			if (sessionId) {
+				await handleCheckoutSuccess(sessionId);
+			} else if (isCod) {
+				clearCart();
+			} else {
+				setError("No session ID found in the URL");
+			}
 			setIsProcessing(false);
-		} else {
-			setIsProcessing(false);
-			setError("No session ID found in the URL");
-		}
-	}, [clearCart, isCod]);
+		};
+
+		processOrder().then(() => {
+			if (!error) {
+				toast.success("Order placed successfully!");
+			}
+		});
+	}, [clearCart, isCod, error]);
 
 	if (isProcessing) return "Processing...";
 

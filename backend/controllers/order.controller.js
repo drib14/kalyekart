@@ -23,20 +23,22 @@ export const getOrders = async (req, res) => {
 
 export const createCodOrder = async (req, res) => {
 	try {
-		const { products, couponCode, shippingAddress, contactNumber } = req.body;
+		const { products, couponCode, shippingAddress, contactNumber, subtotal, deliveryFee, totalAmount } = req.body;
 		const userId = req.user._id;
 
 		if (!Array.isArray(products) || products.length === 0) {
 			return res.status(400).json({ error: "Invalid or empty products array" });
 		}
 
-		let totalAmount = products.reduce((acc, product) => acc + product.price * product.quantity, 0);
-
+		let couponDetails = null;
 		if (couponCode) {
 			const coupon = await Coupon.findOne({ code: couponCode, userId, isActive: true });
 			if (coupon) {
-				totalAmount -= (totalAmount * coupon.discountPercentage) / 100;
 				await Coupon.findOneAndUpdate({ code: couponCode, userId }, { isActive: false });
+				couponDetails = {
+					code: coupon.code,
+					discountPercentage: coupon.discountPercentage,
+				};
 			}
 		}
 
@@ -47,7 +49,10 @@ export const createCodOrder = async (req, res) => {
 				quantity: p.quantity,
 				price: p.price,
 			})),
+			subtotal,
+			deliveryFee,
 			totalAmount,
+			coupon: couponDetails,
 			shippingAddress,
 			contactNumber,
 			paymentMethod: "cod",
@@ -151,7 +156,7 @@ export const getAllOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
 	try {
 		const { orderId } = req.params;
-		const { status: newStatus } = req.body;
+		const { status } = req.body;
 
 		const order = await Order.findById(orderId);
 
@@ -159,35 +164,7 @@ export const updateOrderStatus = async (req, res) => {
 			return res.status(404).json({ message: "Order not found" });
 		}
 
-		// Patch for older documents that don't have these fields
-		if (order.subtotal === undefined) {
-			order.subtotal = order.totalAmount;
-		}
-		if (order.deliveryFee === undefined) {
-			order.deliveryFee = 0;
-		}
-
-		const currentStatus = order.status;
-		const statusFlow = ["Order Placed", "Preparing", "Out for Delivery", "Delivered"];
-
-		if (currentStatus === "Delivered" || currentStatus === "Cancelled") {
-			return res.status(400).json({ message: `Cannot change status of a ${currentStatus.toLowerCase()} order.` });
-		}
-
-		if (newStatus === "Cancelled") {
-			order.status = newStatus;
-			await order.save();
-			return res.status(200).json({ message: "Order has been cancelled." });
-		}
-
-		const currentIndex = statusFlow.indexOf(currentStatus);
-		const newIndex = statusFlow.indexOf(newStatus);
-
-		if (newIndex < currentIndex) {
-			return res.status(400).json({ message: "Cannot revert order status." });
-		}
-
-		order.status = newStatus;
+		order.status = status;
 		await order.save();
 
 		res.status(200).json({ message: "Order status updated successfully" });

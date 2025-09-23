@@ -48,14 +48,11 @@ const CheckoutPage = () => {
 				const distance = haversineDistance(storeLocation, selectedCity);
 				let fee = 0;
 				if (distance <= 10) {
-					// Zone 1: Inside Cebu City
-					fee = 15 + distance * 2; // ₱15 base + ₱2/km
+					fee = 15 + distance * 2;
 				} else if (distance > 10 && distance <= 20) {
-					// Zone 2: Outside Cebu City
-					fee = 25 + distance * 3; // ₱25 base + ₱3/km
+					fee = 25 + distance * 3;
 				} else {
-					// Zone 3: Different municipalities
-					fee = 50 + distance * 4; // ₱50 base + ₱4/km
+					fee = 50 + distance * 4;
 				}
 				setDeliveryFee(fee);
 			}
@@ -73,7 +70,6 @@ const CheckoutPage = () => {
 			return axios.post("/orders/cod", data);
 		},
 		onSuccess: () => {
-			toast.success("Order placed successfully");
 			navigate("/purchase-success", { state: { cod: true } });
 		},
 		onError: (error) => {
@@ -102,6 +98,7 @@ const CheckoutPage = () => {
 			shippingAddress,
 			contactNumber,
 			couponCode: coupon?.code,
+			subtotal,
 			deliveryFee,
 			totalAmount: finalTotal,
 		});
