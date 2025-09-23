@@ -144,6 +144,21 @@ const OrderDetailPage = () => {
 								<p>
 									<strong>Status:</strong> <span className='capitalize'>{order.paymentStatus}</span>
 								</p>
+								<div className='border-t border-gray-600 my-2' />
+								<p>
+									<strong>Subtotal:</strong> ₱{order.subtotal.toFixed(2)}
+								</p>
+								{order.coupon && (
+									<p>
+										<strong>Discount:</strong> -{order.coupon.discountPercentage}%
+									</p>
+								)}
+								<p>
+									<strong>Delivery Fee:</strong> ₱{order.deliveryFee.toFixed(2)}
+								</p>
+								<p className='font-bold text-lg'>
+									<strong>Total:</strong> ₱{order.totalAmount.toFixed(2)}
+								</p>
 							</div>
 						</section>
 					</div>
