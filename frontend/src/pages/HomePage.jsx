@@ -6,13 +6,17 @@ import CustomerProductsGrid from "../components/CustomerProductsGrid";
 import CategoryTab from "../components/CategoryTab";
 
 const HomePage = () => {
-	const { fetchAllProducts, products } = useProductStore();
+	const { fetchAllProducts, products, fetchProductsByCategory } = useProductStore();
 	const [selectedProduct, setSelectedProduct] = useState(null);
 	const [activeCategory, setActiveCategory] = useState("All");
 
 	useEffect(() => {
-		fetchAllProducts();
-	}, [fetchAllProducts]);
+		if (activeCategory === "All") {
+			fetchAllProducts();
+		} else {
+			fetchProductsByCategory(activeCategory);
+		}
+	}, [activeCategory, fetchAllProducts, fetchProductsByCategory]);
 
 	const handleCardClick = (product) => {
 		setSelectedProduct(product);
@@ -21,9 +25,6 @@ const HomePage = () => {
 	const handleCloseModal = () => {
 		setSelectedProduct(null);
 	};
-
-	const filteredProducts =
-		activeCategory === "All" ? products : products.filter((p) => p.category === activeCategory);
 
 	const allCategories = [{ name: "All", id: "all", imageUrl: "/logo.jpg" }, ...categories];
 
@@ -50,7 +51,7 @@ const HomePage = () => {
 						))}
 					</div>
 
-					<CustomerProductsGrid products={filteredProducts} onCardClick={handleCardClick} />
+					<CustomerProductsGrid products={products} onCardClick={handleCardClick} />
 				</div>
 			</div>
 		</>

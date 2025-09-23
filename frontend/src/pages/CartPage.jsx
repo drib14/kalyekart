@@ -13,15 +13,6 @@ const CartPage = () => {
 	const { cart } = useCartStore();
 	const [isAddonsModalOpen, setIsAddonsModalOpen] = useState(false);
 
-	useEffect(() => {
-		if (cart.length > 0) {
-			const timer = setTimeout(() => {
-				setIsAddonsModalOpen(true);
-			}, 1000); // 1 second delay
-			return () => clearTimeout(timer);
-		}
-	}, [cart.length]);
-
 	return (
 		<>
 			{isAddonsModalOpen && <AddonsModal onClose={() => setIsAddonsModalOpen(false)} />}
@@ -55,6 +46,12 @@ const CartPage = () => {
 							>
 								<OrderSummary />
 								<GiftCouponCard />
+								<button
+									onClick={() => setIsAddonsModalOpen(true)}
+									className='w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300'
+								>
+									Find more items to add
+								</button>
 							</motion.div>
 						)}
 					</div>
