@@ -29,10 +29,12 @@ const orderSchema = new mongoose.Schema(
 		subtotal: {
 			type: Number,
 			required: true,
+			default: 0,
 		},
 		deliveryFee: {
 			type: Number,
 			required: true,
+			default: 0,
 		},
 		totalAmount: {
 			type: Number,

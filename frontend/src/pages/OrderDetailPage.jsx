@@ -52,41 +52,68 @@ const OrderDetailPage = () => {
 				</header>
 
 				<main>
-					<section className='mb-8'>
-						<h3 className='text-xl font-semibold mb-4 flex items-center'><ShoppingCart className='mr-2' /> Items Ordered</h3>
-						<div className='space-y-4'>
-							{order.products.map((item) => {
-								if (!item.product || item.product.isDeleted) {
+					<div className='grid lg:grid-cols-2 gap-8'>
+						<section className='mb-8'>
+							<h3 className='text-xl font-semibold mb-4 flex items-center'><ShoppingCart className='mr-2' /> Items Ordered</h3>
+							<div className='space-y-4'>
+								{order.products.map((item) => {
+									if (!item.product || item.product.isDeleted) {
+										return (
+											<div key={item._id} className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'>
+												<div className='flex items-center gap-4'>
+													<div className='w-16 h-16 bg-gray-600 rounded-md flex items-center justify-center'>
+														<p className='text-gray-400 text-lg'>?</p>
+													</div>
+													<div>
+														<p className='font-bold text-red-400 italic'>Product no longer available</p>
+													</div>
+												</div>
+											</div>
+										);
+									}
 									return (
 										<div key={item._id} className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'>
 											<div className='flex items-center gap-4'>
-												<div className='w-16 h-16 bg-gray-600 rounded-md flex items-center justify-center'>
-													<p className='text-gray-400 text-lg'>?</p>
-												</div>
+												<img src={item.product.image} alt={item.product.name} className='w-16 h-16 rounded-md object-cover'/>
 												<div>
-													<p className='font-bold text-red-400 italic'>Product no longer available</p>
+													<p className='font-bold text-white'>{item.product.name}</p>
+													<p className='text-sm text-gray-400'>
+														{item.quantity} x ₱{item.price.toFixed(2)}
+													</p>
 												</div>
 											</div>
+											<p className='font-semibold text-white'>₱{(item.quantity * item.price).toFixed(2)}</p>
 										</div>
-									);
-								}
-								return (
-									<div key={item._id} className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'>
-										<div className='flex items-center gap-4'>
-											<img src={item.product.image} alt={item.product.name} className='w-16 h-16 rounded-md object-cover'/>
-											<div>
-												<p className='font-bold text-white'>{item.product.name}</p>
-												<p className='text-sm text-gray-400'>
-													{item.quantity} x ₱{item.price.toFixed(2)}
-												</p>
-											</div>
-										</div>
-										<p className='font-semibold text-white'>₱{(item.quantity * item.price).toFixed(2)}</p>
+									)
+								})}
+							</div>
+						</section>
+
+						<section className='mb-8'>
+							<h3 className='text-xl font-semibold mb-4'>Payment Summary</h3>
+							<div className='bg-gray-700 p-4 rounded-lg space-y-2'>
+								<div className='flex justify-between'>
+									<span className='text-gray-400'>Subtotal</span>
+									<span className='font-semibold'>₱{order.subtotal.toFixed(2)}</span>
+								</div>
+								{order.coupon && (
+									<div className='flex justify-between text-emerald-400'>
+										<span>Discount ({order.coupon.code})</span>
+										<span>-{order.coupon.discountPercentage}%</span>
 									</div>
-								)
-							})}
-						</div>
-					</section>
+								)}
+								<div className='flex justify-between'>
+									<span className='text-gray-400'>Delivery Fee</span>
+									<span className='font-semibold'>₱{order.deliveryFee.toFixed(2)}</span>
+								</div>
+								<div className='border-t border-gray-600 my-2' />
+								<div className='flex justify-between text-xl'>
+									<span className='font-bold'>Total</span>
+									<span className='font-bold text-emerald-400'>₱{order.totalAmount.toFixed(2)}</span>
+								</div>
+							</div>
+						</section>
+					</div>
 
 					<div className='grid md:grid-cols-2 gap-8'>
 						<section>
