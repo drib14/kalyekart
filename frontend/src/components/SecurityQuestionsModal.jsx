@@ -69,27 +69,34 @@ const SecurityQuestionsModal = () => {
 					Warning: Please remember your answers. You will need them to recover your password.
 				</p>
 				<form onSubmit={handleSubmit} className='space-y-3'>
-					{questions.map((q, index) => (
-						<div key={index} className='space-y-1'>
-							<label className='block text-xs sm:text-sm font-medium text-gray-300'>
-								Question {index + 1}
-							</label>
-							<select
-								value={q.question}
-								onChange={(e) => handleQuestionChange(index, e.target.value)}
-								required
-								className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 text-sm'
-							>
-								<option value='' disabled>
-									Select a question
-								</option>
-								{securityQuestionsList.map((sq) => (
-									<option key={sq} value={sq}>
-										{sq}
+					{questions.map((q, index) => {
+						const selectedQuestions = questions.map(item => item.question).filter((_, i) => i !== index);
+						return (
+							<div key={index} className='space-y-1'>
+								<label className='block text-xs sm:text-sm font-medium text-gray-300'>
+									Question {index + 1}
+								</label>
+								<select
+									value={q.question}
+									onChange={(e) => handleQuestionChange(index, e.target.value)}
+									required
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 text-sm'
+								>
+									<option value='' disabled>
+										Select a question
 									</option>
-								))}
-							</select>
-							<label className='block text-xs sm:text-sm font-medium text-gray-300'>Answer</label>
+									{securityQuestionsList.map((sq) => (
+										<option
+											key={sq}
+											value={sq}
+											disabled={selectedQuestions.includes(sq)}
+											className='disabled:text-gray-500'
+										>
+											{sq}
+										</option>
+									))}
+								</select>
+								<label className='block text-xs sm:text-sm font-medium text-gray-300'>Answer</label>
 							<input
 								type='text'
 								value={q.answer}
