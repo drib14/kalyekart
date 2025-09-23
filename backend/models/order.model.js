@@ -49,6 +49,7 @@ const orderSchema = new mongoose.Schema(
 			fullName: { type: String, required: true },
 			streetAddress: { type: String, required: true },
 			city: { type: String, required: true },
+			barangay: { type: String, required: true },
 			province: { type: String, required: true },
 			postalCode: { type: String, required: true },
 		},

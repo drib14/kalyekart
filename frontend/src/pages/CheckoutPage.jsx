@@ -8,6 +8,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cebuAddresses } from "../data/cebuAddresses";
+import { cebuBarangays } from "../data/cebuBarangays";
 
 const CheckoutPage = () => {
 	const { cart, subtotal, total, coupon } = useCartStore();
@@ -17,11 +18,13 @@ const CheckoutPage = () => {
 	const [fullName, setFullName] = useState(user?.name || "");
 	const [streetAddress, setStreetAddress] = useState("");
 	const [city, setCity] = useState("");
+	const [barangay, setBarangay] = useState("");
 	const [province, setProvince] = useState("Cebu");
 	const [postalCode, setPostalCode] = useState("");
 	const [contactNumber, setContactNumber] = useState(user?.phoneNumber || "");
 	const [deliveryFee, setDeliveryFee] = useState(0);
 	const [finalTotal, setFinalTotal] = useState(total);
+	const [customerCoords, setCustomerCoords] = useState(null);
 
 	const storeLocation = cebuAddresses.find((addr) => addr.isStore);
 
@@ -41,25 +44,55 @@ const CheckoutPage = () => {
 		return R * c; // Distance in km
 	};
 
-	useEffect(() => {
-		if (city) {
-			const selectedCity = cebuAddresses.find((addr) => addr.name === city);
-			if (selectedCity) {
-				const distance = haversineDistance(storeLocation, selectedCity);
-				let fee = 0;
-				if (distance <= 10) {
-					fee = 15 + distance * 2;
-				} else if (distance > 10 && distance <= 20) {
-					fee = 25 + distance * 3;
-				} else {
-					fee = 50 + distance * 4;
+	const getCoordinates = async () => {
+		if (streetAddress && barangay && city) {
+			try {
+				const query = `${streetAddress}, ${barangay}, ${city}, Cebu, Philippines`;
+				const response = await fetch(
+					`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+						query
+					)}&format=json&limit=1`
+				);
+				const data = await response.json();
+				if (data.length > 0) {
+					setCustomerCoords({
+						lat: parseFloat(data[0].lat),
+						lng: parseFloat(data[0].lon),
+					});
 				}
-				setDeliveryFee(fee);
+			} catch (error) {
+				console.error("Error fetching coordinates:", error);
+				toast.error("Could not fetch location data.");
 			}
+		}
+	};
+
+	useEffect(() => {
+		const handler = setTimeout(() => {
+			getCoordinates();
+		}, 1000); // Debounce for 1 second
+
+		return () => {
+			clearTimeout(handler);
+		};
+	}, [streetAddress, barangay, city]);
+
+	useEffect(() => {
+		if (customerCoords) {
+			const distance = haversineDistance(storeLocation, customerCoords);
+			let fee = 0;
+			if (distance <= 10) {
+				fee = 15 + distance * 2;
+			} else if (distance > 10 && distance <= 20) {
+				fee = 25 + distance * 3;
+			} else {
+				fee = 50 + distance * 4;
+			}
+			setDeliveryFee(Math.round(fee));
 		} else {
 			setDeliveryFee(0);
 		}
-	}, [city, storeLocation]);
+	}, [customerCoords, storeLocation]);
 
 	useEffect(() => {
 		setFinalTotal(total + deliveryFee);
@@ -89,6 +122,7 @@ const CheckoutPage = () => {
 			fullName,
 			streetAddress,
 			city,
+			barangay,
 			province,
 			postalCode,
 		};
@@ -174,6 +208,27 @@ const CheckoutPage = () => {
 									</select>
 								</div>
 								<div>
+									<label htmlFor='barangay' className='block text-sm font-medium text-gray-300 mb-1'>
+										Barangay
+									</label>
+									<select
+										id='barangay'
+										required
+										value={barangay}
+										onChange={(e) => setBarangay(e.target.value)}
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+									>
+										<option value=''>Select a barangay</option>
+										{cebuBarangays.map((b) => (
+											<option key={b} value={b}>
+												{b}
+											</option>
+										))}
+									</select>
+								</div>
+							</div>
+							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+								<div>
 									<label htmlFor='province' className='block text-sm font-medium text-gray-300 mb-1'>
 										Province
 									</label>
@@ -187,19 +242,19 @@ const CheckoutPage = () => {
 										disabled
 									/>
 								</div>
-							</div>
-							<div>
-								<label htmlFor='postalCode' className='block text-sm font-medium text-gray-300 mb-1'>
-									Postal Code
-								</label>
-								<input
-									id='postalCode'
-									type='text'
-									required
-									value={postalCode}
-									onChange={(e) => setPostalCode(e.target.value)}
-									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
-								/>
+								<div>
+									<label htmlFor='postalCode' className='block text-sm font-medium text-gray-300 mb-1'>
+										Postal Code
+									</label>
+									<input
+										id='postalCode'
+										type='text'
+										required
+										value={postalCode}
+										onChange={(e) => setPostalCode(e.target.value)}
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+									/>
+								</div>
 							</div>
 							<div>
 								<label htmlFor='contactNumber' className='block text-sm font-medium text-gray-300 mb-1'>
@@ -268,7 +323,7 @@ const CheckoutPage = () => {
 							)}
 							<div className='flex justify-between text-gray-300'>
 								<span>Delivery Fee</span>
-								<span>₱{deliveryFee.toFixed(2)}</span>
+								<span>₱{deliveryFee}</span>
 							</div>
 							<div className='flex justify-between font-bold text-xl text-white pt-2'>
 								<span>Total</span>
