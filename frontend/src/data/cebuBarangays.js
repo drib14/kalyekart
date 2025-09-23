@@ -1,3 +1,6 @@
+// NOTE: This is a temporary, hardcoded list of barangays for Cebu City.
+// For a production application, this should be replaced with a more scalable solution,
+// such as fetching this data from a dedicated API.
 export const cebuBarangays = [
 	"Adlaon",
 	"Agsungot",

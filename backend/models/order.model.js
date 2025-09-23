@@ -31,6 +31,10 @@ const orderSchema = new mongoose.Schema(
 			required: true,
 			default: 0,
 		},
+		distance: {
+			type: Number,
+			required: true,
+		},
 		deliveryFee: {
 			type: Number,
 			required: true,
@@ -72,8 +76,8 @@ const orderSchema = new mongoose.Schema(
 		status: {
 			type: String,
 			required: true,
-			enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
-			default: "pending",
+			enum: ["Pending", "Preparing", "Out for Delivery", "Delivered", "Cancelled"],
+			default: "Pending",
 		},
 		cancellationReason: {
 			type: String,

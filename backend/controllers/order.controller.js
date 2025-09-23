@@ -23,7 +23,8 @@ export const getOrders = async (req, res) => {
 
 export const createCodOrder = async (req, res) => {
 	try {
-		const { products, couponCode, shippingAddress, contactNumber, subtotal, deliveryFee, totalAmount } = req.body;
+		const { products, couponCode, shippingAddress, contactNumber, subtotal, deliveryFee, distance, totalAmount } =
+			req.body;
 		const userId = req.user._id;
 
 		if (!Array.isArray(products) || products.length === 0) {
@@ -50,7 +51,8 @@ export const createCodOrder = async (req, res) => {
 				price: p.price,
 			})),
 			subtotal,
-			deliveryFee,
+			deliveryFee: Math.round(deliveryFee),
+			distance,
 			totalAmount,
 			coupon: couponDetails,
 			shippingAddress,

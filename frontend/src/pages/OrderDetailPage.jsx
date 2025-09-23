@@ -25,11 +25,11 @@ const OrderDetailPage = () => {
 
 	const getStatusIcon = (status) => {
 		switch (status) {
-			case "processing":
+			case "Preparing":
 				return <Clock className='w-5 h-5' />;
-			case "shipped":
+			case "Out for Delivery":
 				return <Package className='w-5 h-5' />;
-			case "delivered":
+			case "Delivered":
 				return <CheckCircle className='w-5 h-5' />;
 			default:
 				return <Clock className='w-5 h-5' />;
@@ -48,6 +48,10 @@ const OrderDetailPage = () => {
 					<div className='text-right'>
 						<h2 className='text-xl font-semibold'>Total Amount</h2>
 						<p className='text-3xl font-bold text-emerald-400'>₱{order.totalAmount.toFixed(2)}</p>
+						<div className='flex items-center justify-end mt-2'>
+							{getStatusIcon(order.status)}
+							<p className='ml-2 text-lg'>{order.status}</p>
+						</div>
 					</div>
 				</header>
 

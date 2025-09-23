@@ -12,15 +12,15 @@ const getEffectiveStatus = (order) => {
 		}
 	}
 	switch (order.status) {
-		case "pending":
+		case "Pending":
 			return { text: "Pending", color: "bg-yellow-500 text-yellow-900" };
-		case "processing":
-			return { text: "Processing", color: "bg-cyan-500 text-cyan-900" };
-		case "shipped":
-			return { text: "Shipped", color: "bg-indigo-500 text-indigo-900" };
-		case "delivered":
+		case "Preparing":
+			return { text: "Preparing", color: "bg-cyan-500 text-cyan-900" };
+		case "Out for Delivery":
+			return { text: "Out for Delivery", color: "bg-indigo-500 text-indigo-900" };
+		case "Delivered":
 			return { text: "Delivered", color: "bg-green-500 text-green-900" };
-		case "cancelled":
+		case "Cancelled":
 			return { text: "Cancelled", color: "bg-red-500 text-red-900" };
 		default:
 			return { text: order.status, color: "bg-gray-500 text-gray-900" };
@@ -126,7 +126,7 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 										</dl>
 									</div>
 									<div className='flex justify-end gap-4 mt-4 flex-wrap'>
-										{order.status === "pending" && (
+										{order.status === "Pending" && (
 											<button
 												onClick={(e) => handleButtonClick(e, () => openCancelModal(order))}
 												className='bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md text-sm z-10 relative'
@@ -134,7 +134,7 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 												Cancel Order
 											</button>
 										)}
-										{order.status === "delivered" && !order.refundRequest && (
+										{order.status === "Delivered" && !order.refundRequest && (
 											<button
 												onClick={(e) => handleButtonClick(e, () => openRefundModal(order))}
 												className='bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm z-10 relative'

@@ -25,6 +25,7 @@ const CheckoutPage = () => {
 	const [deliveryFee, setDeliveryFee] = useState(0);
 	const [finalTotal, setFinalTotal] = useState(total);
 	const [customerCoords, setCustomerCoords] = useState(null);
+	const [distance, setDistance] = useState(0);
 
 	const storeLocation = cebuAddresses.find((addr) => addr.isStore);
 
@@ -44,55 +45,69 @@ const CheckoutPage = () => {
 		return R * c; // Distance in km
 	};
 
-	const getCoordinates = async () => {
-		if (streetAddress && barangay && city) {
-			try {
-				const query = `${streetAddress}, ${barangay}, ${city}, Cebu, Philippines`;
-				const response = await fetch(
-					`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-						query
-					)}&format=json&limit=1`
-				);
-				const data = await response.json();
-				if (data.length > 0) {
-					setCustomerCoords({
-						lat: parseFloat(data[0].lat),
-						lng: parseFloat(data[0].lon),
-					});
-				}
-			} catch (error) {
-				console.error("Error fetching coordinates:", error);
-				toast.error("Could not fetch location data.");
-			}
-		}
-	};
-
 	useEffect(() => {
+		const calculateFee = async () => {
+			if (streetAddress && barangay && city) {
+				try {
+					const query = `${streetAddress}, ${barangay}, ${city}, Cebu, Philippines`;
+					const response = await fetch(
+						`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+							query
+						)}&format=json&limit=1`
+					);
+					const data = await response.json();
+					if (data.length > 0) {
+						const customerCoords = {
+							lat: parseFloat(data[0].lat),
+							lng: parseFloat(data[0].lon),
+						};
+						const dist = haversineDistance(storeLocation, customerCoords);
+						setDistance(dist);
+						let fee = 0;
+						if (dist <= 10) {
+							fee = 15 + dist * 2;
+						} else if (dist > 10 && dist <= 20) {
+							fee = 25 + dist * 3;
+						} else {
+							fee = 50 + dist * 4;
+						}
+						setDeliveryFee(Math.round(fee));
+						return;
+					}
+				} catch (error) {
+					console.error("Error fetching coordinates:", error);
+					toast.error("Could not fetch location data. Using fallback calculation.");
+				}
+			}
+
+			// Fallback calculation
+			const selectedCity = cebuAddresses.find((addr) => addr.name === city);
+			if (selectedCity) {
+				const dist = haversineDistance(storeLocation, selectedCity);
+				setDistance(dist);
+				let fee = 0;
+				if (dist <= 10) {
+					fee = 15 + dist * 2;
+				} else if (dist > 10 && dist <= 20) {
+					fee = 25 + dist * 3;
+				} else {
+					fee = 50 + dist * 4;
+				}
+				setDeliveryFee(Math.round(fee));
+			} else {
+				setDeliveryFee(0);
+				setDistance(0);
+			}
+		};
+
 		const handler = setTimeout(() => {
-			getCoordinates();
+			calculateFee();
 		}, 1000); // Debounce for 1 second
 
 		return () => {
 			clearTimeout(handler);
 		};
-	}, [streetAddress, barangay, city]);
-
-	useEffect(() => {
-		if (customerCoords) {
-			const distance = haversineDistance(storeLocation, customerCoords);
-			let fee = 0;
-			if (distance <= 10) {
-				fee = 15 + distance * 2;
-			} else if (distance > 10 && distance <= 20) {
-				fee = 25 + distance * 3;
-			} else {
-				fee = 50 + distance * 4;
-			}
-			setDeliveryFee(Math.round(fee));
-		} else {
-			setDeliveryFee(0);
-		}
-	}, [customerCoords, storeLocation]);
+	}, [streetAddress, barangay, city, storeLocation]);
 
 	useEffect(() => {
 		setFinalTotal(total + deliveryFee);
@@ -102,8 +117,8 @@ const CheckoutPage = () => {
 		mutationFn: (data) => {
 			return axios.post("/orders/cod", data);
 		},
-		onSuccess: () => {
-			navigate("/purchase-success", { state: { cod: true } });
+		onSuccess: (data) => {
+			navigate(`/purchase-success`, { state: { cod: true, orderId: data.orderId } });
 		},
 		onError: (error) => {
 			toast.error(error.response.data.message);
@@ -134,6 +149,7 @@ const CheckoutPage = () => {
 			couponCode: coupon?.code,
 			subtotal,
 			deliveryFee,
+			distance,
 			totalAmount: finalTotal,
 		});
 	};
