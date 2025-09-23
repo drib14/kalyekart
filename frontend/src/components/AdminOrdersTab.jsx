@@ -19,15 +19,15 @@ const getEffectiveStatus = (order) => {
 		}
 	}
 	switch (order.status) {
-		case "pending":
-			return { text: "Pending", color: "bg-yellow-500 text-yellow-900" };
-		case "processing":
-			return { text: "Processing", color: "bg-cyan-500 text-cyan-900" };
-		case "shipped":
-			return { text: "Shipped", color: "bg-indigo-500 text-indigo-900" };
-		case "delivered":
+		case "Order Placed":
+			return { text: "Order Placed", color: "bg-yellow-500 text-yellow-900" };
+		case "Preparing":
+			return { text: "Preparing", color: "bg-cyan-500 text-cyan-900" };
+		case "Out for Delivery":
+			return { text: "Out for Delivery", color: "bg-indigo-500 text-indigo-900" };
+		case "Delivered":
 			return { text: "Delivered", color: "bg-green-500 text-green-900" };
-		case "cancelled":
+		case "Cancelled":
 			return { text: "Cancelled", color: "bg-red-500 text-red-900" };
 		default:
 			return { text: order.status, color: "bg-gray-500 text-gray-900" };
@@ -265,11 +265,11 @@ const AdminOrdersTab = () => {
 											onChange={(e) => updateOrderStatus({ orderId: order._id, status: e.target.value })}
 											className='bg-gray-700 border border-gray-600 rounded-md shadow-sm'
 										>
-											<option value='pending'>Pending</option>
-											<option value='processing'>Processing</option>
-											<option value='shipped'>Shipped</option>
-											<option value='delivered'>Delivered</option>
-											<option value='cancelled'>Cancelled</option>
+											<option value='Order Placed'>Order Placed</option>
+											<option value='Preparing'>Preparing</option>
+											<option value='Out for Delivery'>Out for Delivery</option>
+											<option value='Delivered'>Delivered</option>
+											<option value='Cancelled'>Cancelled</option>
 										</select>
 									</div>
 								</div>

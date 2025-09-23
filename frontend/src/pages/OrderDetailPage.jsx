@@ -25,11 +25,11 @@ const OrderDetailPage = () => {
 
 	const getStatusIcon = (status) => {
 		switch (status) {
-			case "processing":
+			case "Preparing":
 				return <Clock className='w-5 h-5' />;
-			case "shipped":
+			case "Out for Delivery":
 				return <Package className='w-5 h-5' />;
-			case "delivered":
+			case "Delivered":
 				return <CheckCircle className='w-5 h-5' />;
 			default:
 				return <Clock className='w-5 h-5' />;
