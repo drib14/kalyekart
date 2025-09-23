@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import axios from "../lib/axios";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 
 export const useCartStore = create((set, get) => ({
 	cart: [],
@@ -47,6 +47,7 @@ export const useCartStore = create((set, get) => ({
 		try {
 			const res = await axios.delete("/cart/all/clear");
 			set({ cart: res.data, coupon: null, total: 0, subtotal: 0 });
+			toast.success("Cart cleared");
 		} catch (error) {
 			toast.error(error.response?.data?.message || "Failed to clear cart");
 		}
@@ -66,6 +67,7 @@ export const useCartStore = create((set, get) => ({
 			const res = await axios.delete(`/cart/${productId}`);
 			set({ cart: res.data });
 			get().calculateTotals();
+			toast.success("Product removed from cart");
 		} catch (error) {
 			toast.error(error.response?.data?.message || "An error occurred");
 		}

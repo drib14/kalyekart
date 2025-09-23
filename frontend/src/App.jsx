@@ -7,7 +7,7 @@ import AdminPage from "./pages/AdminPage";
 import CategoryPage from "./pages/CategoryPage";
 
 import Navbar from "./components/Navbar";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 import { useUserStore } from "./stores/useUserStore";
 import { useEffect } from "react";
 import SecurityQuestionsModal from "./components/SecurityQuestionsModal";
@@ -86,7 +86,7 @@ function App() {
 					<Route path='/order/:orderId' element={user ? <OrderDetailPage /> : <Navigate to='/login' />} />
 				</Routes>
 			</div>
-			<Toaster />
+			<Toaster theme='dark' />
 		</div>
 	);
 }

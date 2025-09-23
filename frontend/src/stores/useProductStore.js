@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import axios from "../lib/axios";
 
 export const useProductStore = create((set) => ({

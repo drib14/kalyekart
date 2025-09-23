@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 import axios from "../lib/axios";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import LoadingSpinner from "./LoadingSpinner";
 import ProductDetailModal from "./ProductDetailModal";
 
