@@ -33,7 +33,7 @@ const ProductsList = () => {
 				onClose={handleCloseModal}
 				onConfirm={handleConfirmDelete}
 				title='Delete Product'
-				message='Are you sure you want to delete this product? This action cannot be undone.'
+				message='Are you sure you want to delete this product? This will hide it from all customers and it will no longer be available for purchase. Existing orders will not be affected.'
 			/>
 			<motion.div
 				className='bg-gray-800 shadow-lg rounded-lg overflow-hidden max-w-4xl mx-auto'

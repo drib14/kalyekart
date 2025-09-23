@@ -92,9 +92,9 @@ const ProductDetailModal = ({ product, onClose }) => {
 							</div>
 						</div>
 
-						<div className='space-y-3'>
+						<div className='flex gap-3'>
 							<button
-								className='w-full flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-3 text-center text-base font-medium
+								className='flex-1 flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-3 text-center text-base font-medium
 								 text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300'
 								onClick={handleAddToCart}
 							>
@@ -102,7 +102,7 @@ const ProductDetailModal = ({ product, onClose }) => {
 								Add to Cart
 							</button>
 							<button
-								className='w-full flex items-center justify-center rounded-lg bg-gray-600 px-5 py-3 text-center text-base font-medium
+								className='flex-1 flex items-center justify-center rounded-lg bg-gray-600 px-5 py-3 text-center text-base font-medium
 								 text-white hover:bg-gray-500 focus:outline-none focus:ring-4 focus:ring-gray-400'
 								onClick={handleCheckout}
 							>

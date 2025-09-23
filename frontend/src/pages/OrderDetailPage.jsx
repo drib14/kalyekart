@@ -56,7 +56,7 @@ const OrderDetailPage = () => {
 						<h3 className='text-xl font-semibold mb-4 flex items-center'><ShoppingCart className='mr-2' /> Items Ordered</h3>
 						<div className='space-y-4'>
 							{order.products.map((item) => {
-								if (!item.product) {
+								if (!item.product || item.product.isDeleted) {
 									return (
 										<div key={item._id} className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'>
 											<div className='flex items-center gap-4'>
