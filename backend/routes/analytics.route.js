@@ -1,9 +1,15 @@
 import express from "express";
 import { adminRoute, protectRoute } from "../middleware/auth.middleware.js";
-import { getAnalyticsData, getDailySalesData } from "../controllers/analytics.controller.js";
+import {
+	getAnalyticsData,
+	getDailySalesData,
+	streamAnalyticsData,
+} from "../controllers/analytics.controller.js";
 import Order from "../models/order.model.js";
 
 const router = express.Router();
+
+router.get("/stream", protectRoute, adminRoute, streamAnalyticsData);
 
 router.get("/", protectRoute, adminRoute, async (req, res) => {
 	try {

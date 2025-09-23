@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import axios from "../lib/axios";
 import { Users, Package, ShoppingCart, DollarSign, XCircle, Undo2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
@@ -18,20 +17,25 @@ const AnalyticsTab = () => {
 	const [filter, setFilter] = useState("weekly");
 
 	useEffect(() => {
-		const fetchAnalyticsData = async () => {
-			setIsLoading(true);
-			try {
-				const response = await axios.get(`/analytics?filter=${filter}`);
-				setAnalyticsData(response.data.analyticsData);
-				setDailySalesData(response.data.dailySalesData);
-			} catch (error) {
-				console.error("Error fetching analytics data:", error);
-			} finally {
-				setIsLoading(false);
-			}
+		setIsLoading(true);
+		const eventSource = new EventSource(`/api/analytics/stream?filter=${filter}`);
+
+		eventSource.onmessage = (event) => {
+			const data = JSON.parse(event.data);
+			setAnalyticsData(data.analyticsData);
+			setDailySalesData(data.dailySalesData);
+			setIsLoading(false);
 		};
 
-		fetchAnalyticsData();
+		eventSource.onerror = (error) => {
+			console.error("EventSource failed:", error);
+			eventSource.close();
+			setIsLoading(false);
+		};
+
+		return () => {
+			eventSource.close();
+		};
 	}, [filter]);
 
 	if (isLoading) {
