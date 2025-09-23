@@ -120,6 +120,10 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 											<dt className='font-normal text-gray-400'>Delivery Fee</dt>
 											<dd className='font-medium text-white'>₱{order.deliveryFee.toFixed(2)}</dd>
 										</dl>
+										<dl className='flex items-center justify-between gap-4 text-sm'>
+											<dt className='font-normal text-gray-400'>Payment Status</dt>
+											<dd className='font-medium text-white capitalize'>{order.paymentStatus}</dd>
+										</dl>
 										<dl className='flex items-center justify-between gap-4 text-base font-bold text-white pt-2 border-t border-gray-700 mt-2'>
 											<dt>Total</dt>
 											<dd>₱{order.totalAmount.toFixed(2)}</dd>

@@ -79,6 +79,9 @@ const orderSchema = new mongoose.Schema(
 			enum: ["Pending", "Preparing", "Out for Delivery", "Delivered", "Cancelled"],
 			default: "Pending",
 		},
+		statusETA: {
+			type: Date,
+		},
 		cancellationReason: {
 			type: String,
 		},

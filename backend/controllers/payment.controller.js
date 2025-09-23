@@ -61,8 +61,8 @@ export const createCheckoutSession = async (req, res) => {
 					}))
 				),
 				shippingAddress: JSON.stringify(shippingAddress),
-				distance,
-				deliveryFee,
+				distance: String(distance),
+				deliveryFee: String(deliveryFee),
 			},
 		});
 

@@ -269,7 +269,9 @@ const AdminOrdersTab = () => {
 											<option value='Preparing'>Preparing</option>
 											<option value='Out for Delivery'>Out for Delivery</option>
 											<option value='Delivered'>Delivered</option>
-											<option value='Cancelled'>Cancelled</option>
+											<option value='Cancelled' disabled={order.status === 'Delivered'}>
+												Cancelled
+											</option>
 										</select>
 									</div>
 								</div>

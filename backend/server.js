@@ -12,6 +12,8 @@ import paymentRoutes from "./routes/payment.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
 import orderRoutes from "./routes/order.route.js";
 import userRoutes from "./routes/user.route.js";
+import Order from "./models/order.model.js";
+import { calculateETA } from "./lib/eta.js";
 
 import { connectDB } from "./lib/db.js";
 
@@ -52,4 +54,39 @@ if (process.env.NODE_ENV === "production") {
 app.listen(PORT, () => {
 	console.log("Server is running on http://localhost:" + PORT);
 	connectDB();
+
+	setInterval(async () => {
+		try {
+			const now = new Date();
+			const expiredOrders = await Order.find({
+				statusETA: { $lte: now },
+				status: { $nin: ["Delivered", "Cancelled"] },
+			});
+
+			for (const order of expiredOrders) {
+				let nextStatus;
+
+				switch (order.status) {
+					case "Pending":
+						nextStatus = "Preparing";
+						break;
+					case "Preparing":
+						nextStatus = "Out for Delivery";
+						break;
+					case "Out for Delivery":
+						nextStatus = "Delivered";
+						break;
+					default:
+						continue;
+				}
+
+				order.status = nextStatus;
+				order.statusETA = calculateETA(nextStatus, order);
+				await order.save();
+				console.log(`Order ${order._id} auto-updated to ${nextStatus}`);
+			}
+		} catch (error) {
+			console.error("Error in auto-update task:", error);
+		}
+	}, 10000); // Run every 10 seconds
 });

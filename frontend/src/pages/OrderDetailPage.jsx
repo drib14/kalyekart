@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { CheckCircle, Clock, Package, ShoppingCart, User, Home, Phone } from "lucide-react";
+import CountdownTimer from "../components/CountdownTimer";
+import ProgressBar from "../components/ProgressBar";
 
 const OrderDetailPage = () => {
 	const { orderId } = useParams();
@@ -51,9 +53,19 @@ const OrderDetailPage = () => {
 						<div className='flex items-center justify-end mt-2'>
 							{getStatusIcon(order.status)}
 							<p className='ml-2 text-lg'>{order.status}</p>
+							{order.status !== "Delivered" && order.status !== "Cancelled" && order.statusETA && (
+								<div className='ml-4'>
+									<CountdownTimer eta={order.statusETA} />
+								</div>
+							)}
 						</div>
 					</div>
 				</header>
+
+				<section className='mb-8'>
+					<h3 className='text-xl font-semibold mb-4'>Order Progress</h3>
+					<ProgressBar status={order.status} />
+				</section>
 
 				<main>
 					<section className='mb-8'>

@@ -1,6 +1,7 @@
 import Order from "../models/order.model.js";
 import Coupon from "../models/coupon.model.js";
 import { uploadOnCloudinary } from "../lib/cloudinary.js";
+import { calculateETA } from "../lib/eta.js";
 
 export const getOrders = async (req, res) => {
 	try {
@@ -59,6 +60,7 @@ export const createCodOrder = async (req, res) => {
 			contactNumber,
 			paymentMethod: "cod",
 			paymentStatus: "pending",
+			statusETA: new Date(Date.now() + 2 * 60 * 1000), // 2 minutes from now
 		});
 
 		await newOrder.save();
@@ -167,6 +169,8 @@ export const updateOrderStatus = async (req, res) => {
 		}
 
 		order.status = status;
+		order.statusETA = calculateETA(status, order);
+
 		await order.save();
 
 		res.status(200).json({ message: "Order status updated successfully" });

@@ -118,7 +118,7 @@ const CheckoutPage = () => {
 			return axios.post("/orders/cod", data);
 		},
 		onSuccess: (data) => {
-			navigate(`/purchase-success`, { state: { cod: true, orderId: data.orderId } });
+			navigate(`/purchase-success`, { state: { cod: true, orderId: data.data.orderId } });
 		},
 		onError: (error) => {
 			toast.error(error.response.data.message);

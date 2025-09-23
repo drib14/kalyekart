@@ -35,20 +35,20 @@ const PurchaseSuccessPage = () => {
 			} catch (error) {
 				console.log(error);
 				setError(error.response?.data?.message || "An error occurred during payment verification.");
-			} finally {
-				setIsProcessing(false);
 			}
 		};
 
 		const processOrder = async () => {
-			const sessionId = new URLSearchParams(window.location.search).get("session_id");
-			if (sessionId) {
-				await handleCheckoutSuccess(sessionId);
-			} else if (isCod) {
-				clearCart();
-				setIsProcessing(false);
-			} else {
-				setError("No session ID or COD state found.");
+			try {
+				const sessionId = new URLSearchParams(window.location.search).get("session_id");
+				if (sessionId) {
+					await handleCheckoutSuccess(sessionId);
+				} else if (isCod) {
+					clearCart();
+				} else {
+					setError("No session ID or COD state found.");
+				}
+			} finally {
 				setIsProcessing(false);
 			}
 		};
