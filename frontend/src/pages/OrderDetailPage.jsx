@@ -1,11 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { CheckCircle, Clock, Package, ShoppingCart, User, Home, Phone } from "lucide-react";
+import { CheckCircle, Clock, Package, ShoppingCart, User, Home, Phone, Star } from "lucide-react";
+import { useState } from "react";
+import ReviewForm from "../components/ReviewForm";
 
 const OrderDetailPage = () => {
 	const { orderId } = useParams();
+	const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+	const [selectedProductForReview, setSelectedProductForReview] = useState(null);
+	const queryClient = useQueryClient();
 
 	const {
 		data: order,
@@ -19,6 +24,21 @@ const OrderDetailPage = () => {
 			return res.data;
 		},
 	});
+
+	const handleOpenReviewModal = (product) => {
+		setSelectedProductForReview(product);
+		setIsReviewModalOpen(true);
+	};
+
+	const handleCloseReviewModal = () => {
+		setSelectedProductForReview(null);
+		setIsReviewModalOpen(false);
+	};
+
+	const handleReviewSubmit = () => {
+		queryClient.invalidateQueries(["reviews", selectedProductForReview._id]);
+		queryClient.invalidateQueries(["order", orderId]); // To potentially update reviewed status
+	};
 
 	if (isLoading) return <LoadingSpinner />;
 	if (isError) return <div className='text-center py-10 text-red-500'>Error: {error.response.data.message}</div>;
@@ -38,6 +58,13 @@ const OrderDetailPage = () => {
 
 	return (
 		<div className='min-h-screen bg-gray-900 text-white p-4 sm:p-8'>
+			{isReviewModalOpen && (
+				<ReviewForm
+					productId={selectedProductForReview._id}
+					onClose={handleCloseReviewModal}
+					onReviewSubmit={handleReviewSubmit}
+				/>
+			)}
 			<div className='max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-2xl p-6 sm:p-8'>
 				<header className='flex justify-between items-start mb-8 border-b border-gray-700 pb-6'>
 					<div>
@@ -82,7 +109,17 @@ const OrderDetailPage = () => {
 													</p>
 												</div>
 											</div>
+										<div className='text-right'>
 											<p className='font-semibold text-white'>₱{(item.quantity * item.price).toFixed(2)}</p>
+											{order.status === "Delivered" && (
+												<button
+													onClick={() => handleOpenReviewModal(item.product)}
+													className='text-xs text-emerald-400 hover:underline mt-1'
+												>
+													Leave a Review
+												</button>
+											)}
+										</div>
 										</div>
 									)
 								})}

@@ -3,6 +3,7 @@ import { X, Heart, Minus, Plus, ShoppingCart, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useCartStore } from "../stores/useCartStore";
 import { useNavigate } from "react-router-dom";
+import ProductReviews from "./ProductReviews";
 
 const ProductDetailModal = ({ product, onClose }) => {
 	const [quantity, setQuantity] = useState(1);
@@ -88,7 +89,7 @@ const ProductDetailModal = ({ product, onClose }) => {
 
 							<div className='mb-4'>
 								<h3 className='text-lg font-semibold text-white mb-2'>Reviews</h3>
-								<p className='text-gray-500 italic'>Coming soon...</p>
+								<ProductReviews product={product} />
 							</div>
 						</div>
 
