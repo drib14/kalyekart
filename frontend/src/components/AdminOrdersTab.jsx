@@ -140,14 +140,19 @@ const AdminOrdersTab = () => {
 										{order.user.profilePicture ? (
 											<img
 												src={order.user.profilePicture}
-												alt={order.user.name}
+												alt={order.shippingAddress?.fullName || order.user.name}
 												className='w-12 h-12 rounded-full object-cover'
 											/>
 										) : (
 											<UserCircle className='w-12 h-12 text-gray-500' />
 										)}
 										<div>
-											<p className='text-lg font-bold text-white'>{order.user.name}</p>
+											<p
+												className='text-lg font-bold text-white'
+												title={`Account name: ${order.user.name}`}
+											>
+												{order.shippingAddress.fullName}
+											</p>
 											<p className='text-sm text-gray-400'>Order ID: {order._id}</p>
 											<p className='text-sm text-gray-400'>
 												Placed on: {new Date(order.createdAt).toLocaleDateString()}
