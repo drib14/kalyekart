@@ -43,6 +43,9 @@ const Navbar = () => {
 					</div>
 
 					<nav className='flex items-center gap-4'>
+						<Link to='/' className='text-gray-300 hover:text-emerald-400 transition duration-300 ease-in-out'>
+							Home
+						</Link>
 						{user && (
 							<Link
 								to={"/cart"}
