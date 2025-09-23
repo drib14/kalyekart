@@ -8,7 +8,7 @@ import CategoryTab from "../components/CategoryTab";
 const HomePage = () => {
 	const { fetchAllProducts, products } = useProductStore();
 	const [selectedProduct, setSelectedProduct] = useState(null);
-	const [activeCategory, setActiveCategory] = useState("All");
+	const [activeCategory, setActiveCategory] = useState("all");
 
 	useEffect(() => {
 		fetchAllProducts();
@@ -23,7 +23,7 @@ const HomePage = () => {
 	};
 
 	const filteredProducts =
-		activeCategory === "All" ? products : products.filter((p) => p.category === activeCategory);
+		activeCategory === "all" ? products : products.filter((p) => p.category === activeCategory);
 
 	const allCategories = [{ name: "All", id: "all", imageUrl: "/logo.jpg" }, ...categories];
 
@@ -44,8 +44,8 @@ const HomePage = () => {
 							<CategoryTab
 								key={category.id}
 								category={category}
-								onClick={() => setActiveCategory(category.name)}
-								isActive={activeCategory === category.name}
+								onClick={() => setActiveCategory(category.id)}
+								isActive={activeCategory === category.id}
 							/>
 						))}
 					</div>
