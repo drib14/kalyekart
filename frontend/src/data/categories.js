@@ -1,7 +1,7 @@
 export const categories = [
-	{ id: "jeans", name: "Jeans", imageUrl: "/jeans.jpg" },
-	{ id: "t-shirts", name: "T-shirts", imageUrl: "/tshirts.jpg" },
-	{ id: "shoes", name: "Shoes", imageUrl: "/shoes.jpg" },
-	{ id: "glasses", name: "Glasses", imageUrl: "/glasses.png" },
-	{ id: "jackets", name: "Jackets", imageUrl: "/jackets.jpg" },
+	{ id: "fried-vegetables", name: "Fried Vegetables", imageUrl: "/jeans.jpg" },
+	{ id: "fried-seafood", name: "Fried Seafood", imageUrl: "/tshirts.jpg" },
+	{ id: "fried-meat", name: "Fried Meat", imageUrl: "/shoes.jpg" },
+	{ id: "extra", name: "Extra", imageUrl: "/glasses.png" },
+	{ id: "drinks", name: "Drinks", imageUrl: "/jackets.jpg" },
 ];
