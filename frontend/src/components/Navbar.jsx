@@ -1,6 +1,7 @@
 import { ShoppingCart, UserPlus, LogIn, LogOut, Lock, User, Settings, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserStore } from "../stores/useUserStore";
+import Searchbar from "./Searchbar";
 import { useCartStore } from "../stores/useCartStore";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
@@ -31,18 +32,17 @@ const Navbar = () => {
 	return (
 		<header className='fixed top-0 left-0 w-full bg-gray-900 bg-opacity-90 backdrop-blur-md shadow-lg z-40 transition-all duration-300 border-b border-emerald-800'>
 			<div className='container mx-auto px-4 py-3'>
-				<div className='flex flex-wrap justify-between items-center'>
-					<Link to='/' className='text-2xl font-bold text-emerald-400 items-center space-x-2 flex'>
-						KalyeKart
+				<div className='flex justify-between items-center'>
+					<Link to='/' className='flex items-center gap-2'>
+						<img src='/logo.jpg' alt='KalyeKart Logo' className='w-10 h-10 rounded-full' />
+						<span className='text-2xl font-bold text-emerald-400 hidden sm:block'>KalyeKart</span>
 					</Link>
 
-					<nav className='flex flex-wrap items-center gap-4'>
-						<Link
-							to={"/"}
-							className='text-gray-300 hover:text-emerald-400 transition duration-300 ease-in-out'
-						>
-							Home
-						</Link>
+					<div className='flex-1 flex justify-center px-4'>
+						<Searchbar />
+					</div>
+
+					<nav className='flex items-center gap-4'>
 						{user && (
 							<Link
 								to={"/cart"}
