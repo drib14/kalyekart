@@ -66,24 +66,41 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 										</div>
 									</div>
 									<div className='space-y-2'>
-										{order.products.map((item) => (
-											<div
-												key={item.product._id}
-												className='flex items-center justify-between'
-											>
-												<div className='flex items-center gap-2'>
-													<img
-														src={item.product.image}
-														alt={item.product.name}
-														className='w-10 h-10 object-cover rounded-md'
-													/>
-													<p className='font-medium text-white truncate'>
-														{item.product.name}
-													</p>
+										{order.products.map((item) => {
+											if (!item.product) {
+												return (
+													<div key={item._id} className='flex items-center justify-between'>
+														<div className='flex items-center gap-2'>
+															<div className='w-10 h-10 bg-gray-700 rounded-md flex items-center justify-center'>
+																<p className='text-gray-500'>?</p>
+															</div>
+															<p className='font-medium text-red-400 italic'>
+																Product no longer available
+															</p>
+														</div>
+														<p className='text-sm text-gray-400'>x{item.quantity}</p>
+													</div>
+												);
+											}
+											return (
+												<div
+													key={item.product._id}
+													className='flex items-center justify-between'
+												>
+													<div className='flex items-center gap-2'>
+														<img
+															src={item.product.image}
+															alt={item.product.name}
+															className='w-10 h-10 object-cover rounded-md'
+														/>
+														<p className='font-medium text-white truncate'>
+															{item.product.name}
+														</p>
+													</div>
+													<p className='text-sm text-gray-400'>x{item.quantity}</p>
 												</div>
-												<p className='text-sm text-gray-400'>x{item.quantity}</p>
-											</div>
-										))}
+											);
+										})}
 									</div>
 								</div>
 								<div className='mt-auto pt-4'>

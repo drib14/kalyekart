@@ -55,20 +55,36 @@ const OrderDetailPage = () => {
 					<section className='mb-8'>
 						<h3 className='text-xl font-semibold mb-4 flex items-center'><ShoppingCart className='mr-2' /> Items Ordered</h3>
 						<div className='space-y-4'>
-							{order.products.map((item) => (
-								<div key={item._id} className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'>
-									<div className='flex items-center gap-4'>
-										<img src={item.product.image} alt={item.product.name} className='w-16 h-16 rounded-md object-cover'/>
-										<div>
-											<p className='font-bold text-white'>{item.product.name}</p>
-											<p className='text-sm text-gray-400'>
-												{item.quantity} x ₱{item.price.toFixed(2)}
-											</p>
+							{order.products.map((item) => {
+								if (!item.product) {
+									return (
+										<div key={item._id} className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'>
+											<div className='flex items-center gap-4'>
+												<div className='w-16 h-16 bg-gray-600 rounded-md flex items-center justify-center'>
+													<p className='text-gray-400 text-lg'>?</p>
+												</div>
+												<div>
+													<p className='font-bold text-red-400 italic'>Product no longer available</p>
+												</div>
+											</div>
 										</div>
+									);
+								}
+								return (
+									<div key={item._id} className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'>
+										<div className='flex items-center gap-4'>
+											<img src={item.product.image} alt={item.product.name} className='w-16 h-16 rounded-md object-cover'/>
+											<div>
+												<p className='font-bold text-white'>{item.product.name}</p>
+												<p className='text-sm text-gray-400'>
+													{item.quantity} x ₱{item.price.toFixed(2)}
+												</p>
+											</div>
+										</div>
+										<p className='font-semibold text-white'>₱{(item.quantity * item.price).toFixed(2)}</p>
 									</div>
-									<p className='font-semibold text-white'>₱{(item.quantity * item.price).toFixed(2)}</p>
-								</div>
-							))}
+								)
+							})}
 						</div>
 					</section>
 
