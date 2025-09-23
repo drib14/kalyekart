@@ -29,6 +29,7 @@ const getEffectiveStatus = (order) => {
 
 const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 	const handleButtonClick = (e, callback) => {
+		e.preventDefault();
 		e.stopPropagation();
 		callback();
 	};
