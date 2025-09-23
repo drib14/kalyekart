@@ -43,6 +43,7 @@ export const useUserStore = create((set, get) => ({
 		try {
 			await axios.post("/auth/logout");
 			set({ user: null });
+			window.location.href = "/login";
 		} catch (error) {
 			toast.error(error.response?.data?.message || "An error occurred during logout");
 		}
