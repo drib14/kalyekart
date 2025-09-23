@@ -67,6 +67,19 @@ const AdminOrdersTab = () => {
 		},
 	});
 
+	const { mutate: updatePaymentStatus } = useMutation({
+		mutationFn: ({ orderId, status }) => {
+			return axios.put(`/orders/${orderId}/payment-status`, { status });
+		},
+		onSuccess: () => {
+			toast.success("Payment status updated successfully");
+			refetchOrders();
+		},
+		onError: (error) => {
+			toast.error(error.response.data.message);
+		},
+	});
+
 	const { mutate: updateRefundStatus } = useMutation({
 		mutationFn: ({ orderId, status, rejectionReason }) => {
 			return axios.put(`/orders/${orderId}/refund/status`, { status, rejectionReason });
@@ -152,6 +165,9 @@ const AdminOrdersTab = () => {
 											<p className='text-sm text-gray-400'>
 												Placed on: {new Date(order.createdAt).toLocaleDateString()}
 											</p>
+											<p className='text-sm text-gray-400'>
+												Payment: <span className='font-medium text-white'>{order.paymentMethod.toUpperCase()}</span> | <span className='font-medium text-white capitalize'>{order.paymentStatus}</span>
+											</p>
 										</div>
 									</div>
 									<div className={`px-3 py-1 rounded-full text-sm font-medium ${effectiveStatus.color}`}>
@@ -181,16 +197,37 @@ const AdminOrdersTab = () => {
 
 								{expandedOrderId === order._id && (
 									<div className='mt-4 border-t border-gray-700 pt-4 space-y-4'>
-										<div>
-											<h3 className='text-lg font-bold text-white mb-2'>Shipping Details</h3>
-											<div className='text-sm text-gray-300'>
-												<p>
-													<strong>Address:</strong> {order.shippingAddress.streetAddress}, {order.shippingAddress.city},{" "}
-													{order.shippingAddress.province}, {order.shippingAddress.postalCode}
-												</p>
-												<p>
-													<strong>Contact:</strong> {order.contactNumber}
-												</p>
+										<div className='grid md:grid-cols-2 gap-8'>
+											<div>
+												<h3 className='text-lg font-bold text-white mb-2'>Shipping Details</h3>
+												<div className='text-sm text-gray-300'>
+													<p>
+														<strong>Address:</strong> {order.shippingAddress.streetAddress}, {order.shippingAddress.city},{" "}
+														{order.shippingAddress.province}, {order.shippingAddress.postalCode}
+													</p>
+													<p>
+														<strong>Contact:</strong> {order.contactNumber}
+													</p>
+												</div>
+											</div>
+											<div>
+												<h3 className='text-lg font-bold text-white mb-2'>Payment Details</h3>
+												<div className='text-sm text-gray-300 space-y-1'>
+													<p>
+														<strong>Subtotal:</strong> ₱{order.subtotal.toFixed(2)}
+													</p>
+													{order.coupon && (
+														<p>
+															<strong>Discount:</strong> -{order.coupon.discountPercentage}%
+														</p>
+													)}
+													<p>
+														<strong>Delivery Fee:</strong> ₱{order.deliveryFee.toFixed(2)}
+													</p>
+													<p>
+														<strong>Total:</strong> ₱{order.totalAmount.toFixed(2)}
+													</p>
+												</div>
 											</div>
 										</div>
 
@@ -255,24 +292,46 @@ const AdminOrdersTab = () => {
 											/>
 										</button>
 									</div>
-									<div>
-										<label htmlFor={`status-${order._id}`} className='text-sm text-gray-400 mr-2'>
-											Order Status:
-										</label>
-										<select
-											id={`status-${order._id}`}
-											value={order.status}
-											onChange={(e) => updateOrderStatus({ orderId: order._id, status: e.target.value })}
-											className='bg-gray-700 border border-gray-600 rounded-md shadow-sm'
-										>
-											<option value='Pending'>Pending</option>
-											<option value='Preparing'>Preparing</option>
-											<option value='Out for Delivery'>Out for Delivery</option>
-											<option value='Delivered'>Delivered</option>
-											<option value='Cancelled' disabled={order.status === 'Delivered'}>
-												Cancelled
-											</option>
-										</select>
+									<div className='flex items-center gap-4'>
+										<div>
+											<label htmlFor={`payment-status-${order._id}`} className='text-sm text-gray-400 mr-2'>
+												Payment Status:
+											</label>
+											<select
+												id={`payment-status-${order._id}`}
+												value={order.paymentStatus}
+												onChange={(e) =>
+													updatePaymentStatus({ orderId: order._id, status: e.target.value })
+												}
+												className='bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+												disabled={order.paymentMethod === "card"} // Disable for card payments
+											>
+												<option value='pending'>Pending</option>
+												<option value='paid'>Paid</option>
+												<option value='failed'>Failed</option>
+											</select>
+										</div>
+										<div>
+											<label htmlFor={`status-${order._id}`} className='text-sm text-gray-400 mr-2'>
+												Order Status:
+											</label>
+											<select
+												id={`status-${order._id}`}
+												value={order.status}
+												onChange={(e) =>
+													updateOrderStatus({ orderId: order._id, status: e.target.value })
+												}
+												className='bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+											>
+												<option value='Pending'>Pending</option>
+												<option value='Preparing'>Preparing</option>
+												<option value='Out for Delivery'>Out for Delivery</option>
+												<option value='Delivered'>Delivered</option>
+												<option value='Cancelled' disabled={order.status === "Delivered"}>
+													Cancelled
+												</option>
+											</select>
+										</div>
 									</div>
 								</div>
 							</div>

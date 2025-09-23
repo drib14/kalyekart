@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { CheckCircle, Clock, Package, ShoppingCart, User, Home, Phone } from "lucide-react";
+import { CheckCircle, Clock, Package, ShoppingCart, User, Home, Phone, CreditCard } from "lucide-react";
 import CountdownTimer from "../components/CountdownTimer";
 import ProgressBar from "../components/ProgressBar";
 
@@ -104,19 +104,46 @@ const OrderDetailPage = () => {
 						</div>
 					</section>
 
-					<div className='grid md:grid-cols-2 gap-8'>
+					<div className='grid md:grid-cols-3 gap-8'>
 						<section>
-							<h3 className='text-xl font-semibold mb-4 flex items-center'><Home className='mr-2' /> Shipping Information</h3>
+							<h3 className='text-xl font-semibold mb-4 flex items-center'>
+								<Home className='mr-2' /> Shipping Information
+							</h3>
 							<div className='bg-gray-700 p-4 rounded-lg space-y-2'>
-								<p><strong>Address:</strong> {order.shippingAddress.streetAddress}, {order.shippingAddress.city}, {order.shippingAddress.province}, {order.shippingAddress.postalCode}</p>
-								<p><strong>Contact:</strong> {order.contactNumber}</p>
+								<p>
+									<strong>Address:</strong> {order.shippingAddress.streetAddress},{" "}
+									{order.shippingAddress.city}, {order.shippingAddress.province},{" "}
+									{order.shippingAddress.postalCode}
+								</p>
+								<p>
+									<strong>Contact:</strong> {order.contactNumber}
+								</p>
 							</div>
 						</section>
 						<section>
-							<h3 className='text-xl font-semibold mb-4 flex items-center'><User className='mr-2' /> Customer Information</h3>
+							<h3 className='text-xl font-semibold mb-4 flex items-center'>
+								<User className='mr-2' /> Customer Information
+							</h3>
 							<div className='bg-gray-700 p-4 rounded-lg space-y-2'>
-								<p><strong>Name:</strong> {order.user.name}</p>
-								<p><strong>Email:</strong> {order.user.email}</p>
+								<p>
+									<strong>Name:</strong> {order.user.name}
+								</p>
+								<p>
+									<strong>Email:</strong> {order.user.email}
+								</p>
+							</div>
+						</section>
+						<section>
+							<h3 className='text-xl font-semibold mb-4 flex items-center'>
+								<CreditCard className='mr-2' /> Payment Information
+							</h3>
+							<div className='bg-gray-700 p-4 rounded-lg space-y-2'>
+								<p>
+									<strong>Method:</strong> {order.paymentMethod.toUpperCase()}
+								</p>
+								<p>
+									<strong>Status:</strong> <span className='capitalize'>{order.paymentStatus}</span>
+								</p>
 							</div>
 						</section>
 					</div>

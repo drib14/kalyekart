@@ -142,6 +142,7 @@ export const requestRefund = async (req, res) => {
 export const getAllOrders = async (req, res) => {
 	try {
 		const orders = await Order.find()
+			.sort({ createdAt: -1 })
 			.populate("user", "name email profilePicture")
 			.populate({
 				path: "products",
@@ -177,6 +178,31 @@ export const updateOrderStatus = async (req, res) => {
 	} catch (error) {
 		console.error("Error updating order status:", error);
 		res.status(500).json({ message: "Error updating order status", error: error.message });
+	}
+};
+
+export const updatePaymentStatus = async (req, res) => {
+	try {
+		const { orderId } = req.params;
+		const { status } = req.body;
+
+		const order = await Order.findById(orderId);
+
+		if (!order) {
+			return res.status(404).json({ message: "Order not found" });
+		}
+
+		if (order.paymentMethod === "card") {
+			return res.status(400).json({ message: "Cannot manually update status for card payments." });
+		}
+
+		order.paymentStatus = status;
+		await order.save();
+
+		res.status(200).json({ message: "Payment status updated successfully" });
+	} catch (error) {
+		console.error("Error updating payment status:", error);
+		res.status(500).json({ message: "Error updating payment status", error: error.message });
 	}
 };
 
