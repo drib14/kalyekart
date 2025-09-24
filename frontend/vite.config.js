@@ -9,6 +9,11 @@ export default defineConfig({
 			"/api": {
 				target: "http://localhost:5000",
 			},
+			"/psgc": {
+				target: "https://psgc.rootscratch.com",
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/psgc/, ""),
+			},
 		},
 	},
 });
