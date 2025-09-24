@@ -50,8 +50,7 @@ const CheckoutPage = () => {
 
 	useEffect(() => {
 		const fetchMunicipalities = async () => {
-			const data = await getMunicipalities("072200000");
-			console.log("Setting municipalities:", data);
+			const data = await getMunicipalities("0702200000");
 			setMunicipalities(data);
 		};
 		fetchMunicipalities();
@@ -63,16 +62,12 @@ const CheckoutPage = () => {
 				const selectedCity = municipalities.find((m) => m.name === city);
 				if (selectedCity) {
 					const data = await getBarangays(selectedCity.code);
-					console.log("Setting barangays:", data);
 					setBarangays(data);
 				}
 			}
 		};
 		fetchBarangays();
 	}, [city, municipalities]);
-
-	console.log("Municipalities state:", municipalities);
-	console.log("Barangays state:", barangays);
 
 	useEffect(() => {
 		const calculateFee = async () => {
