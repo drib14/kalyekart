@@ -72,7 +72,7 @@ const CheckoutPage = () => {
 
 	useEffect(() => {
 		const calculateFee = async () => {
-			if (!streetAddress || !barangay || !city) {
+			if (!barangay || !city) {
 				setDeliveryFee(0);
 				setDistance(0);
 				return;
@@ -80,7 +80,7 @@ const CheckoutPage = () => {
 
 			let coords = null;
 			try {
-				const query = `${streetAddress}, ${barangay}, ${city}, Cebu, Philippines`;
+				const query = `${barangay}, ${city}, Cebu, Philippines`;
 				const data = await getCoordinates(query);
 				if (data.length > 0) {
 					coords = {
@@ -136,7 +136,7 @@ const CheckoutPage = () => {
 		return () => {
 			clearTimeout(handler);
 		};
-	}, [streetAddress, barangay, city, storeLocation]);
+	}, [barangay, city, storeLocation]);
 
 	useEffect(() => {
 		setFinalTotal(total + deliveryFee);
