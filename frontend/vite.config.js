@@ -9,6 +9,11 @@ export default defineConfig({
 			"/api": {
 				target: "http://localhost:5000",
 			},
+			"/nominatim": {
+				target: "https://nominatim.openstreetmap.org",
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/nominatim/, ""),
+			},
 		},
 	},
 });
