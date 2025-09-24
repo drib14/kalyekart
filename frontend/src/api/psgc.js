@@ -13,7 +13,7 @@ export const getCebuCitiesAndMunicipalities = async () => {
 	const municipalitiesResponse = await axios.get(`${API_URL}/municipalities`);
 	const citiesResponse = await axios.get(`${API_URL}/cities`);
 	const combined = [...municipalitiesResponse.data, ...citiesResponse.data];
-	const cebuProvincePrefix = "0722";
+	const cebuProvincePrefix = "0702";
 	const cebuCityCode = "0730600000";
 	const mandaueCityCode = "0731300000";
 	const lapuLapuCityCode = "0731100000";
