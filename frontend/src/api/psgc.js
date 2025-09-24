@@ -7,12 +7,15 @@ export const getRegions = async () => {
 	return response.data;
 };
 
-// NOTE: This API fetches all municipalities and filters them on the client side.
+// NOTE: This API fetches all cities and municipalities and filters them on the client side.
 // This is not ideal, but it is a limitation of the psgc.cloud API.
-export const getMunicipalities = async (provinceCode) => {
-	const response = await axios.get(`${API_URL}/municipalities`);
+export const getCitiesAndMunicipalities = async (provinceCode) => {
+	const municipalitiesResponse = await axios.get(`${API_URL}/municipalities`);
+	const citiesResponse = await axios.get(`${API_URL}/cities`);
+	const combined = [...municipalitiesResponse.data, ...citiesResponse.data];
 	const provincePrefix = provinceCode.substring(0, 4); // e.g., "0722"
-	return response.data.filter((m) => m.code.startsWith(provincePrefix));
+	const filtered = combined.filter((m) => m.code.startsWith(provincePrefix));
+	return filtered.sort((a, b) => a.name.localeCompare(b.name));
 };
 
 // NOTE: This API fetches all barangays and filters them on the client side.

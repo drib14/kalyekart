@@ -7,7 +7,7 @@ import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getMunicipalities, getBarangays } from "../api/psgc";
+import { getCitiesAndMunicipalities, getBarangays } from "../api/psgc";
 import { getCoordinates } from "../api/openstreetmap";
 
 const CheckoutPage = () => {
@@ -49,11 +49,11 @@ const CheckoutPage = () => {
 	};
 
 	useEffect(() => {
-		const fetchMunicipalities = async () => {
-			const data = await getMunicipalities("0702200000");
+		const fetchCitiesAndMunicipalities = async () => {
+			const data = await getCitiesAndMunicipalities("0702200000");
 			setMunicipalities(data);
 		};
-		fetchMunicipalities();
+		fetchCitiesAndMunicipalities();
 	}, []);
 
 	useEffect(() => {
