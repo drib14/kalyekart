@@ -80,7 +80,8 @@ const CheckoutPage = () => {
 
 			let coords = null;
 			try {
-				const query = `${barangay}, ${city}, Cebu, Philippines`;
+				const cleanedCity = city.replace(/^(City of|Municipality of)\s*/, "");
+				const query = `${barangay}, ${cleanedCity}, Cebu, Philippines`;
 				const data = await getCoordinates(query);
 				if (data.length > 0) {
 					coords = {
@@ -97,7 +98,8 @@ const CheckoutPage = () => {
 				// Fallback to city
 				try {
 					toast.error("Could not find the exact address. Using city center for delivery fee calculation.");
-					const cityQuery = `${city}, Cebu, Philippines`;
+					const cleanedCity = city.replace(/^(City of|Municipality of)\s*/, "");
+					const cityQuery = `${cleanedCity}, Cebu, Philippines`;
 					const cityData = await getCoordinates(cityQuery);
 					if (cityData.length > 0) {
 						coords = {
