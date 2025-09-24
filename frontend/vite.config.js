@@ -15,6 +15,7 @@ export default defineConfig({
 				rewrite: (path) => path.replace(/^\/nominatim/, ""),
 				headers: {
 					"User-Agent": "Cebu-Delivery-App/1.0",
+					"Referer": "https://www.geoportal.gov.ph/",
 				},
 			},
 		},
