@@ -11,7 +11,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
 
 	const mutation = useMutation({
 		mutationFn: (newFeedback) => {
-			return axios.post("/api/feedback", newFeedback);
+			return axios.post("/feedback", newFeedback);
 		},
 		onSuccess: () => {
 			setSubmitted(true);

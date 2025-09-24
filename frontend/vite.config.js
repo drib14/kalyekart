@@ -9,6 +9,15 @@ export default defineConfig({
 			"/api": {
 				target: "http://localhost:5000",
 			},
+			"/nominatim": {
+				target: "https://nominatim.openstreetmap.org",
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/nominatim/, ""),
+				headers: {
+					"User-Agent": "Cebu-Delivery-App/1.0",
+					"Referer": "https://www.geoportal.gov.ph/",
+				},
+			},
 		},
 	},
 });
