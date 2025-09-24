@@ -9,6 +9,7 @@ import productRoutes from "./routes/product.route.js";
 import cartRoutes from "./routes/cart.route.js";
 import couponRoutes from "./routes/coupon.route.js";
 import paymentRoutes from "./routes/payment.route.js";
+import feedbackRoutes from "./routes/feedback.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
 import orderRoutes from "./routes/order.route.js";
 import userRoutes from "./routes/user.route.js";
@@ -41,6 +42,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/feedback", feedbackRoutes);
 app.use("/api/users", userRoutes);
 
 if (process.env.NODE_ENV === "production") {

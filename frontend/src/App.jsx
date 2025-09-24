@@ -10,7 +10,9 @@ import SearchPage from "./pages/SearchPage";
 import Navbar from "./components/Navbar";
 import { Toaster } from "sonner";
 import { useUserStore } from "./stores/useUserStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import FloatingFeedbackButton from "./components/FloatingFeedbackButton";
+import FeedbackModal from "./components/FeedbackModal";
 import SecurityQuestionsModal from "./components/SecurityQuestionsModal";
 import LoadingSpinner from "./components/LoadingSpinner";
 import CartPage from "./pages/CartPage";
@@ -29,6 +31,8 @@ import OrderDetailPage from "./pages/OrderDetailPage";
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
 	const { getCartItems } = useCartStore();
+	const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+
 	useEffect(() => {
 		checkAuth();
 	}, [checkAuth]);
@@ -89,6 +93,8 @@ function App() {
 				</Routes>
 			</div>
 			<Toaster theme='dark' />
+			<FloatingFeedbackButton onClick={() => setIsFeedbackModalOpen(true)} />
+			<FeedbackModal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} />
 		</div>
 	);
 }

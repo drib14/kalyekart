@@ -7,8 +7,8 @@ import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getCebuCitiesAndMunicipalities, getBarangays } from "../api/psgc";
-import { getCoordinates } from "../api/openstreetmap";
+import { cebuAddresses } from "../data/cebuAddresses";
+import { cebuBarangays } from "../data/cebuBarangays";
 
 const CheckoutPage = () => {
 	const { cart, subtotal, total, coupon } = useCartStore();
@@ -27,10 +27,7 @@ const CheckoutPage = () => {
 	const [customerCoords, setCustomerCoords] = useState(null);
 	const [distance, setDistance] = useState(0);
 
-	const [municipalities, setMunicipalities] = useState([]);
-	const [barangays, setBarangays] = useState([]);
-
-	const storeLocation = { lat: 10.3085, lng: 123.883 }; // Hardcoded store location
+	const storeLocation = cebuAddresses.find((addr) => addr.isStore);
 
 	const haversineDistance = (coords1, coords2) => {
 		const toRad = (x) => (x * Math.PI) / 180;
@@ -49,72 +46,44 @@ const CheckoutPage = () => {
 	};
 
 	useEffect(() => {
-		const fetchCebuCitiesAndMunicipalities = async () => {
-			const data = await getCebuCitiesAndMunicipalities();
-			setMunicipalities(data);
-		};
-		fetchCebuCitiesAndMunicipalities();
-	}, []);
-
-	useEffect(() => {
-		const fetchBarangays = async () => {
-			if (city) {
-				const selectedCity = municipalities.find((m) => m.name === city);
-				if (selectedCity) {
-					const data = await getBarangays(selectedCity.code);
-					setBarangays(data);
-					setPostalCode(selectedCity.zip_code || "");
-				}
-			}
-		};
-		fetchBarangays();
-	}, [city, municipalities]);
-
-	useEffect(() => {
 		const calculateFee = async () => {
-			if (!barangay || !city) {
-				setDeliveryFee(0);
-				setDistance(0);
-				return;
-			}
-
-			let coords = null;
-			try {
-				const cleanedCity = city.replace(/^(City of|Municipality of)\s*/, "");
-				const query = `${barangay}, ${cleanedCity}, Cebu, Philippines`;
-				const data = await getCoordinates(query);
-				if (data.length > 0) {
-					coords = {
-						lat: parseFloat(data[0].lat),
-						lng: parseFloat(data[0].lon),
-					};
-				}
-			} catch (e) {
-				console.error("Error fetching coordinates:", e);
-				toast.error("Could not fetch location data. Using fallback calculation.");
-			}
-
-			if (!coords) {
-				// Fallback to city
+			if (streetAddress && barangay && city) {
 				try {
-					toast.error("Could not find the exact address. Using city center for delivery fee calculation.");
-					const cleanedCity = city.replace(/^(City of|Municipality of)\s*/, "");
-					const cityQuery = `${cleanedCity}, Cebu, Philippines`;
-					const cityData = await getCoordinates(cityQuery);
-					if (cityData.length > 0) {
-						coords = {
-							lat: parseFloat(cityData[0].lat),
-							lng: parseFloat(cityData[0].lon),
+					const query = `${streetAddress}, ${barangay}, ${city}, Cebu, Philippines`;
+					const response = await fetch(
+						`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+							query
+						)}&format=json&limit=1`
+					);
+					const data = await response.json();
+					if (data.length > 0) {
+						const customerCoords = {
+							lat: parseFloat(data[0].lat),
+							lng: parseFloat(data[0].lon),
 						};
+						const dist = haversineDistance(storeLocation, customerCoords);
+						setDistance(dist);
+						let fee = 0;
+						if (dist <= 10) {
+							fee = 15 + dist * 2;
+						} else if (dist > 10 && dist <= 20) {
+							fee = 25 + dist * 3;
+						} else {
+							fee = 50 + dist * 4;
+						}
+						setDeliveryFee(Math.round(fee));
+						return;
 					}
-				} catch (e) {
-					console.error("Error fetching city coordinates:", e);
-					toast.error("Could not fetch city location data.");
+				} catch (error) {
+					console.error("Error fetching coordinates:", error);
+					toast.error("Could not fetch location data. Using fallback calculation.");
 				}
 			}
 
-			if (coords) {
-				const dist = haversineDistance(storeLocation, coords);
+			// Fallback calculation
+			const selectedCity = cebuAddresses.find((addr) => addr.name === city);
+			if (selectedCity) {
+				const dist = haversineDistance(storeLocation, selectedCity);
 				setDistance(dist);
 				let fee = 0;
 				if (dist <= 10) {
@@ -138,7 +107,7 @@ const CheckoutPage = () => {
 		return () => {
 			clearTimeout(handler);
 		};
-	}, [barangay, city, storeLocation]);
+	}, [streetAddress, barangay, city, storeLocation]);
 
 	useEffect(() => {
 		setFinalTotal(total + deliveryFee);
@@ -245,11 +214,13 @@ const CheckoutPage = () => {
 										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
 									>
 										<option value=''>Select a city</option>
-										{municipalities.map((m) => (
-											<option key={m.code} value={m.name}>
-												{m.name}
-											</option>
-										))}
+										{cebuAddresses
+											.filter((addr) => !addr.isStore)
+											.map((addr) => (
+												<option key={addr.name} value={addr.name}>
+													{addr.name}
+												</option>
+											))}
 									</select>
 								</div>
 								<div>
@@ -264,9 +235,9 @@ const CheckoutPage = () => {
 										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
 									>
 										<option value=''>Select a barangay</option>
-										{barangays.map((b) => (
-											<option key={b.code} value={b.name}>
-												{b.name}
+										{cebuBarangays.map((b) => (
+											<option key={b} value={b}>
+												{b}
 											</option>
 										))}
 									</select>
@@ -298,7 +269,6 @@ const CheckoutPage = () => {
 										value={postalCode}
 										onChange={(e) => setPostalCode(e.target.value)}
 										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
-										readOnly
 									/>
 								</div>
 							</div>
