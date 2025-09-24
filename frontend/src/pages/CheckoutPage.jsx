@@ -63,6 +63,7 @@ const CheckoutPage = () => {
 				if (selectedCity) {
 					const data = await getBarangays(selectedCity.code);
 					setBarangays(data);
+					setPostalCode(selectedCity.zip_code || "");
 				}
 			}
 		};
@@ -295,6 +296,7 @@ const CheckoutPage = () => {
 										value={postalCode}
 										onChange={(e) => setPostalCode(e.target.value)}
 										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+										readOnly
 									/>
 								</div>
 							</div>
