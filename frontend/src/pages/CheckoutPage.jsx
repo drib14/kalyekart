@@ -243,7 +243,7 @@ const CheckoutPage = () => {
 									>
 										<option value=''>Select a city</option>
 										{municipalities.map((m) => (
-											<option key={m.psgc_id} value={m.name}>
+											<option key={m.code} value={m.name}>
 												{m.name}
 											</option>
 										))}
@@ -262,7 +262,7 @@ const CheckoutPage = () => {
 									>
 										<option value=''>Select a barangay</option>
 										{barangays.map((b) => (
-											<option key={b.psgc_id} value={b.name}>
+											<option key={b.code} value={b.name}>
 												{b.name}
 											</option>
 										))}
