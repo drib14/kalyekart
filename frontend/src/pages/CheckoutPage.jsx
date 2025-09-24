@@ -146,7 +146,7 @@ const CheckoutPage = () => {
 
 	const { mutate: createCodOrder, isPending } = useMutation({
 		mutationFn: (data) => {
-			return axios.post("/api/orders/cod", data);
+			return axios.post("/orders/cod", data);
 		},
 		onSuccess: (data) => {
 			navigate(`/purchase-success`, { state: { cod: true, orderId: data.data.orderId } });
