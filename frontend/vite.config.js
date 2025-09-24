@@ -13,6 +13,9 @@ export default defineConfig({
 				target: "https://nominatim.openstreetmap.org",
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/nominatim/, ""),
+				headers: {
+					"User-Agent": "Cebu-Delivery-App/1.0",
+				},
 			},
 		},
 	},
