@@ -61,7 +61,7 @@ const CheckoutPage = () => {
 			if (city) {
 				const selectedCity = municipalities.find((m) => m.name === city);
 				if (selectedCity) {
-					const data = await getBarangays(selectedCity.psgc_id);
+					const data = await getBarangays(selectedCity.code);
 					setBarangays(data);
 				}
 			}
@@ -69,62 +69,73 @@ const CheckoutPage = () => {
 		fetchBarangays();
 	}, [city, municipalities]);
 
-	const calculateFee = async () => {
-		if (!streetAddress || !barangay || !city) {
-			toast.error("Please fill in all address fields to calculate the delivery fee.");
-			return;
-		}
-
-		let coords = null;
-		try {
-			const query = `${streetAddress}, ${barangay}, ${city}, Cebu, Philippines`;
-			const data = await getCoordinates(query);
-			if (data.length > 0) {
-				coords = {
-					lat: parseFloat(data[0].lat),
-					lng: parseFloat(data[0].lon),
-				};
+	useEffect(() => {
+		const calculateFee = async () => {
+			if (!streetAddress || !barangay || !city) {
+				setDeliveryFee(0);
+				setDistance(0);
+				return;
 			}
-		} catch (e) {
-			console.error("Error fetching coordinates:", e);
-			toast.error("Could not fetch location data. Using fallback calculation.");
-		}
 
-		if (!coords) {
-			// Fallback to city
+			let coords = null;
 			try {
-				toast.error("Could not find the exact address. Using city center for delivery fee calculation.");
-				const cityQuery = `${city}, Cebu, Philippines`;
-				const cityData = await getCoordinates(cityQuery);
-				if (cityData.length > 0) {
+				const query = `${streetAddress}, ${barangay}, ${city}, Cebu, Philippines`;
+				const data = await getCoordinates(query);
+				if (data.length > 0) {
 					coords = {
-						lat: parseFloat(cityData[0].lat),
-						lng: parseFloat(cityData[0].lon),
+						lat: parseFloat(data[0].lat),
+						lng: parseFloat(data[0].lon),
 					};
 				}
 			} catch (e) {
-				console.error("Error fetching city coordinates:", e);
-				toast.error("Could not fetch city location data.");
+				console.error("Error fetching coordinates:", e);
+				toast.error("Could not fetch location data. Using fallback calculation.");
 			}
-		}
 
-		if (coords) {
-			const dist = haversineDistance(storeLocation, coords);
-			setDistance(dist);
-			let fee = 0;
-			if (dist <= 10) {
-				fee = 15 + dist * 2;
-			} else if (dist > 10 && dist <= 20) {
-				fee = 25 + dist * 3;
-			} else {
-				fee = 50 + dist * 4;
+			if (!coords) {
+				// Fallback to city
+				try {
+					toast.error("Could not find the exact address. Using city center for delivery fee calculation.");
+					const cityQuery = `${city}, Cebu, Philippines`;
+					const cityData = await getCoordinates(cityQuery);
+					if (cityData.length > 0) {
+						coords = {
+							lat: parseFloat(cityData[0].lat),
+							lng: parseFloat(cityData[0].lon),
+						};
+					}
+				} catch (e) {
+					console.error("Error fetching city coordinates:", e);
+					toast.error("Could not fetch city location data.");
+				}
 			}
-			setDeliveryFee(Math.round(fee));
-		} else {
-			setDeliveryFee(0);
-			setDistance(0);
-		}
-	};
+
+			if (coords) {
+				const dist = haversineDistance(storeLocation, coords);
+				setDistance(dist);
+				let fee = 0;
+				if (dist <= 10) {
+					fee = 15 + dist * 2;
+				} else if (dist > 10 && dist <= 20) {
+					fee = 25 + dist * 3;
+				} else {
+					fee = 50 + dist * 4;
+				}
+				setDeliveryFee(Math.round(fee));
+			} else {
+				setDeliveryFee(0);
+				setDistance(0);
+			}
+		};
+
+		const handler = setTimeout(() => {
+			calculateFee();
+		}, 1000); // Debounce for 1 second
+
+		return () => {
+			clearTimeout(handler);
+		};
+	}, [streetAddress, barangay, city, storeLocation]);
 
 	useEffect(() => {
 		setFinalTotal(total + deliveryFee);
@@ -302,20 +313,6 @@ const CheckoutPage = () => {
 								/>
 							</div>
 
-							<div>
-								<button
-									type='button'
-									onClick={calculateFee}
-									className='w-full flex justify-center py-3 px-4 border border-transparent
-									rounded-md shadow-sm text-lg font-medium text-white bg-blue-600
-									 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2
-									  focus:ring-blue-500 transition duration-150 ease-in-out disabled:opacity-50'
-									disabled={!streetAddress || !barangay || !city}
-								>
-									Calculate Delivery Fee
-								</button>
-							</div>
-
 							<div className='pt-6'>
 								<button
 									type='submit'
@@ -323,7 +320,7 @@ const CheckoutPage = () => {
 									rounded-md shadow-sm text-lg font-medium text-white bg-emerald-600
 									 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2
 									  focus:ring-emerald-500 transition duration-150 ease-in-out disabled:opacity-50'
-									disabled={isPending || cart.length === 0 || deliveryFee === 0}
+									disabled={isPending || cart.length === 0}
 								>
 									{isPending ? <LoadingSpinner /> : "Place Order (Cash on Delivery)"}
 								</button>

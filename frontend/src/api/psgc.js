@@ -7,21 +7,18 @@ export const getRegions = async () => {
 	return response.data;
 };
 
-export const getProvinces = async (regionId) => {
-	const response = await axios.get(`${API_URL}/regions/${regionId}/provinces`);
-	return response.data;
+// NOTE: This API fetches all municipalities and filters them on the client side.
+// This is not ideal, but it is a limitation of the psgc.cloud API.
+export const getMunicipalities = async (provinceCode) => {
+	const response = await axios.get(`${API_URL}/municipalities`);
+	const provincePrefix = provinceCode.substring(0, 4); // e.g., "0722"
+	return response.data.filter((m) => m.code.startsWith(provincePrefix));
 };
 
-export const getMunicipalities = async (provinceId) => {
-	const response = await axios.get(
-		`${API_URL}/provinces/${provinceId}/municipalities`
-	);
-	return response.data;
-};
-
-export const getBarangays = async (municipalityId) => {
-	const response = await axios.get(
-		`${API_URL}/municipalities/${municipalityId}/barangays`
-	);
-	return response.data;
+// NOTE: This API fetches all barangays and filters them on the client side.
+// This is not ideal, but it is a limitation of the psgc.cloud API.
+export const getBarangays = async (municipalityCode) => {
+	const response = await axios.get(`${API_URL}/barangays`);
+	const municipalityPrefix = municipalityCode.substring(0, 6); // e.g., "072217"
+	return response.data.filter((b) => b.code.startsWith(municipalityPrefix));
 };
