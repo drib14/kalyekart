@@ -7,7 +7,7 @@ import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getCitiesAndMunicipalities, getBarangays } from "../api/psgc";
+import { getCebuCitiesAndMunicipalities, getBarangays } from "../api/psgc";
 import { getCoordinates } from "../api/openstreetmap";
 
 const CheckoutPage = () => {
@@ -49,11 +49,11 @@ const CheckoutPage = () => {
 	};
 
 	useEffect(() => {
-		const fetchCitiesAndMunicipalities = async () => {
-			const data = await getCitiesAndMunicipalities("0702200000");
+		const fetchCebuCitiesAndMunicipalities = async () => {
+			const data = await getCebuCitiesAndMunicipalities();
 			setMunicipalities(data);
 		};
-		fetchCitiesAndMunicipalities();
+		fetchCebuCitiesAndMunicipalities();
 	}, []);
 
 	useEffect(() => {

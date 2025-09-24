@@ -7,14 +7,24 @@ export const getRegions = async () => {
 	return response.data;
 };
 
-// NOTE: This API fetches all cities and municipalities and filters them on the client side.
-// This is not ideal, but it is a limitation of the psgc.cloud API.
-export const getCitiesAndMunicipalities = async (provinceCode) => {
+// NOTE: This function is specifically designed to get all cities and municipalities in Cebu.
+// It fetches all cities and municipalities and filters them based on the known PSGC codes for Cebu.
+export const getCebuCitiesAndMunicipalities = async () => {
 	const municipalitiesResponse = await axios.get(`${API_URL}/municipalities`);
 	const citiesResponse = await axios.get(`${API_URL}/cities`);
 	const combined = [...municipalitiesResponse.data, ...citiesResponse.data];
-	const provincePrefix = provinceCode.substring(0, 4); // e.g., "0722"
-	const filtered = combined.filter((m) => m.code.startsWith(provincePrefix));
+	const cebuProvincePrefix = "0722";
+	const cebuCityCode = "0730600000";
+	const mandaueCityCode = "0731300000";
+	const lapuLapuCityCode = "0731100000";
+
+	const filtered = combined.filter(
+		(m) =>
+			m.code.startsWith(cebuProvincePrefix) ||
+			m.code === cebuCityCode ||
+			m.code === mandaueCityCode ||
+			m.code === lapuLapuCityCode
+	);
 	return filtered.sort((a, b) => a.name.localeCompare(b.name));
 };
 
