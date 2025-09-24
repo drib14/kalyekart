@@ -33,5 +33,8 @@ export const getCebuCitiesAndMunicipalities = async () => {
 export const getBarangays = async (municipalityCode) => {
 	const response = await axios.get(`${API_URL}/barangays`);
 	const municipalityPrefix = municipalityCode.substring(0, 6); // e.g., "072217"
-	return response.data.filter((b) => b.code.startsWith(municipalityPrefix));
+	const filtered = response.data.filter((b) =>
+		b.code.startsWith(municipalityPrefix)
+	);
+	return filtered.sort((a, b) => a.name.localeCompare(b.name));
 };
