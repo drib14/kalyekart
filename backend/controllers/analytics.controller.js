@@ -3,35 +3,47 @@ import Product from "../models/product.model.js";
 import User from "../models/user.model.js";
 
 export const getAnalyticsData = async () => {
-	const totalUsers = await User.countDocuments({ role: "customer" });
-	const totalProducts = await Product.countDocuments();
+	try {
+		const totalUsers = await User.countDocuments({ role: "customer" });
+		const totalProducts = await Product.countDocuments();
 
-	const salesData = await Order.aggregate([
-		{
-			$match: { status: "delivered" },
-		},
-		{
-			$group: {
-				_id: null,
-				totalSales: { $sum: 1 },
-				totalRevenue: { $sum: "$totalAmount" },
+		const salesData = await Order.aggregate([
+			{
+				$match: { status: "delivered" },
 			},
-		},
-	]);
+			{
+				$group: {
+					_id: null,
+					totalSales: { $sum: 1 },
+					totalRevenue: { $sum: "$totalAmount" },
+				},
+			},
+		]);
 
-	const cancelledOrders = await Order.countDocuments({ status: "cancelled" });
-	const refundedOrders = await Order.countDocuments({ "refundRequest.status": "approved" });
+		const cancelledOrders = await Order.countDocuments({ status: "cancelled" });
+		const refundedOrders = await Order.countDocuments({ "refundRequest.status": "approved" });
 
-	const { totalSales, totalRevenue } = salesData[0] || { totalSales: 0, totalRevenue: 0 };
+		const { totalSales, totalRevenue } = salesData[0] || { totalSales: 0, totalRevenue: 0 };
 
-	return {
-		users: totalUsers,
-		products: totalProducts,
-		totalSales,
-		totalRevenue,
-		cancelledOrders,
-		refundedOrders,
-	};
+		return {
+			users: totalUsers,
+			products: totalProducts,
+			totalSales,
+			totalRevenue,
+			cancelledOrders,
+			refundedOrders,
+		};
+	} catch (error) {
+		console.error("Error in getAnalyticsData:", error);
+		return {
+			users: 0,
+			products: 0,
+			totalSales: 0,
+			totalRevenue: 0,
+			cancelledOrders: 0,
+			refundedOrders: 0,
+		};
+	}
 };
 
 export const getDailySalesData = async (startDate, endDate) => {

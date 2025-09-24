@@ -304,26 +304,28 @@ const CheckoutPage = () => {
 					<div className='bg-gray-800 p-8 rounded-lg shadow-lg'>
 						<h2 className='text-2xl font-bold text-white mb-6'>Order Summary</h2>
 						<div className='space-y-4'>
-							{cart.map((item) => (
-								<div key={item.product._id} className='flex items-center justify-between'>
-									<div className='flex items-center'>
-										<img
-											src={item.product.image}
-											alt={item.product.name}
-											className='w-16 h-16 object-cover rounded-md mr-4'
-										/>
-										<div>
-											<p className='font-medium text-white'>{item.product.name}</p>
-											<p className='text-sm text-gray-400'>
-												{item.quantity} x ₱{item.product.price.toFixed(2)}
-											</p>
+							{cart
+								.filter((item) => item && item.product)
+								.map((item) => (
+									<div key={item.product._id} className='flex items-center justify-between'>
+										<div className='flex items-center'>
+											<img
+												src={item.product.image}
+												alt={item.product.name}
+												className='w-16 h-16 object-cover rounded-md mr-4'
+											/>
+											<div>
+												<p className='font-medium text-white'>{item.product.name}</p>
+												<p className='text-sm text-gray-400'>
+													{item.quantity} x ₱{item.product.price.toFixed(2)}
+												</p>
+											</div>
 										</div>
+										<p className='font-medium text-white'>
+											₱{(item.quantity * item.product.price).toFixed(2)}
+										</p>
 									</div>
-									<p className='font-medium text-white'>
-										₱{(item.quantity * item.product.price).toFixed(2)}
-									</p>
-								</div>
-							))}
+								))}
 						</div>
 						<div className='border-t border-gray-700 my-6' />
 						<div className='space-y-2'>
