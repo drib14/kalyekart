@@ -27,7 +27,7 @@ export const createCodOrder = async (req, res) => {
 		}
 		const distance = calculateHaversineDistance(WAREHOUSE_COORDINATES.lat, WAREHOUSE_COORDINATES.lon, coordinates.lat, coordinates.lon);
 		const baseFee = 15;
-		const feePerKm = 8;
+		const feePerKm = 5;
 		const deliveryFee = Math.round(baseFee + (distance * feePerKm));
 		const totalAmount = subtotal + deliveryFee;
 
@@ -139,7 +139,7 @@ export const createStripeCheckoutSession = async (req, res) => {
 		}
 		const distance = calculateHaversineDistance(WAREHOUSE_COORDINATES.lat, WAREHOUSE_COORDINATES.lon, coordinates.lat, coordinates.lon);
 		const baseFee = 15;
-		const feePerKm = 8;
+		const feePerKm = 5;
 		const deliveryFee = Math.round(baseFee + (distance * feePerKm));
 		const totalAmount = subtotal + deliveryFee;
 

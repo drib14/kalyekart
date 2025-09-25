@@ -54,7 +54,7 @@ router.post("/calculate-fee", async (req, res) => {
 
         // Updated fee model
         const baseFee = 15; // Base fare
-        const feePerKm = 8;  // Per-km charge
+        const feePerKm = 5;  // Per-km charge
         const deliveryFee = Math.round(baseFee + (distance * feePerKm));
 
         res.json({ deliveryFee, distance: distance.toFixed(2) });
