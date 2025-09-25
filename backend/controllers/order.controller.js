@@ -4,6 +4,7 @@ import Product from "../models/product.model.js";
 import { stripe } from "../lib/stripe.js";
 import { v4 as uuidv4 } from "uuid";
 import cloudinary from "../lib/cloudinary.js";
+import { getDeliveryDetails } from "../lib/distance.js";
 
 export const createCodOrder = async (req, res) => {
 	try {
@@ -13,10 +14,13 @@ export const createCodOrder = async (req, res) => {
 			contactNumber,
 			couponCode,
 			subtotal,
-			deliveryFee,
-			distance,
-			totalAmount,
 		} = req.body;
+
+		const deliveryDetails = getDeliveryDetails(shippingAddress.city);
+		if (deliveryDetails === null) {
+			return res.status(400).json({ message: "Invalid shipping address" });
+		}
+		const { distance, deliveryFee } = deliveryDetails;
 
 		const newOrder = new Order({
 			user: req.user._id,
@@ -34,7 +38,7 @@ export const createCodOrder = async (req, res) => {
 			subtotal,
 			deliveryFee,
 			distance,
-			totalAmount,
+			totalAmount: subtotal + deliveryFee,
 		});
 
 		await newOrder.save();
@@ -68,9 +72,15 @@ export const getOrderById = async (req, res) => {
 
 export const createStripeCheckoutSession = async (req, res) => {
 	try {
-		const { products, shippingAddress, contactNumber, couponCode, subtotal, deliveryFee, distance, totalAmount } =
+		const { products, shippingAddress, contactNumber, couponCode, subtotal } =
 			req.body;
 		const idempotencyKey = uuidv4();
+
+		const deliveryDetails = getDeliveryDetails(shippingAddress.city);
+		if (deliveryDetails === null) {
+			return res.status(400).json({ message: "Invalid shipping address" });
+		}
+		const { distance, deliveryFee } = deliveryDetails;
 
 		const line_items = products.map((product) => ({
 			price_data: {
@@ -83,6 +93,17 @@ export const createStripeCheckoutSession = async (req, res) => {
 			},
 			quantity: product.quantity,
 		}));
+
+		line_items.push({
+			price_data: {
+				currency: "php",
+				product_data: {
+					name: "Delivery Fee",
+				},
+				unit_amount: deliveryFee * 100,
+			},
+			quantity: 1,
+		});
 
 		const session = await stripe.checkout.sessions.create(
 			{
@@ -108,7 +129,7 @@ export const createStripeCheckoutSession = async (req, res) => {
 					subtotal,
 					deliveryFee,
 					distance,
-					totalAmount,
+					totalAmount: subtotal + deliveryFee,
 				},
 			},
 			{ idempotencyKey }

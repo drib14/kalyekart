@@ -15,7 +15,7 @@ export const submitFeedback = async (req, res) => {
 
 	const mailOptions = {
 		from: `"Kalyekart Feedback" <${process.env.EMAIL_USER}>`,
-		to: "jhondribramirez7@gmail.com, kalyekart@gmail.com",
+		to: process.env.EMAIL_USER,
 		subject: "New Feedback Submission",
 		html: `
 			<h1>New Feedback Submission</h1>
