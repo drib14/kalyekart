@@ -28,7 +28,7 @@ const CheckoutPage = () => {
 	useEffect(() => {
 		const fetchLocations = async () => {
 			try {
-				const response = await axios.get("/api/delivery/locations");
+				const response = await axios.get("/delivery/locations");
 				setLocations(response.data);
 			} catch (error) {
 				toast.error("Failed to fetch locations.");
@@ -42,7 +42,7 @@ const CheckoutPage = () => {
 		if (city) {
 			const fetchFee = async () => {
 				try {
-					const response = await axios.post("/api/delivery/calculate-fee", {
+					const response = await axios.post("/delivery/calculate-fee", {
 						shippingAddress: { city },
 					});
 					setDeliveryFee(response.data.deliveryFee);
