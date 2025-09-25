@@ -3,39 +3,7 @@ import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import nodemailer from "nodemailer";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// --- Email Sending Utility ---
-const sendPasswordResetEmail = async (email, code) => {
-	const transporter = nodemailer.createTransport({
-		host: "smtp.gmail.com",
-		port: 465,
-		secure: true,
-		auth: {
-			user: process.env.EMAIL_USER,
-			pass: process.env.EMAIL_PASS,
-		},
-	});
-
-	const templatePath = path.join(__dirname, "../templates/passwordReset.html");
-	let htmlContent = fs.readFileSync(templatePath, "utf8");
-	htmlContent = htmlContent.replace("{{RESET_CODE}}", code);
-
-	const mailOptions = {
-		from: `"Kalyekart" <${process.env.EMAIL_USER}>`,
-		to: email,
-		subject: "Your Password Reset Code",
-		html: htmlContent,
-	};
-
-	await transporter.sendMail(mailOptions);
-};
+import { sendEmail } from "../lib/email.js";
 
 const generateTokens = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -83,6 +51,12 @@ export const signup = async (req, res) => {
 		await storeRefreshToken(user._id, refreshToken);
 
 		setCookies(res, accessToken, refreshToken);
+
+		// Send welcome email
+		await sendEmail(user.email, "Welcome to Kalyekart!", "welcome", {
+			USER_NAME: user.name,
+			CLIENT_URL: process.env.CLIENT_URL,
+		});
 
 		res.status(201).json({
 			_id: user._id,
@@ -156,9 +130,9 @@ export const forgotPassword = async (req, res) => {
 
 		await user.save();
 
-		// Hash the code before sending (or assume pre-save hook handles it if configured)
-		// For this implementation, let's just send the plain code
-		await sendPasswordResetEmail(user.email, resetCode);
+		await sendEmail(user.email, "Your Password Reset Code", "passwordReset", {
+			RESET_CODE: resetCode,
+		});
 
 		res.status(200).json({ message: "A password reset code has been sent to your email." });
 

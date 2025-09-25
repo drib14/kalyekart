@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Kalyekart Order Update</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #10B981;
+            color: #ffffff;
+            padding: 10px 20px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #10B981;
+        }
+        .status-badge {
+            display: inline-block;
+            background-color: #e0f2f1;
+            color: #10B981;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #10B981;
+            color: #ffffff;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Kalyekart</h1>
+        </div>
+        <div class="content">
+            <h2>Order Update for {{USER_NAME}}</h2>
+            <p>We have an update on your order #{{ORDER_ID}}. The status is now:</p>
+            <div style="text-align:center;">
+                <span class="status-badge">{{ORDER_STATUS}}</span>
+            </div>
+            <p style="margin-top: 20px;">{{STATUS_MESSAGE}}</p>
+            <div style="text-align:center; margin-top: 30px;">
+                <a href="{{CLIENT_URL}}/my-orders" class="button">Track My Order</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 Kalyekart. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

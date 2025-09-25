@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import cloudinary from "../lib/cloudinary.js";
 
 import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
+import { sendEmail } from "../lib/email.js";
 
 const WAREHOUSE_COORDINATES = { lat: 10.2983, lon: 123.8991 }; // USC Main Campus (for Pungko-pungko sa salazar)
 
@@ -54,6 +55,32 @@ export const createCodOrder = async (req, res) => {
 		const user = await User.findById(req.user._id);
 		user.cartItems = [];
 		await user.save();
+
+		// Send order confirmation email
+		const orderItemsHtml = newOrder.products
+			.map(
+				(item) => `
+			<tr>
+				<td>${item.name}</td>
+				<td>${item.quantity}</td>
+				<td>₱${item.price.toFixed(2)}</td>
+			</tr>
+		`
+			)
+			.join("");
+
+		await sendEmail(
+			user.email,
+			`Your Kalyekart Order #${newOrder._id} is Confirmed!`,
+			"orderConfirmation",
+			{
+				USER_NAME: user.name,
+				ORDER_ID: newOrder._id,
+				ORDER_ITEMS: orderItemsHtml,
+				TOTAL_AMOUNT: `₱${newOrder.totalAmount.toFixed(2)}`,
+				CLIENT_URL: process.env.CLIENT_URL,
+			}
+		);
 
 		res.status(201).json({ message: "Order created successfully", orderId: newOrder._id });
 	} catch (error) {
@@ -225,13 +252,70 @@ export const updateOrderStatus = async (req, res) => {
 		const { orderId } = req.params;
 		const { status } = req.body;
 
-		const order = await Order.findById(orderId);
+		const order = await Order.findById(orderId).populate("user", "name email");
 		if (!order) {
 			return res.status(404).json({ message: "Order not found" });
 		}
 
 		order.status = status;
 		await order.save();
+
+		// --- Send Order Update Email ---
+		const statusMessages = {
+			Processing: "Your order is being processed and prepared for shipment.",
+			Shipped: "Your order has been shipped and is on its way to you.",
+			"Out for Delivery": "Your order is out for delivery and should arrive soon.",
+			Delivered: "Your order has been delivered. Thank you for shopping with us!",
+			Cancelled: "Your order has been cancelled.",
+		};
+
+		await sendEmail(
+			order.user.email,
+			`Your Kalyekart Order Status is now: ${status}`,
+			"orderUpdate",
+			{
+				USER_NAME: order.user.name,
+				ORDER_ID: order._id,
+				ORDER_STATUS: status,
+				STATUS_MESSAGE: statusMessages[status] || "Your order status has been updated.",
+				CLIENT_URL: process.env.CLIENT_URL,
+			}
+		);
+
+		// --- Send Virtual Receipt on Delivery ---
+		if (status === "Delivered") {
+			const orderItemsHtml = order.products
+				.map(
+					(item) => `
+				<tr>
+					<td>${item.name}</td>
+					<td>${item.quantity}</td>
+					<td>₱${item.price.toFixed(2)}</td>
+				</tr>
+			`
+				)
+				.join("");
+
+			await sendEmail(
+				order.user.email,
+				`Your Receipt for Kalyekart Order #${order._id}`,
+				"virtualReceipt",
+				{
+					USER_NAME: order.user.name,
+					ORDER_ID: order._id,
+					ORDER_ITEMS: orderItemsHtml,
+					TOTAL_AMOUNT: `₱${order.totalAmount.toFixed(2)}`,
+					PAYMENT_METHOD: order.paymentMethod.toUpperCase(),
+					TRANSACTION_ID: order.paymentIntentId || order._id, // Use paymentIntentId if available, otherwise orderId
+					DATE: new Date(order.createdAt).toLocaleDateString("en-US", {
+						year: "numeric",
+						month: "long",
+						day: "numeric",
+					}),
+				}
+			);
+		}
+
 		res.json(order);
 	} catch (error) {
 		console.log("Error in updateOrderStatus controller", error.message);

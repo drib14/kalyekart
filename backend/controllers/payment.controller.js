@@ -1,6 +1,8 @@
 import Coupon from "../models/coupon.model.js";
 import Order from "../models/order.model.js";
+import User from "../models/user.model.js";
 import { stripe } from "../lib/stripe.js";
+import { sendEmail } from "../lib/email.js";
 
 export const createCheckoutSession = async (req, res) => {
 	try {
@@ -56,6 +58,7 @@ export const createCheckoutSession = async (req, res) => {
 				products: JSON.stringify(
 					products.map((p) => ({
 						id: p._id,
+						name: p.name,
 						quantity: p.quantity,
 						price: p.price,
 					}))
@@ -103,6 +106,7 @@ export const checkoutSuccess = async (req, res) => {
 				user: session.metadata.userId,
 				products: products.map((product) => ({
 					product: product.id,
+					name: product.name,
 					quantity: product.quantity,
 					price: product.price,
 				})),
@@ -114,6 +118,33 @@ export const checkoutSuccess = async (req, res) => {
 			});
 
 			await newOrder.save();
+
+			// --- Send Order Confirmation Email for Stripe ---
+			const user = await User.findById(session.metadata.userId);
+			const orderItemsHtml = newOrder.products
+				.map(
+					(item) => `
+				<tr>
+					<td>${item.name}</td>
+					<td>${item.quantity}</td>
+					<td>₱${item.price.toFixed(2)}</td>
+				</tr>
+			`
+				)
+				.join("");
+
+			await sendEmail(
+				user.email,
+				`Your Kalyekart Order #${newOrder._id} is Confirmed!`,
+				"orderConfirmation",
+				{
+					USER_NAME: user.name,
+					ORDER_ID: newOrder._id,
+					ORDER_ITEMS: orderItemsHtml,
+					TOTAL_AMOUNT: `₱${newOrder.totalAmount.toFixed(2)}`,
+					CLIENT_URL: process.env.CLIENT_URL,
+				}
+			);
 
 			res.status(200).json({
 				success: true,
