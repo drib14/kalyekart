@@ -4,7 +4,15 @@ import Product from "../models/product.model.js";
 import { stripe } from "../lib/stripe.js";
 import { v4 as uuidv4 } from "uuid";
 import cloudinary from "../lib/cloudinary.js";
-import { getDeliveryDetails } from "../lib/distance.js";
+import {
+	getCoordinates,
+	calculateDistance,
+} from "../services/location.service.js";
+
+const WAREHOUSE_COORDINATES = {
+	lat: 10.3157,
+	lon: 123.8854,
+}; // Cebu City coordinates
 
 export const createCodOrder = async (req, res) => {
 	try {
@@ -16,11 +24,22 @@ export const createCodOrder = async (req, res) => {
 			subtotal,
 		} = req.body;
 
-		const deliveryDetails = getDeliveryDetails(shippingAddress.city);
-		if (deliveryDetails === null) {
-			return res.status(400).json({ message: "Invalid shipping address" });
+		const address = `${shippingAddress.street}, ${shippingAddress.barangay}, ${shippingAddress.city}, Cebu`;
+		const coordinates = await getCoordinates(address);
+		if (!coordinates) {
+			return res.status(400).json({ message: "Could not find location" });
 		}
-		const { distance, deliveryFee } = deliveryDetails;
+
+		const distance = calculateDistance(
+			WAREHOUSE_COORDINATES.lat,
+			WAREHOUSE_COORDINATES.lon,
+			coordinates.lat,
+			coordinates.lon
+		);
+
+		const baseFee = 50;
+		const feePerKm = 10;
+		const deliveryFee = baseFee + distance * feePerKm;
 
 		const newOrder = new Order({
 			user: req.user._id,
@@ -36,8 +55,8 @@ export const createCodOrder = async (req, res) => {
 			paymentStatus: "pending",
 			couponCode,
 			subtotal,
-			deliveryFee,
-			distance,
+			deliveryFee: deliveryFee,
+			distance: distance,
 			totalAmount: subtotal + deliveryFee,
 		});
 
@@ -76,11 +95,22 @@ export const createStripeCheckoutSession = async (req, res) => {
 			req.body;
 		const idempotencyKey = uuidv4();
 
-		const deliveryDetails = getDeliveryDetails(shippingAddress.city);
-		if (deliveryDetails === null) {
-			return res.status(400).json({ message: "Invalid shipping address" });
+		const address = `${shippingAddress.street}, ${shippingAddress.barangay}, ${shippingAddress.city}, Cebu`;
+		const coordinates = await getCoordinates(address);
+		if (!coordinates) {
+			return res.status(400).json({ message: "Could not find location" });
 		}
-		const { distance, deliveryFee } = deliveryDetails;
+
+		const distance = calculateDistance(
+			WAREHOUSE_COORDINATES.lat,
+			WAREHOUSE_COORDINATES.lon,
+			coordinates.lat,
+			coordinates.lon
+		);
+
+		const baseFee = 50;
+		const feePerKm = 10;
+		const deliveryFee = baseFee + distance * feePerKm;
 
 		const line_items = products.map((product) => ({
 			price_data: {
@@ -127,8 +157,8 @@ export const createStripeCheckoutSession = async (req, res) => {
 					paymentMethod: "card",
 					couponCode,
 					subtotal,
-					deliveryFee,
-					distance,
+					deliveryFee: deliveryFee,
+					distance: distance,
 					totalAmount: subtotal + deliveryFee,
 				},
 			},

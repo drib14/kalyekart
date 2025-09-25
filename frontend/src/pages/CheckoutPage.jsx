@@ -7,9 +7,6 @@ import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getCebuCitiesAndMunicipalities, getBarangays } from "../api/psgc";
-import { getCoordinates } from "../api/openstreetmap";
-
 const CheckoutPage = () => {
 	const { cart, subtotal, total, coupon } = useCartStore();
 	const { user } = useUserStore();
@@ -24,121 +21,68 @@ const CheckoutPage = () => {
 	const [contactNumber, setContactNumber] = useState(user?.phoneNumber || "");
 	const [deliveryFee, setDeliveryFee] = useState(0);
 	const [finalTotal, setFinalTotal] = useState(total);
-	const [customerCoords, setCustomerCoords] = useState(null);
-	const [distance, setDistance] = useState(0);
 
+	const [cities, setCities] = useState([]);
 	const [municipalities, setMunicipalities] = useState([]);
 	const [barangays, setBarangays] = useState([]);
 
-	const storeLocation = { lat: 10.3085, lng: 123.883 }; // Hardcoded store location
-
-	const haversineDistance = (coords1, coords2) => {
-		const toRad = (x) => (x * Math.PI) / 180;
-		const R = 6371; // Earth radius in km
-
-		const dLat = toRad(coords2.lat - coords1.lat);
-		const dLon = toRad(coords2.lng - coords1.lng);
-		const lat1 = toRad(coords1.lat);
-		const lat2 = toRad(coords2.lat);
-
-		const a =
-			Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-			Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
-		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-		return R * c; // Distance in km
-	};
-
 	useEffect(() => {
-		const fetchCebuCitiesAndMunicipalities = async () => {
-			const data = await getCebuCitiesAndMunicipalities();
-			setMunicipalities(data);
+		const fetchCitiesAndMunicipalities = async () => {
+			try {
+				const [citiesRes, municipalitiesRes] = await Promise.all([
+					axios.get("/locations/cities"),
+					axios.get("/locations/municipalities"),
+				]);
+				setCities(citiesRes.data);
+				setMunicipalities(municipalitiesRes.data);
+			} catch (error) {
+				toast.error("Could not fetch locations");
+			}
 		};
-		fetchCebuCitiesAndMunicipalities();
+		fetchCitiesAndMunicipalities();
 	}, []);
 
 	useEffect(() => {
 		const fetchBarangays = async () => {
 			if (city) {
-				const selectedCity = municipalities.find((m) => m.name === city);
+				const selectedCity = [...cities, ...municipalities].find(
+					(m) => m.name === city
+				);
 				if (selectedCity) {
-					const data = await getBarangays(selectedCity.code);
-					setBarangays(data);
-					setPostalCode(selectedCity.zip_code || "");
+					try {
+						const res = await axios.get(
+							`/locations/barangays/${selectedCity.code}`
+						);
+						setBarangays(res.data);
+						setPostalCode(selectedCity.zip_code || "");
+					} catch (error) {
+						toast.error("Could not fetch barangays");
+					}
 				}
 			}
 		};
 		fetchBarangays();
-	}, [city, municipalities]);
+	}, [city, cities, municipalities]);
 
 	useEffect(() => {
-		const calculateFee = async () => {
-			if (!barangay || !city) {
-				setDeliveryFee(0);
-				setDistance(0);
-				return;
-			}
-
-			let coords = null;
-			try {
-				const cleanedCity = city.replace(/^(City of|Municipality of)\s*/, "");
-				const query = `${barangay}, ${cleanedCity}, Cebu, Philippines`;
-				const data = await getCoordinates(query);
-				if (data.length > 0) {
-					coords = {
-						lat: parseFloat(data[0].lat),
-						lng: parseFloat(data[0].lon),
-					};
-				}
-			} catch (e) {
-				console.error("Error fetching coordinates:", e);
-				toast.error("Could not fetch location data. Using fallback calculation.");
-			}
-
-			if (!coords) {
-				// Fallback to city
+		const calculateDeliveryFee = async () => {
+			if (streetAddress && city && barangay) {
 				try {
-					toast.error("Could not find the exact address. Using city center for delivery fee calculation.");
-					const cleanedCity = city.replace(/^(City of|Municipality of)\s*/, "");
-					const cityQuery = `${cleanedCity}, Cebu, Philippines`;
-					const cityData = await getCoordinates(cityQuery);
-					if (cityData.length > 0) {
-						coords = {
-							lat: parseFloat(cityData[0].lat),
-							lng: parseFloat(cityData[0].lon),
-						};
-					}
-				} catch (e) {
-					console.error("Error fetching city coordinates:", e);
-					toast.error("Could not fetch city location data.");
+					const res = await axios.post("/locations/delivery-fee", {
+						shippingAddress: {
+							street: streetAddress,
+							barangay,
+							city,
+						},
+					});
+					setDeliveryFee(res.data.deliveryFee);
+				} catch (error) {
+					toast.error("Could not calculate delivery fee");
 				}
 			}
-
-			if (coords) {
-				const dist = haversineDistance(storeLocation, coords);
-				setDistance(dist);
-				let fee = 0;
-				if (dist <= 10) {
-					fee = 15 + dist * 2;
-				} else if (dist > 10 && dist <= 20) {
-					fee = 25 + dist * 3;
-				} else {
-					fee = 50 + dist * 4;
-				}
-				setDeliveryFee(Math.round(fee));
-			} else {
-				setDeliveryFee(0);
-				setDistance(0);
-			}
 		};
-
-		const handler = setTimeout(() => {
-			calculateFee();
-		}, 1000); // Debounce for 1 second
-
-		return () => {
-			clearTimeout(handler);
-		};
-	}, [barangay, city, storeLocation]);
+		calculateDeliveryFee();
+	}, [streetAddress, city, barangay]);
 
 	useEffect(() => {
 		setFinalTotal(total + deliveryFee);
@@ -179,8 +123,6 @@ const CheckoutPage = () => {
 			contactNumber,
 			couponCode: coupon?.code,
 			subtotal,
-			deliveryFee,
-			distance,
 			totalAmount: finalTotal,
 		});
 	};
@@ -245,11 +187,13 @@ const CheckoutPage = () => {
 										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
 									>
 										<option value=''>Select a city</option>
-										{municipalities.map((m) => (
-											<option key={m.code} value={m.name}>
-												{m.name}
-											</option>
-										))}
+										{[...cities, ...municipalities]
+											.sort((a, b) => a.name.localeCompare(b.name))
+											.map((m) => (
+												<option key={m.code} value={m.name}>
+													{m.name}
+												</option>
+											))}
 									</select>
 								</div>
 								<div>
