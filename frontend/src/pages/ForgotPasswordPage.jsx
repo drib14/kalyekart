@@ -58,14 +58,14 @@ const ForgotPasswordPage = () => {
 									required
 									value={email}
 									onChange={(e) => setEmail(e.target.value)}
-									className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md'
+									className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-lg'
 									placeholder='you@example.com'
 								/>
 							</div>
 						</div>
 						<button
 							type='submit'
-							className='w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700'
+							className='w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700'
 							disabled={isRequesting}
 						>
 							{isRequesting ? <LoadingSpinner size='sm' /> : "Send Reset Code"}

@@ -7,6 +7,7 @@ import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Loader } from "lucide-react";
 
 const CheckoutPage = () => {
 	const { cart, subtotal, total, coupon } = useCartStore();
@@ -35,7 +36,7 @@ const CheckoutPage = () => {
 				const response = await axios.get("/locations/cities-municipalities");
 				setLocations(response.data);
 			} catch (error) {
-				toast.error("Failed to fetch locations.");
+				toast.error(error.response?.data?.message || "Failed to fetch locations.");
 			}
 		};
 		fetchLocations();
@@ -52,7 +53,7 @@ const CheckoutPage = () => {
 						setBarangays(response.data);
 						setPostalCode(selectedLocation.zip_code || "");
 					} catch (error) {
-						toast.error("Failed to fetch barangays.");
+						toast.error(error.response?.data?.message || "Failed to fetch barangays.");
 					}
 				};
 				fetchBarangays();
@@ -86,7 +87,7 @@ const CheckoutPage = () => {
 					});
 					setDeliveryFee(response.data.deliveryFee);
 				} catch (error) {
-					toast.error("Could not calculate delivery fee.");
+					toast.error(error.response?.data?.message || "Could not calculate delivery fee.");
 					setDeliveryFee(0);
 				}
 			}, 500);
@@ -146,7 +147,7 @@ const CheckoutPage = () => {
 						toast.error(`DEBUG: Could not match location. API Response: ${JSON.stringify(address)}`);
 					}
 				} catch (error) {
-					toast.error("Could not determine your address. Please enter it manually.");
+					toast.error(error.response?.data?.message || "Could not determine your address. Please enter it manually.");
 				} finally {
 					setIsLocating(false);
 				}
@@ -333,7 +334,11 @@ const CheckoutPage = () => {
 									  focus:ring-emerald-500 transition duration-150 ease-in-out disabled:opacity-50'
 									disabled={isPending || cart.length === 0}
 								>
-									{isPending ? <LoadingSpinner /> : "Place Order (Cash on Delivery)"}
+									{isPending ? (
+										<Loader className='animate-spin' />
+									) : (
+										"Place Order (Cash on Delivery)"
+									)}
 								</button>
 							</div>
 						</form>

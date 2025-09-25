@@ -1,20 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "../lib/axios";
-import LoadingSpinner from "../components/LoadingSpinner";
 import { motion } from "framer-motion";
-import { Mail, KeyRound, Lock } from "lucide-react";
+import { Mail, KeyRound, Lock, Loader } from "lucide-react";
 
 const ResetPasswordPage = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
 
-	// Get email from the previous page.
 	const email = location.state?.email;
 	const [code, setCode] = useState("");
 	const [password, setPassword] = useState("");
+
+	useEffect(() => {
+		if (!email) {
+			toast.error("Session expired. Please request a new password reset code.");
+			navigate("/forgot-password", { replace: true });
+		}
+	}, [email, navigate]);
 
 	const { mutate: resetPassword, isPending } = useMutation({
 		mutationFn: () => {
@@ -52,7 +57,7 @@ const ResetPasswordPage = () => {
 			>
 				<h2 className='mt-6 text-center text-3xl font-extrabold text-emerald-400'>Reset Your Password</h2>
 				<p className='mt-2 text-center text-sm text-gray-400'>
-					Enter your email, the reset code you received, and your new password.
+					Enter the code you received and your new password.
 				</p>
 			</motion.div>
 
@@ -68,11 +73,11 @@ const ResetPasswordPage = () => {
 							<label htmlFor='email' className='block text-sm font-medium text-gray-300'>
 								Email address
 							</label>
-							<div className='mt-1 relative rounded-md shadow-sm'>
+							<div className='mt-1 relative rounded-lg shadow-sm'>
 								<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
 									<Mail className='h-5 w-5 text-gray-400' aria-hidden='true' />
 								</div>
-								<p className='block w-full px-3 py-2 pl-10 bg-gray-900 border border-gray-700 rounded-md text-gray-300'>
+								<p className='block w-full px-3 py-2 pl-10 bg-gray-900 border border-gray-700 rounded-lg text-gray-300'>
 									{email || "No email provided"}
 								</p>
 							</div>
@@ -81,7 +86,7 @@ const ResetPasswordPage = () => {
 							<label htmlFor='code' className='block text-sm font-medium text-gray-300'>
 								Reset Code
 							</label>
-							<div className='mt-1 relative rounded-md shadow-sm'>
+							<div className='mt-1 relative rounded-lg shadow-sm'>
 								<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
 									<KeyRound className='h-5 w-5 text-gray-400' aria-hidden='true' />
 								</div>
@@ -91,7 +96,7 @@ const ResetPasswordPage = () => {
 									required
 									value={code}
 									onChange={(e) => setCode(e.target.value)}
-									className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md'
+									className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-lg'
 									placeholder='6-digit code'
 								/>
 							</div>
@@ -100,7 +105,7 @@ const ResetPasswordPage = () => {
 							<label htmlFor='password' className='block text-sm font-medium text-gray-300'>
 								New Password
 							</label>
-							<div className='mt-1 relative rounded-md shadow-sm'>
+							<div className='mt-1 relative rounded-lg shadow-sm'>
 								<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
 									<Lock className='h-5 w-5 text-gray-400' aria-hidden='true' />
 								</div>
@@ -110,17 +115,17 @@ const ResetPasswordPage = () => {
 									required
 									value={password}
 									onChange={(e) => setPassword(e.target.value)}
-									className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md'
+									className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-lg'
 									placeholder='New password'
 								/>
 							</div>
 						</div>
 						<button
 							type='submit'
-							className='w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700'
+							className='w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700'
 							disabled={isPending}
 						>
-							{isPending ? <LoadingSpinner size='sm' /> : "Reset Password"}
+							{isPending ? <Loader className='animate-spin' /> : "Reset Password"}
 						</button>
 					</form>
 				</div>

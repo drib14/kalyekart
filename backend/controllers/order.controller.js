@@ -391,22 +391,3 @@ export const getRefunds = async (req, res) => {
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
-
-export const updateRefundStatus = async (req, res) => {
-	try {
-		const { refundId } = req.params;
-		const { status } = req.body;
-
-		const order = await Order.findOne({ "refundRequest._id": refundId });
-		if (!order) {
-			return res.status(404).json({ message: "Refund request not found" });
-		}
-
-		order.refundRequest.status = status;
-		await order.save();
-		res.json(order);
-	} catch (error) {
-		console.log("Error in updateRefundStatus controller", error.message);
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
-};

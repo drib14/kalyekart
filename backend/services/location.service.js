@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 
-const PSGC_API_BASE_URL = process.env.PSGC_API_BASE_URL;
-const LOCATIONIQ_API_BASE_URL = process.env.LOCATIONIQ_API_BASE_URL;
+const PSGC_API_BASE_URL = process.env.PSGC_API_BASE_URL || "https://psgc.cloud/api";
+const LOCATIONIQ_API_BASE_URL = process.env.LOCATIONIQ_API_BASE_URL || "https://us1.locationiq.com/v1";
 const LOCATIONIQ_ACCESS_TOKEN = process.env.LOCATIONIQ_ACCESS_TOKEN;
 
 const CEBU_PROVINCE_CODE = "07022";
@@ -12,6 +12,10 @@ const HUC_CEBU_CODES = ["0730600000", "0731100000", "0731300000"]; // Cebu City,
  * Fetches all cities and municipalities for Cebu province.
  */
 export async function getCebuCitiesAndMunicipalities() {
+	if (!PSGC_API_BASE_URL) {
+		console.error("PSGC API Base URL is not configured.");
+		throw new Error("Server configuration error: Missing PSGC API URL.");
+	}
     try {
         const [citiesRes, munRes] = await Promise.all([
             fetch(`${PSGC_API_BASE_URL}/cities`),
@@ -36,6 +40,10 @@ export async function getCebuCitiesAndMunicipalities() {
  * Fetches all barangays for a given city or municipality code.
  */
 export async function getBarangays(cityOrMunCode) {
+	if (!PSGC_API_BASE_URL) {
+		console.error("PSGC API Base URL is not configured.");
+		throw new Error("Server configuration error: Missing PSGC API URL.");
+	}
     try {
         const response = await fetch(`${PSGC_API_BASE_URL}/cities/${cityOrMunCode}/barangays`);
         if (response.status === 404) { // It might be a municipality
@@ -53,9 +61,9 @@ export async function getBarangays(cityOrMunCode) {
  * Gets coordinates for a given address string.
  */
 export async function getCoordinates(address) {
-    if (!LOCATIONIQ_ACCESS_TOKEN) {
-        console.error("LocationIQ Access Token is not configured.");
-        throw new Error("Server configuration error: Missing LocationIQ token.");
+    if (!LOCATIONIQ_API_BASE_URL || !LOCATIONIQ_ACCESS_TOKEN) {
+        console.error("LocationIQ API credentials are not fully configured.");
+        throw new Error("Server configuration error: Missing LocationIQ credentials.");
     }
     try {
         const response = await fetch(
@@ -91,9 +99,9 @@ export function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
  * Gets address details for given coordinates using reverse geocoding.
  */
 export async function reverseGeocode(lat, lon) {
-    if (!LOCATIONIQ_ACCESS_TOKEN) {
-        console.error("LocationIQ Access Token is not configured.");
-        throw new Error("Server configuration error: Missing LocationIQ token.");
+    if (!LOCATIONIQ_API_BASE_URL || !LOCATIONIQ_ACCESS_TOKEN) {
+        console.error("LocationIQ API credentials are not fully configured.");
+        throw new Error("Server configuration error: Missing LocationIQ credentials.");
     }
     try {
         const response = await fetch(

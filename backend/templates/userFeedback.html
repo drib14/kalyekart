@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>We've Received Your Feedback!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #10B981;
+            color: #ffffff;
+            padding: 10px 20px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #10B981;
+        }
+        .feedback-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #10B981;
+            font-style: italic;
+            color: #555;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Kalyekart</h1>
+        </div>
+        <div class="content">
+            <h2>Thank You for Your Feedback, {{USER_NAME}}!</h2>
+            <p>We have successfully received your feedback and greatly appreciate you taking the time to share your thoughts with us. Your input is crucial in helping us improve our services.</p>
+            <p>Here is a copy of the feedback you submitted:</p>
+            <div class="feedback-box">
+                <p>"{{FEEDBACK_MESSAGE}}"</p>
+            </div>
+            <p>Our team will review your comments carefully. We are always working to make Kalyekart better for you!</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 Kalyekart. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

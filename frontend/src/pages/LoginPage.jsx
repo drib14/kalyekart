@@ -88,10 +88,7 @@ const LoginPage = () => {
 							disabled={loading}
 						>
 							{loading ? (
-								<>
-									<Loader className='mr-2 h-5 w-5 animate-spin' aria-hidden='true' />
-									Loading...
-								</>
+								<Loader className='animate-spin' />
 							) : (
 								<>
 									<LogIn className='mr-2 h-5 w-5' aria-hidden='true' />

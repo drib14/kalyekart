@@ -38,13 +38,13 @@ const AddonsModal = ({ onClose }) => {
 								<img
 									src={product.image}
 									alt={product.name}
-									className='w-full h-24 sm:h-32 object-cover rounded-md mb-2'
+									className='w-full h-24 sm:h-32 object-cover rounded-lg mb-2'
 								/>
 								<p className='font-medium text-white text-sm sm:text-base'>{product.name}</p>
 								<p className='text-xs sm:text-sm text-gray-400'>₱{product.price.toFixed(2)}</p>
 								<button
 									onClick={() => handleAddToCart(product)}
-									className='w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 sm:py-2 rounded-md text-sm'
+									className='w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 sm:py-2 rounded-lg text-sm'
 								>
 									Add to Cart
 								</button>
@@ -53,7 +53,7 @@ const AddonsModal = ({ onClose }) => {
 				</div>
 				<button
 					onClick={onClose}
-					className='w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-md'
+					className='w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg'
 				>
 					Close
 				</button>

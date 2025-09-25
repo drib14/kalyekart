@@ -3,8 +3,10 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "../lib/axios";
 import { toast } from "sonner";
 import Confetti from "react-confetti";
+import { useUserStore } from "../stores/useUserStore";
 
 const FeedbackModal = ({ isOpen, onClose }) => {
+	const { user } = useUserStore();
 	const [rating, setRating] = useState(0);
 	const [feedback, setFeedback] = useState("");
 	const [submitted, setSubmitted] = useState(false);
@@ -23,7 +25,18 @@ const FeedbackModal = ({ isOpen, onClose }) => {
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		mutation.mutate({ rating, feedback });
+		if (!user) {
+			toast.error("You must be logged in to submit feedback.");
+			return;
+		}
+		mutation.mutate({
+			rating,
+			feedback,
+			user: {
+				name: user.name,
+				email: user.email,
+			},
+		});
 	};
 
 	if (!isOpen) return null;

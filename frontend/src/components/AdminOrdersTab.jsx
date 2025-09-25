@@ -3,7 +3,7 @@ import axios from "../lib/axios";
 import { toast } from "sonner";
 import { useState } from "react";
 import LoadingSpinner from "./LoadingSpinner";
-import { UserCircle, ChevronDown } from "lucide-react";
+import { UserCircle, ChevronDown, Loader } from "lucide-react";
 import RejectionReasonModal from "./RejectionReasonModal";
 import ProofViewerModal from "./ProofViewerModal";
 
@@ -239,13 +239,13 @@ const AdminOrdersTab = () => {
 															onClick={() =>
 																updateOrderStatus({ orderId: order._id, refundStatus: "approved" })
 															}
-															className='bg-green-600 hover:bg-green-700 text-white py-1 px-2 rounded-md text-xs'
+															className='bg-green-600 hover:bg-green-700 text-white py-1 px-2 rounded-lg text-xs'
 														>
 															Approve
 														</button>
 														<button
 															onClick={() => setRejectionModalOrder(order)}
-															className='bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded-md text-xs'
+															className='bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded-lg text-xs'
 														>
 															Reject
 														</button>
@@ -283,7 +283,7 @@ const AdminOrdersTab = () => {
 												onChange={(e) =>
 													updateOrderStatus({ orderId: order._id, paymentStatus: e.target.value })
 												}
-												className='bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+												className='bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
 												disabled={order.paymentMethod === "card"} // Disable for card payments
 											>
 												<option value='pending'>Pending</option>
@@ -301,7 +301,7 @@ const AdminOrdersTab = () => {
 												onChange={(e) =>
 													updateOrderStatus({ orderId: order._id, status: e.target.value })
 												}
-												className='bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+												className='bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
 											>
 												<option value='Pending'>Pending</option>
 												<option value='Preparing'>Preparing</option>

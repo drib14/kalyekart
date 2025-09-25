@@ -5,6 +5,6 @@ import upload from "../middleware/multer.middleware.js";
 
 const router = express.Router();
 
-router.put("/profile", protectRoute, upload.single("profilePicture"), updateUserProfile);
+router.put("/profile", upload.single("profilePicture"), protectRoute, updateUserProfile);
 
 export default router;
