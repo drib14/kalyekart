@@ -62,6 +62,22 @@ export const createCodOrder = async (req, res) => {
 	}
 };
 
+export const getAllOrders = async (req, res) => {
+	try {
+		const orders = await Order.find()
+			.populate({
+				path: "products.product",
+				select: "name image",
+			})
+			.populate("user", "name")
+			.sort({ createdAt: -1 });
+		res.json(orders);
+	} catch (error) {
+		console.log("Error in getAllOrders controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const cancelOrder = async (req, res) => {
 	try {
 		const { orderId } = req.params;
