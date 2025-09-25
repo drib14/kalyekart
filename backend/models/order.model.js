@@ -51,7 +51,7 @@ const orderSchema = new mongoose.Schema(
 		},
 		shippingAddress: {
 			fullName: { type: String, required: true },
-			streetAddress: { type: String, required: true },
+			sitio: { type: String }, // Optional field for more specific location
 			city: { type: String, required: true },
 			barangay: { type: String, required: true },
 			province: { type: String, required: true },

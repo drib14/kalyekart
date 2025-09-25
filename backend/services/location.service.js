@@ -86,3 +86,24 @@ export function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
         (1 - Math.cos(dLon)) / 2;
     return R * 2 * Math.asin(Math.sqrt(a));
 }
+
+/**
+ * Gets address details for given coordinates using reverse geocoding.
+ */
+export async function reverseGeocode(lat, lon) {
+    if (!LOCATIONIQ_ACCESS_TOKEN) {
+        console.error("LocationIQ Access Token is not configured.");
+        throw new Error("Server configuration error: Missing LocationIQ token.");
+    }
+    try {
+        const response = await fetch(
+            `${LOCATIONIQ_API_BASE_URL}/reverse?key=${LOCATIONIQ_ACCESS_TOKEN}&lat=${lat}&lon=${lon}&format=json`
+        );
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        return data.address;
+    } catch (error) {
+        console.error("Error reverse geocoding from LocationIQ:", error);
+        throw new Error("Could not perform reverse geocoding.");
+    }
+}

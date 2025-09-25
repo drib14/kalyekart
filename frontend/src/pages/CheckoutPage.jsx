@@ -14,6 +14,7 @@ const CheckoutPage = () => {
 	const navigate = useNavigate();
 
 	const [fullName, setFullName] = useState(user?.name || "");
+	const [sitio, setSitio] = useState("");
 	const [city, setCity] = useState("");
 	const [barangay, setBarangay] = useState("");
 	const [province, setProvince] = useState("Cebu");
@@ -24,6 +25,8 @@ const CheckoutPage = () => {
 
 	const [locations, setLocations] = useState([]);
 	const [barangays, setBarangays] = useState([]);
+	const [isLocating, setIsLocating] = useState(false);
+	const [targetBarangay, setTargetBarangay] = useState(null); // Used for auto-filling
 
 	// Fetch cities and municipalities on component mount
 	useEffect(() => {
@@ -41,7 +44,7 @@ const CheckoutPage = () => {
 	// Fetch barangays when city changes
 	useEffect(() => {
 		if (city) {
-			const selectedLocation = locations.find(loc => loc.name === city);
+			const selectedLocation = locations.find((loc) => loc.name === city);
 			if (selectedLocation) {
 				const fetchBarangays = async () => {
 					try {
@@ -60,6 +63,20 @@ const CheckoutPage = () => {
 		}
 	}, [city, locations]);
 
+	// Set barangay after auto-locating
+	useEffect(() => {
+		if (targetBarangay && barangays.length > 0) {
+			const matchedBarangay = barangays.find(b => b.name === targetBarangay);
+			if (matchedBarangay) {
+				setBarangay(matchedBarangay.name);
+			} else {
+				toast.info(`We've set your city. Please select your barangay from the list.`);
+			}
+			setTargetBarangay(null); // Reset target
+		}
+	}, [barangays, targetBarangay]);
+
+
 	// Fetch delivery fee when address changes
 	useEffect(() => {
 		if (city && barangay) {
@@ -73,7 +90,7 @@ const CheckoutPage = () => {
 					toast.error("Could not calculate delivery fee.");
 					setDeliveryFee(0);
 				}
-			}, 1000); // Debounce to prevent excessive API calls
+			}, 500); // Debounce
 
 			return () => clearTimeout(handler);
 		}
@@ -96,6 +113,43 @@ const CheckoutPage = () => {
 		},
 	});
 
+	const handleUseCurrentLocation = () => {
+		if (!navigator.geolocation) {
+			toast.error("Geolocation is not supported by your browser.");
+			return;
+		}
+		setIsLocating(true);
+		navigator.geolocation.getCurrentPosition(
+			async (position) => {
+				const { latitude, longitude } = position.coords;
+				try {
+					const response = await axios.post("/locations/reverse-geocode", { lat: latitude, lon: longitude });
+					const address = response.data;
+					const cityName = address.city || address.town || address.county;
+					const barangayName = address.village || address.suburb;
+					const sitioInfo = [address.road, address.house_number].filter(Boolean).join(", ");
+
+					const matchedLocation = locations.find(loc => loc.name.includes(cityName.replace("City of ", "")));
+					if (matchedLocation) {
+						setCity(matchedLocation.name);
+						setTargetBarangay(barangayName); // Set target to find after barangays load
+						setSitio(sitioInfo);
+					} else {
+						toast.error("Your location appears to be outside our delivery area.");
+					}
+				} catch (error) {
+					toast.error("Could not determine your address. Please enter it manually.");
+				} finally {
+					setIsLocating(false);
+				}
+			},
+			() => {
+				toast.error("Unable to retrieve your location. Please enable location services.");
+				setIsLocating(false);
+			}
+		);
+	};
+
 	const handlePlaceOrder = () => {
 		const products = cart.map((item) => ({
 			_id: item.product._id,
@@ -106,6 +160,7 @@ const CheckoutPage = () => {
 
 		const shippingAddress = {
 			fullName,
+			sitio,
 			city,
 			barangay,
 			province,
@@ -137,7 +192,18 @@ const CheckoutPage = () => {
 				<h1 className='text-3xl font-extrabold text-emerald-400 mb-8 text-center'>Checkout</h1>
 				<div className='grid md:grid-cols-2 md:gap-4 lg:gap-8'>
 					<div className='bg-gray-800 p-8 rounded-lg shadow-lg'>
-						<h2 className='text-2xl font-bold text-white mb-6'>Delivery Information</h2>
+						<h2 className='text-2xl font-bold text-white mb-6 flex justify-between items-center'>
+							<span>Delivery Information</span>
+							<button
+								type="button"
+								onClick={handleUseCurrentLocation}
+								className="text-sm font-medium text-emerald-400 hover:text-emerald-300 disabled:opacity-50 flex items-center"
+								disabled={isLocating}
+							>
+								<svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+								{isLocating ? 'Locating...' : 'Use Current Location'}
+							</button>
+						</h2>
 						<form onSubmit={handleSubmit} className='space-y-4'>
 							<div>
 								<label htmlFor='fullName' className='block text-sm font-medium text-gray-300 mb-1'>
@@ -149,6 +215,18 @@ const CheckoutPage = () => {
 									required
 									value={fullName}
 									onChange={(e) => setFullName(e.target.value)}
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+								/>
+							</div>
+							<div>
+								<label htmlFor='sitio' className='block text-sm font-medium text-gray-300 mb-1'>
+									Sitio / Street / House No. (Optional)
+								</label>
+								<input
+									id='sitio'
+									type='text'
+									value={sitio}
+									onChange={(e) => setSitio(e.target.value)}
 									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
 								/>
 							</div>

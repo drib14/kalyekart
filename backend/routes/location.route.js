@@ -3,13 +3,14 @@ import {
     getCebuCitiesAndMunicipalities,
     getBarangays,
     getCoordinates,
-    calculateHaversineDistance
+    calculateHaversineDistance,
+    reverseGeocode
 } from "../services/location.service.js";
 
 const router = express.Router();
 
-// Define the central warehouse coordinates
-const WAREHOUSE_COORDINATES = { lat: 10.3157, lon: 123.8854 }; // Cebu City
+// Define the central warehouse coordinates for "Pungko-pungko sa salazar" (approximated to USC Main)
+const WAREHOUSE_COORDINATES = { lat: 10.2983, lon: 123.8991 };
 
 router.get("/cities-municipalities", async (req, res) => {
     try {
@@ -51,14 +52,27 @@ router.post("/calculate-fee", async (req, res) => {
             coordinates.lon
         );
 
-        // Fairer fee model
-        const baseFee = 20; // Lower base fee
-        const feePerKm = 8;  // Lower per-km charge
+        // Updated fee model
+        const baseFee = 15; // Base fare
+        const feePerKm = 8;  // Per-km charge
         const deliveryFee = Math.round(baseFee + (distance * feePerKm));
 
         res.json({ deliveryFee, distance: distance.toFixed(2) });
     } catch (error) {
         res.status(500).json({ message: "Server error while calculating delivery fee." });
+    }
+});
+
+router.post("/reverse-geocode", async (req, res) => {
+    try {
+        const { lat, lon } = req.body;
+        if (!lat || !lon) {
+            return res.status(400).json({ message: "Latitude and longitude are required." });
+        }
+        const address = await reverseGeocode(lat, lon);
+        res.json(address);
+    } catch (error) {
+        res.status(500).json({ message: "Server error while reverse geocoding." });
     }
 });
 

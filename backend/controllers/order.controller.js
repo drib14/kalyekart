@@ -7,7 +7,7 @@ import cloudinary from "../lib/cloudinary.js";
 
 import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
 
-const WAREHOUSE_COORDINATES = { lat: 10.3157, lon: 123.8854 }; // Cebu City
+const WAREHOUSE_COORDINATES = { lat: 10.2983, lon: 123.8991 }; // USC Main Campus (for Pungko-pungko sa salazar)
 
 export const createCodOrder = async (req, res) => {
 	try {
@@ -26,7 +26,7 @@ export const createCodOrder = async (req, res) => {
 			return res.status(400).json({ message: "Could not determine coordinates for the provided address." });
 		}
 		const distance = calculateHaversineDistance(WAREHOUSE_COORDINATES.lat, WAREHOUSE_COORDINATES.lon, coordinates.lat, coordinates.lon);
-		const baseFee = 20;
+		const baseFee = 15;
 		const feePerKm = 8;
 		const deliveryFee = Math.round(baseFee + (distance * feePerKm));
 		const totalAmount = subtotal + deliveryFee;
@@ -92,7 +92,7 @@ export const createStripeCheckoutSession = async (req, res) => {
 			return res.status(400).json({ message: "Could not determine coordinates for the provided address." });
 		}
 		const distance = calculateHaversineDistance(WAREHOUSE_COORDINATES.lat, WAREHOUSE_COORDINATES.lon, coordinates.lat, coordinates.lon);
-		const baseFee = 20;
+		const baseFee = 15;
 		const feePerKm = 8;
 		const deliveryFee = Math.round(baseFee + (distance * feePerKm));
 		const totalAmount = subtotal + deliveryFee;
