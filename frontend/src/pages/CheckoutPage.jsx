@@ -16,19 +16,21 @@ const CheckoutPage = () => {
 	const [fullName, setFullName] = useState(user?.name || "");
 	const [streetAddress, setStreetAddress] = useState("");
 	const [city, setCity] = useState("");
+	const [barangay, setBarangay] = useState("");
 	const [province, setProvince] = useState("Cebu");
-	const [postalCode, setPostalCode] = useState(""); // This can be improved later
+	const [postalCode, setPostalCode] = useState("");
 	const [contactNumber, setContactNumber] = useState(user?.phoneNumber || "");
 	const [deliveryFee, setDeliveryFee] = useState(0);
 	const [finalTotal, setFinalTotal] = useState(total);
 
 	const [locations, setLocations] = useState([]);
+	const [barangays, setBarangays] = useState([]);
 
-	// Fetch locations on component mount
+	// Fetch cities and municipalities on component mount
 	useEffect(() => {
 		const fetchLocations = async () => {
 			try {
-				const response = await axios.get("/delivery/locations");
+				const response = await axios.get("/locations/cities-municipalities");
 				setLocations(response.data);
 			} catch (error) {
 				toast.error("Failed to fetch locations.");
@@ -37,25 +39,46 @@ const CheckoutPage = () => {
 		fetchLocations();
 	}, []);
 
-	// Fetch delivery fee when city changes
+	// Fetch barangays when city changes
 	useEffect(() => {
 		if (city) {
-			const fetchFee = async () => {
+			const selectedLocation = locations.find(loc => loc.name === city);
+			if (selectedLocation) {
+				const fetchBarangays = async () => {
+					try {
+						const response = await axios.get(`/locations/barangays/${selectedLocation.code}`);
+						setBarangays(response.data);
+						setPostalCode(selectedLocation.zip_code || "");
+					} catch (error) {
+						toast.error("Failed to fetch barangays.");
+					}
+				};
+				fetchBarangays();
+			}
+		} else {
+			setBarangays([]);
+			setPostalCode("");
+		}
+	}, [city, locations]);
+
+	// Fetch delivery fee when address changes
+	useEffect(() => {
+		if (streetAddress && city && barangay) {
+			const handler = setTimeout(async () => {
 				try {
-					const response = await axios.post("/delivery/calculate-fee", {
-						shippingAddress: { city },
+					const response = await axios.post("/locations/calculate-fee", {
+						shippingAddress: { street: streetAddress, city, barangay },
 					});
 					setDeliveryFee(response.data.deliveryFee);
 				} catch (error) {
 					toast.error("Could not calculate delivery fee.");
 					setDeliveryFee(0);
 				}
-			};
-			fetchFee();
-		} else {
-			setDeliveryFee(0);
+			}, 1000); // Debounce to prevent excessive API calls
+
+			return () => clearTimeout(handler);
 		}
-	}, [city]);
+	}, [streetAddress, city, barangay]);
 
 	// Update final total when delivery fee or cart total changes
 	useEffect(() => {
@@ -86,6 +109,7 @@ const CheckoutPage = () => {
 			fullName,
 			streetAddress,
 			city,
+			barangay,
 			province,
 			postalCode,
 		};
@@ -96,7 +120,6 @@ const CheckoutPage = () => {
 			contactNumber,
 			couponCode: coupon?.code,
 			subtotal,
-			// No deliveryFee or totalAmount sent, backend calculates them
 		});
 	};
 
@@ -116,7 +139,7 @@ const CheckoutPage = () => {
 				<h1 className='text-3xl font-extrabold text-emerald-400 mb-8 text-center'>Checkout</h1>
 				<div className='grid md:grid-cols-2 md:gap-4 lg:gap-8'>
 					<div className='bg-gray-800 p-8 rounded-lg shadow-lg'>
-						<h2 className='text-2xl font-bold text-white mb-6'>Shipping Information</h2>
+						<h2 className='text-2xl font-bold text-white mb-6'>Delivery Information</h2>
 						<form onSubmit={handleSubmit} className='space-y-4'>
 							<div>
 								<label htmlFor='fullName' className='block text-sm font-medium text-gray-300 mb-1'>
@@ -161,24 +184,31 @@ const CheckoutPage = () => {
 									>
 										<option value=''>Select a city</option>
 										{locations.map((loc) => (
-											<option key={loc} value={loc}>
-												{loc}
+											<option key={loc.code} value={loc.name}>
+												{loc.name}
 											</option>
 										))}
 									</select>
 								</div>
 								<div>
-									<label htmlFor='postalCode' className='block text-sm font-medium text-gray-300 mb-1'>
-										Postal Code
+									<label htmlFor='barangay' className='block text-sm font-medium text-gray-300 mb-1'>
+										Barangay
 									</label>
-									<input
-										id='postalCode'
-										type='text'
-										value={postalCode}
-										onChange={(e) => setPostalCode(e.target.value)}
+									<select
+										id='barangay'
+										required
+										value={barangay}
+										onChange={(e) => setBarangay(e.target.value)}
 										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
-										placeholder='e.g. 6000'
-									/>
+										disabled={!city}
+									>
+										<option value=''>Select a barangay</option>
+										{barangays.map((b) => (
+											<option key={b.code} value={b.name}>
+												{b.name}
+											</option>
+										))}
+									</select>
 								</div>
 							</div>
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
@@ -197,19 +227,33 @@ const CheckoutPage = () => {
 									/>
 								</div>
 								<div>
-									<label htmlFor='contactNumber' className='block text-sm font-medium text-gray-300 mb-1'>
-										Contact Number
+									<label htmlFor='postalCode' className='block text-sm font-medium text-gray-300 mb-1'>
+										Postal Code
 									</label>
 									<input
-										id='contactNumber'
+										id='postalCode'
 										type='text'
-										required
-										value={contactNumber}
-										onChange={(e) => setContactNumber(e.target.value)}
+										value={postalCode}
+										onChange={(e) => setPostalCode(e.target.value)}
 										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
-										placeholder='09123456789'
+										placeholder='e.g. 6000'
+										readOnly
 									/>
 								</div>
+							</div>
+							<div>
+								<label htmlFor='contactNumber' className='block text-sm font-medium text-gray-300 mb-1'>
+									Contact Number
+								</label>
+								<input
+									id='contactNumber'
+									type='text'
+									required
+									value={contactNumber}
+									onChange={(e) => setContactNumber(e.target.value)}
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+									placeholder='09123456789'
+								/>
 							</div>
 
 							<div className='pt-6'>

@@ -5,7 +5,9 @@ import { stripe } from "../lib/stripe.js";
 import { v4 as uuidv4 } from "uuid";
 import cloudinary from "../lib/cloudinary.js";
 
-import { getDeliveryDetails } from "../lib/distance.js";
+import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
+
+const WAREHOUSE_COORDINATES = { lat: 10.3157, lon: 123.8854 }; // Cebu City
 
 export const createCodOrder = async (req, res) => {
 	try {
@@ -17,7 +19,17 @@ export const createCodOrder = async (req, res) => {
 			subtotal,
 		} = req.body;
 
-		const { distance, deliveryFee } = getDeliveryDetails(shippingAddress.city);
+		// Calculate delivery fee on the server
+		const fullAddress = `${shippingAddress.street}, ${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
+		const coordinates = await getCoordinates(fullAddress);
+		if (!coordinates) {
+			return res.status(400).json({ message: "Could not determine coordinates for the provided address." });
+		}
+		const distance = calculateHaversineDistance(WAREHOUSE_COORDINATES.lat, WAREHOUSE_COORDINATES.lon, coordinates.lat, coordinates.lon);
+		const baseFee = 20;
+		const feePerKm = 8;
+		const deliveryFee = Math.round(baseFee + (distance * feePerKm));
+		const totalAmount = subtotal + deliveryFee;
 
 		const newOrder = new Order({
 			user: req.user._id,
@@ -35,7 +47,7 @@ export const createCodOrder = async (req, res) => {
 			subtotal,
 			deliveryFee,
 			distance,
-			totalAmount: subtotal + deliveryFee,
+			totalAmount,
 		});
 
 		await newOrder.save();
@@ -73,7 +85,17 @@ export const createStripeCheckoutSession = async (req, res) => {
 			req.body;
 		const idempotencyKey = uuidv4();
 
-		const { distance, deliveryFee } = getDeliveryDetails(shippingAddress.city);
+		// Calculate delivery fee on the server
+		const fullAddress = `${shippingAddress.street}, ${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
+		const coordinates = await getCoordinates(fullAddress);
+		if (!coordinates) {
+			return res.status(400).json({ message: "Could not determine coordinates for the provided address." });
+		}
+		const distance = calculateHaversineDistance(WAREHOUSE_COORDINATES.lat, WAREHOUSE_COORDINATES.lon, coordinates.lat, coordinates.lon);
+		const baseFee = 20;
+		const feePerKm = 8;
+		const deliveryFee = Math.round(baseFee + (distance * feePerKm));
+		const totalAmount = subtotal + deliveryFee;
 
 		const line_items = products.map((product) => ({
 			price_data: {
@@ -87,7 +109,6 @@ export const createStripeCheckoutSession = async (req, res) => {
 			quantity: product.quantity,
 		}));
 
-		// Add delivery fee as a line item
 		if (deliveryFee > 0) {
 			line_items.push({
 				price_data: {
@@ -125,7 +146,7 @@ export const createStripeCheckoutSession = async (req, res) => {
 					subtotal,
 					deliveryFee,
 					distance,
-					totalAmount: subtotal + deliveryFee,
+					totalAmount,
 				},
 			},
 			{ idempotencyKey }
