@@ -15,6 +15,7 @@ const AnalyticsTab = () => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [dailySalesData, setDailySalesData] = useState([]);
 	const [filter, setFilter] = useState("weekly");
+	const [chartKey, setChartKey] = useState(0); // Key to force chart re-render
 
 	useEffect(() => {
 		setIsLoading(true);
@@ -24,6 +25,7 @@ const AnalyticsTab = () => {
 			const data = JSON.parse(event.data);
 			setAnalyticsData(data.analyticsData);
 			setDailySalesData(data.dailySalesData);
+			setChartKey(prevKey => prevKey + 1); // Update key to force re-render
 			setIsLoading(false);
 		};
 
@@ -108,18 +110,25 @@ const AnalyticsTab = () => {
 				transition={{ duration: 0.5, delay: 0.25 }}
 			>
 				<ResponsiveContainer width='100%' height={400}>
-					<LineChart data={dailySalesData}>
-						<CartesianGrid strokeDasharray='3 3' />
-						<XAxis dataKey='date' stroke='#D1D5DB' />
-						<YAxis yAxisId='left' stroke='#D1D5DB' />
-						<YAxis yAxisId='right' orientation='right' stroke='#D1D5DB' />
-						<Tooltip />
-						<Legend />
+					<LineChart key={chartKey} data={dailySalesData}>
+						<CartesianGrid strokeDasharray='3 3' stroke='#4A5568' />
+						<XAxis dataKey='date' stroke='#A0AEC0' tick={{ fontSize: 12 }} />
+						<YAxis yAxisId='left' stroke='#A0AEC0' tick={{ fontSize: 12 }} />
+						<YAxis yAxisId='right' orientation='right' stroke='#A0AEC0' tick={{ fontSize: 12 }} />
+						<Tooltip
+							contentStyle={{
+								backgroundColor: "rgba(31, 41, 55, 0.8)",
+								borderColor: "#4A5568",
+								color: "#E5E7EB",
+							}}
+						/>
+						<Legend wrapperStyle={{ color: "#E5E7EB" }} />
 						<Line
 							yAxisId='left'
 							type='monotone'
 							dataKey='sales'
 							stroke='#10B981'
+							strokeWidth={2}
 							activeDot={{ r: 8 }}
 							name='Sales'
 						/>
@@ -128,6 +137,7 @@ const AnalyticsTab = () => {
 							type='monotone'
 							dataKey='revenue'
 							stroke='#3B82F6'
+							strokeWidth={2}
 							activeDot={{ r: 8 }}
 							name='Revenue'
 						/>
