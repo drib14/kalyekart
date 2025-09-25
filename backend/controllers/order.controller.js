@@ -1,160 +1,116 @@
 import Order from "../models/order.model.js";
-import Coupon from "../models/coupon.model.js";
-import { uploadOnCloudinary } from "../lib/cloudinary.js";
-import { calculateETA } from "../lib/eta.js";
-
-export const getOrders = async (req, res) => {
-	try {
-		const userId = req.user._id;
-		const orders = await Order.find({ user: userId })
-			.sort({ createdAt: -1 })
-			.populate({
-				path: "products",
-				populate: {
-				path: "product",
-				model: "Product",
-			},
-		});
-		res.status(200).json(orders);
-	} catch (error) {
-		console.error("Error getting orders:", error);
-		res.status(500).json({ message: "Error getting orders", error: error.message });
-	}
-};
+import User from "../models/user.model.js";
+import Product from "../models/product.model.js";
+import { stripe } from "../lib/stripe.js";
+import { v4 as uuidv4 } from "uuid";
+import cloudinary from "../lib/cloudinary.js";
 
 export const createCodOrder = async (req, res) => {
 	try {
-		const { products, couponCode, shippingAddress, contactNumber, subtotal, deliveryFee, distance, totalAmount } =
-			req.body;
-		const userId = req.user._id;
-
-		if (!Array.isArray(products) || products.length === 0) {
-			return res.status(400).json({ error: "Invalid or empty products array" });
-		}
-
-		let couponDetails = null;
-		if (couponCode) {
-			const coupon = await Coupon.findOne({ code: couponCode, userId, isActive: true });
-			if (coupon) {
-				await Coupon.findOneAndUpdate({ code: couponCode, userId }, { isActive: false });
-				couponDetails = {
-					code: coupon.code,
-					discountPercentage: coupon.discountPercentage,
-				};
-			}
-		}
+		const {
+			products,
+			shippingAddress,
+			contactNumber,
+			couponCode,
+			subtotal,
+			deliveryFee,
+			distance,
+			totalAmount,
+		} = req.body;
 
 		const newOrder = new Order({
-			user: userId,
+			user: req.user._id,
 			products: products.map((p) => ({
 				product: p._id,
 				quantity: p.quantity,
 				price: p.price,
+				name: p.name,
 			})),
-			subtotal,
-			deliveryFee: Math.round(deliveryFee),
-			distance,
-			totalAmount,
-			coupon: couponDetails,
 			shippingAddress,
 			contactNumber,
 			paymentMethod: "cod",
 			paymentStatus: "pending",
-			statusETA: new Date(Date.now() + 2 * 60 * 1000), // 2 minutes from now
+			couponCode,
+			subtotal,
+			deliveryFee,
+			distance,
+			totalAmount,
 		});
 
 		await newOrder.save();
-		res.status(201).json({ message: "Order placed successfully", orderId: newOrder._id });
+		const user = await User.findById(req.user._id);
+		user.cartItems = [];
+		await user.save();
+
+		res.status(201).json({ message: "Order created successfully", orderId: newOrder._id });
 	} catch (error) {
-		console.error("Error creating COD order:", error);
-		res.status(500).json({ message: "Error creating COD order", error: error.message });
+		console.log("Error in createCodOrder controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
 
-export const cancelOrder = async (req, res) => {
+export const createStripeCheckoutSession = async (req, res) => {
 	try {
-		const { orderId } = req.params;
-		const { reason } = req.body;
-		const userId = req.user._id;
+		const { products, shippingAddress, contactNumber, couponCode, subtotal, deliveryFee, distance, totalAmount } =
+			req.body;
+		const idempotencyKey = uuidv4();
 
-		const order = await Order.findOne({ _id: orderId, user: userId });
-
-		if (!order) {
-			return res.status(404).json({ message: "Order not found" });
-		}
-
-		if (order.status !== "pending") {
-			return res.status(400).json({ message: "Only pending orders can be cancelled" });
-		}
-
-		order.status = "cancelled";
-		order.cancellationReason = reason;
-		await order.save();
-
-		res.status(200).json({ message: "Order cancelled successfully" });
-	} catch (error) {
-		console.error("Error cancelling order:", error);
-		res.status(500).json({ message: "Error cancelling order", error: error.message });
-	}
-};
-
-export const requestRefund = async (req, res) => {
-	try {
-		const { orderId } = req.params;
-		const { reason } = req.body;
-		const userId = req.user._id;
-		const proofPath = req.file?.path;
-
-		if (!proofPath) {
-			return res.status(400).json({ message: "Proof is required" });
-		}
-
-		const order = await Order.findOne({ _id: orderId, user: userId });
-
-		if (!order) {
-			return res.status(404).json({ message: "Order not found" });
-		}
-
-		if (order.status !== "delivered") {
-			return res.status(400).json({ message: "Only delivered orders can be refunded" });
-		}
-
-		const proof = await uploadOnCloudinary(proofPath);
-
-		if (!proof) {
-			return res.status(500).json({ message: "Error uploading proof" });
-		}
-
-		order.refundRequest = {
-			reason,
-			proof: proof.url,
-			status: "pending",
-		};
-		await order.save();
-
-		res.status(200).json({ message: "Refund request submitted successfully" });
-	} catch (error) {
-		console.error("Error requesting refund:", error);
-		res.status(500).json({ message: "Error requesting refund", error: error.message });
-	}
-};
-
-export const getAllOrders = async (req, res) => {
-	try {
-		const orders = await Order.find()
-			.sort({ createdAt: -1 })
-			.populate("user", "name email profilePicture")
-			.populate({
-				path: "products",
-				populate: {
-					path: "product",
-					model: "Product",
+		const line_items = products.map((product) => ({
+			price_data: {
+				currency: "php",
+				product_data: {
+					name: product.name,
+					images: [product.image],
 				},
-			});
-		res.status(200).json(orders);
+				unit_amount: product.price * 100,
+			},
+			quantity: product.quantity,
+		}));
+
+		const session = await stripe.checkout.sessions.create(
+			{
+				payment_method_types: ["card"],
+				line_items,
+				mode: "payment",
+				success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+				cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
+				metadata: {
+					userId: req.user._id.toString(),
+					products: JSON.stringify(
+						products.map((p) => ({
+							product: p._id,
+							quantity: p.quantity,
+							price: p.price,
+							name: p.name,
+						}))
+					),
+					shippingAddress: JSON.stringify(shippingAddress),
+					contactNumber,
+					paymentMethod: "card",
+					couponCode,
+					subtotal,
+					deliveryFee,
+					distance,
+					totalAmount,
+				},
+			},
+			{ idempotencyKey }
+		);
+
+		res.json({ id: session.id });
 	} catch (error) {
-		console.error("Error getting all orders:", error);
-		res.status(500).json({ message: "Error getting all orders", error: error.message });
+		console.log("Error in createStripeCheckoutSession controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const getOrders = async (req, res) => {
+	try {
+		const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+		res.json(orders);
+	} catch (error) {
+		console.log("Error in getOrders controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
 
@@ -164,101 +120,72 @@ export const updateOrderStatus = async (req, res) => {
 		const { status } = req.body;
 
 		const order = await Order.findById(orderId);
-
 		if (!order) {
 			return res.status(404).json({ message: "Order not found" });
 		}
 
 		order.status = status;
-		order.statusETA = calculateETA(status, order);
-
 		await order.save();
-
-		res.status(200).json({ message: "Order status updated successfully" });
+		res.json(order);
 	} catch (error) {
-		console.error("Error updating order status:", error);
-		res.status(500).json({ message: "Error updating order status", error: error.message });
+		console.log("Error in updateOrderStatus controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
 
-export const updatePaymentStatus = async (req, res) => {
+export const requestRefund = async (req, res) => {
 	try {
 		const { orderId } = req.params;
-		const { status } = req.body;
+		const { reason } = req.body;
+		const proof = req.file;
 
 		const order = await Order.findById(orderId);
-
 		if (!order) {
 			return res.status(404).json({ message: "Order not found" });
 		}
 
-		if (order.paymentMethod === "card") {
-			return res.status(400).json({ message: "Cannot manually update status for card payments." });
-		}
+		const result = await cloudinary.uploader.upload(proof.path, {
+			folder: "refunds",
+		});
 
-		order.paymentStatus = status;
+		order.refundRequest = {
+			reason,
+			proof: result.secure_url,
+			status: "pending",
+		};
 		await order.save();
-
-		res.status(200).json({ message: "Payment status updated successfully" });
+		res.json(order);
 	} catch (error) {
-		console.error("Error updating payment status:", error);
-		res.status(500).json({ message: "Error updating payment status", error: error.message });
+		console.log("Error in requestRefund controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const getRefunds = async (req, res) => {
+	try {
+		const orders = await Order.find({ "refundRequest.status": "pending" }).sort({ createdAt: -1 });
+		res.json(orders);
+	} catch (error) {
+		console.log("Error in getRefunds controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
 
 export const updateRefundStatus = async (req, res) => {
 	try {
-		const { orderId } = req.params;
-		const { status, rejectionReason } = req.body;
+		const { refundId } = req.params;
+		const { status } = req.body;
 
-		const order = await Order.findById(orderId);
-
+		const order = await Order.findOne({ "refundRequest._id": refundId });
 		if (!order) {
-			return res.status(404).json({ message: "Order not found" });
-		}
-
-		if (!order.refundRequest) {
 			return res.status(404).json({ message: "Refund request not found" });
 		}
 
 		order.refundRequest.status = status;
-		if (status === "rejected" && rejectionReason) {
-			order.refundRequest.rejectionReason = rejectionReason;
-		}
 		await order.save();
-
-		res.status(200).json({ message: "Refund status updated successfully" });
+		res.json(order);
 	} catch (error) {
-		console.error("Error updating refund status:", error);
-		res.status(500).json({ message: "Error updating refund status", error: error.message });
-	}
-};
-
-export const getOrderById = async (req, res) => {
-	try {
-		const { orderId } = req.params;
-		const userId = req.user._id;
-		const userRole = req.user.role;
-
-		const order = await Order.findById(orderId)
-			.populate("user", "name email")
-			.populate({
-				path: "products.product",
-				model: "Product",
-			});
-
-		if (!order) {
-			return res.status(404).json({ message: "Order not found" });
-		}
-
-		// Check if the user is the owner of the order or an admin
-		if (order.user._id.toString() !== userId.toString() && userRole !== "admin") {
-			return res.status(403).json({ message: "Not authorized to view this order" });
-		}
-
-		res.status(200).json(order);
-	} catch (error) {
-		console.error("Error getting order by ID:", error);
-		res.status(500).json({ message: "Error getting order by ID", error: error.message });
+		console.log("Error in updateRefundStatus controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };

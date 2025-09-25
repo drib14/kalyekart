@@ -4,7 +4,9 @@ export const submitFeedback = async (req, res) => {
 	const { rating, feedback } = req.body;
 
 	const transporter = nodemailer.createTransport({
-		service: "gmail",
+		host: "smtp.gmail.com",
+		port: 465,
+		secure: true,
 		auth: {
 			user: process.env.EMAIL_USER,
 			pass: process.env.EMAIL_PASS,
@@ -12,7 +14,7 @@ export const submitFeedback = async (req, res) => {
 	});
 
 	const mailOptions = {
-		from: process.env.EMAIL_USER,
+		from: `"Kalyekart Feedback" <${process.env.EMAIL_USER}>`,
 		to: "jhondribramirez7@gmail.com, kalyekart@gmail.com",
 		subject: "New Feedback Submission",
 		html: `
@@ -27,7 +29,7 @@ export const submitFeedback = async (req, res) => {
 		await transporter.sendMail(mailOptions);
 		res.status(200).json({ message: "Feedback submitted successfully" });
 	} catch (error) {
-		console.log("Error sending feedback email:", error);
-		res.status(500).json({ message: "Failed to submit feedback" });
+		console.error("Error sending feedback email:", error);
+		res.status(500).json({ message: "Failed to submit feedback", error: error.message });
 	}
 };
