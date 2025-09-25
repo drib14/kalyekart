@@ -6,7 +6,7 @@ const ACCESS_TOKEN = process.env.LOCATIONIQ_ACCESS_TOKEN;
 export async function getCoordinates(address) {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/search.php?key=${ACCESS_TOKEN}&q=${encodeURIComponent(
+      `${API_BASE_URL}/search?key=${ACCESS_TOKEN}&q=${encodeURIComponent(
         address
       )}&format=json`
     );
