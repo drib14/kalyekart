@@ -1,9 +1,13 @@
 import fetch from "node-fetch";
 
 const API_BASE_URL = "https://us1.locationiq.com/v1";
-const ACCESS_TOKEN = process.env.LOCATIONIQ_ACCESS_TOKEN;
-
 export async function getCoordinates(address) {
+  const ACCESS_TOKEN = process.env.LOCATIONIQ_ACCESS_TOKEN;
+  if (!ACCESS_TOKEN) {
+    console.error("LocationIQ Access Token is not configured in .env file.");
+    throw new Error("Server configuration error: Missing LocationIQ token.");
+  }
+
   try {
     const response = await fetch(
       `${API_BASE_URL}/search?key=${ACCESS_TOKEN}&q=${encodeURIComponent(
@@ -11,6 +15,10 @@ export async function getCoordinates(address) {
       )}&format=json`
     );
     const data = await response.json();
+    if (data.error) {
+      console.error("LocationIQ API Error:", data.error);
+      throw new Error("Failed to geocode address.");
+    }
     if (data && data.length > 0) {
       return {
         lat: data[0].lat,
@@ -19,8 +27,8 @@ export async function getCoordinates(address) {
     }
     return null;
   } catch (error) {
-    console.error("Error fetching coordinates:", error);
-    throw new Error("Could not fetch coordinates");
+    console.error("Error fetching coordinates:", error.message);
+    throw new Error("Could not fetch coordinates.");
   }
 }
 
