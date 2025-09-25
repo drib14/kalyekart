@@ -4,6 +4,12 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // --- Email Sending Utility ---
 const sendPasswordResetEmail = async (email, code) => {
@@ -17,17 +23,15 @@ const sendPasswordResetEmail = async (email, code) => {
 		},
 	});
 
+	const templatePath = path.join(__dirname, "../templates/passwordReset.html");
+	let htmlContent = fs.readFileSync(templatePath, "utf8");
+	htmlContent = htmlContent.replace("{{RESET_CODE}}", code);
+
 	const mailOptions = {
 		from: `"Kalyekart" <${process.env.EMAIL_USER}>`,
 		to: email,
 		subject: "Your Password Reset Code",
-		html: `
-			<h1>Password Reset Request</h1>
-			<p>You requested a password reset. Use the code below to reset your password.</p>
-			<h2 style="font-size: 24px; letter-spacing: 2px; text-align: center;">${code}</h2>
-			<p>This code will expire in 10 minutes.</p>
-			<p>If you did not request a password reset, please ignore this email.</p>
-		`,
+		html: htmlContent,
 	};
 
 	await transporter.sendMail(mailOptions);
@@ -85,7 +89,6 @@ export const signup = async (req, res) => {
 			name: user.name,
 			email: user.email,
 			role: user.role,
-			hasSetSecurityQuestions: user.hasSetSecurityQuestions,
 		});
 	} catch (error) {
 		console.log("Error in signup controller", error.message);
@@ -108,7 +111,6 @@ export const login = async (req, res) => {
 				name: user.name,
 				email: user.email,
 				role: user.role,
-				hasSetSecurityQuestions: user.hasSetSecurityQuestions,
 			});
 		} else {
 			res.status(400).json({ message: "Invalid email or password" });
@@ -132,27 +134,6 @@ export const logout = async (req, res) => {
 		res.json({ message: "Logged out successfully" });
 	} catch (error) {
 		console.log("Error in logout controller", error.message);
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
-};
-
-export const setSecurityQuestions = async (req, res) => {
-	try {
-		const { securityQuestions } = req.body;
-		const userId = req.user._id;
-
-		const user = await User.findById(userId);
-		if (!user) {
-			return res.status(404).json({ message: "User not found" });
-		}
-
-		user.securityQuestions = securityQuestions;
-		user.hasSetSecurityQuestions = true;
-		await user.save();
-
-		res.json({ message: "Security questions set successfully" });
-	} catch (error) {
-		console.error("Error setting security questions:", error);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };

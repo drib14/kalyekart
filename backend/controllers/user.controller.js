@@ -38,7 +38,6 @@ export const updateUserProfile = async (req, res) => {
 
 		const userToReturn = user.toObject();
 		delete userToReturn.password;
-		delete userToReturn.securityQuestions;
 
 		res.status(200).json({
 			message: "Profile updated successfully",
