@@ -9,7 +9,7 @@ import {
 	updateRefundStatus,
 } from "../controllers/order.controller.js";
 import { protectRoute, adminRoute } from "../middleware/auth.middleware.js";
-import upload from "../middleware/upload.js";
+import upload from "../middleware/multer.middleware.js";
 
 const router = express.Router();
 
