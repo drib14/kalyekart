@@ -20,7 +20,7 @@ export const createCodOrder = async (req, res) => {
 		} = req.body;
 
 		// Calculate delivery fee on the server
-		const fullAddress = `${shippingAddress.street}, ${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
+		const fullAddress = `${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
 		const coordinates = await getCoordinates(fullAddress);
 		if (!coordinates) {
 			return res.status(400).json({ message: "Could not determine coordinates for the provided address." });
@@ -86,7 +86,7 @@ export const createStripeCheckoutSession = async (req, res) => {
 		const idempotencyKey = uuidv4();
 
 		// Calculate delivery fee on the server
-		const fullAddress = `${shippingAddress.street}, ${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
+		const fullAddress = `${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
 		const coordinates = await getCoordinates(fullAddress);
 		if (!coordinates) {
 			return res.status(400).json({ message: "Could not determine coordinates for the provided address." });

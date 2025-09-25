@@ -33,11 +33,11 @@ router.get("/barangays/:cityOrMunCode", async (req, res) => {
 router.post("/calculate-fee", async (req, res) => {
     try {
         const { shippingAddress } = req.body;
-        if (!shippingAddress || !shippingAddress.street || !shippingAddress.barangay || !shippingAddress.city) {
-            return res.status(400).json({ message: "A complete address is required to calculate the delivery fee." });
+        if (!shippingAddress || !shippingAddress.barangay || !shippingAddress.city) {
+            return res.status(400).json({ message: "City and barangay are required to calculate the delivery fee." });
         }
 
-        const fullAddress = `${shippingAddress.street}, ${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
+        const fullAddress = `${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
         const coordinates = await getCoordinates(fullAddress);
 
         if (!coordinates) {

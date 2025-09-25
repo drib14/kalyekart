@@ -14,7 +14,6 @@ const CheckoutPage = () => {
 	const navigate = useNavigate();
 
 	const [fullName, setFullName] = useState(user?.name || "");
-	const [streetAddress, setStreetAddress] = useState("");
 	const [city, setCity] = useState("");
 	const [barangay, setBarangay] = useState("");
 	const [province, setProvince] = useState("Cebu");
@@ -63,11 +62,11 @@ const CheckoutPage = () => {
 
 	// Fetch delivery fee when address changes
 	useEffect(() => {
-		if (streetAddress && city && barangay) {
+		if (city && barangay) {
 			const handler = setTimeout(async () => {
 				try {
 					const response = await axios.post("/locations/calculate-fee", {
-						shippingAddress: { street: streetAddress, city, barangay },
+						shippingAddress: { city, barangay },
 					});
 					setDeliveryFee(response.data.deliveryFee);
 				} catch (error) {
@@ -78,7 +77,7 @@ const CheckoutPage = () => {
 
 			return () => clearTimeout(handler);
 		}
-	}, [streetAddress, city, barangay]);
+	}, [city, barangay]);
 
 	// Update final total when delivery fee or cart total changes
 	useEffect(() => {
@@ -107,7 +106,6 @@ const CheckoutPage = () => {
 
 		const shippingAddress = {
 			fullName,
-			streetAddress,
 			city,
 			barangay,
 			province,
@@ -151,22 +149,6 @@ const CheckoutPage = () => {
 									required
 									value={fullName}
 									onChange={(e) => setFullName(e.target.value)}
-									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
-								/>
-							</div>
-							<div>
-								<label
-									htmlFor='streetAddress'
-									className='block text-sm font-medium text-gray-300 mb-1'
-								>
-									Street Address
-								</label>
-								<input
-									id='streetAddress'
-									type='text'
-									required
-									value={streetAddress}
-									onChange={(e) => setStreetAddress(e.target.value)}
 									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
 								/>
 							</div>
