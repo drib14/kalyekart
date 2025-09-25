@@ -9,10 +9,11 @@ export const getCebuCitiesAndMunicipalities = async () => {
 		const combined = [...municipalitiesResponse.data, ...citiesResponse.data];
 
 		const cebuProvinceCode = "072200000";
-		// HUCs (Highly Urbanized Cities) might not have a provinceCode, so we include them explicitly as a fallback.
+		// HUCs (Highly Urbanized Cities) like Cebu, Mandaue, and Lapu-Lapu are administratively independent
+		// from the province and may not share the province code. We must include them explicitly.
 		const cebuCityCode = "072217000";
-		const mandaueCityCode = "072226000";
-		const lapuLapuCityCode = "072223000";
+		const mandaueCityCode = "072230000";
+		const lapuLapuCityCode = "072226000";
 
 		const filtered = combined.filter(
 			(loc) =>
