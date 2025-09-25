@@ -2,7 +2,7 @@ import fetch from "node-fetch";
 
 const API_BASE_URL = "https://us1.locationiq.com/v1";
 // TODO: Remove this before production. API Key should be loaded from environment variables.
-const ACCESS_TOKEN = process.env.LOCATIONIQ_ACCESS_TOKEN || "pk.8cc948f454d09799caf406854074b468";
+const ACCESS_TOKEN = "pk.8cc948f454d09799caf406854074b468";
 
 export async function getCoordinates(address) {
   try {
