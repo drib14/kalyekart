@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 
 const API_BASE_URL = "https://psgc.cloud/api";
-const CEBU_PROVINCE_CODE = "072200000";
+const CEBU_PROVINCE_CODE = "07022";
 
 export async function getCebuCities() {
   try {
