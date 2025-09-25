@@ -3,12 +3,16 @@ import fetch from "node-fetch";
 const API_BASE_URL = "https://psgc.cloud/api";
 const CEBU_PROVINCE_CODE = "07022";
 
+const HUC_CEBU_CODES = ["0730600000", "0731100000", "0731300000"]; // Cebu City, Lapu-Lapu, Mandaue
+
 export async function getCebuCities() {
   try {
     const response = await fetch(`${API_BASE_URL}/cities`);
     const cities = await response.json();
-    return cities.filter((city) =>
-      city.code.startsWith(CEBU_PROVINCE_CODE)
+    return cities.filter(
+      (city) =>
+        city.code.startsWith(CEBU_PROVINCE_CODE) ||
+        HUC_CEBU_CODES.includes(city.code)
     );
   } catch (error) {
     console.error("Error fetching Cebu cities:", error);
