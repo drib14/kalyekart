@@ -39,33 +39,38 @@
         .content h2 {
             color: #10B981;
         }
-        .receipt-details {
+        .receipt-details, .payment-breakdown {
             margin-top: 20px;
         }
-        .receipt-details table {
+        .receipt-details table, .payment-breakdown table {
             width: 100%;
             border-collapse: collapse;
         }
-        .receipt-details th, .receipt-details td {
+        .receipt-details th, .receipt-details td, .payment-breakdown th, .payment-breakdown td {
             padding: 10px;
             border-bottom: 1px solid #ddd;
             text-align: left;
         }
-        .receipt-details th {
+        .receipt-details th, .payment-breakdown th {
             background-color: #f9f9f9;
         }
-        .total {
-            text-align: right;
+        .payment-breakdown .total td {
             font-size: 18px;
             font-weight: bold;
-            margin-top: 20px;
             color: #10B981;
+            border-top: 2px solid #333;
         }
         .payment-info {
             margin-top: 20px;
             padding: 15px;
             background-color: #f9f9f9;
             border-left: 4px solid #10B981;
+        }
+        .incharge-info {
+            margin-top: 20px;
+            text-align: center;
+            font-style: italic;
+            color: #555;
         }
         .footer {
             margin-top: 20px;
@@ -82,7 +87,7 @@
         </div>
         <div class="content">
             <h2>Your Receipt for Order #{{ORDER_ID}}</h2>
-            <p>Thank you for your purchase, {{USER_NAME}}! Here is your receipt.</p>
+            <p>Hi {{USER_NAME}}, thank you for your recent purchase! We're so glad you chose us. We've prepared your official receipt below.</p>
 
             <div class="receipt-details">
                 <table>
@@ -99,8 +104,23 @@
                 </table>
             </div>
 
-            <div class="total">
-                Total Paid: {{TOTAL_AMOUNT}}
+            <div class="payment-breakdown">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Subtotal</td>
+                            <td style="text-align:right;">{{SUBTOTAL}}</td>
+                        </tr>
+                        <tr>
+                            <td>Delivery Fee</td>
+                            <td style="text-align:right;">{{DELIVERY_FEE}}</td>
+                        </tr>
+                        <tr class="total">
+                            <td><strong>Total Paid</strong></td>
+                            <td style="text-align:right;"><strong>{{TOTAL_AMOUNT}}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
             <div class="payment-info">
@@ -110,8 +130,12 @@
                 <p><strong>Date:</strong> {{DATE}}</p>
             </div>
 
+            <div class="incharge-info">
+                <p>Your order was personally handled by: <strong>{{ADMIN_NAME}}</strong>.</p>
+            </div>
+
             <p style="text-align:center; margin-top: 30px;">
-                We hope you enjoy your items! If you have any questions, feel free to contact us.
+                We hope you love your items! Every purchase you make supports local businesses and our community. We can't wait to serve you again!
             </p>
         </div>
         <div class="footer">

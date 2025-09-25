@@ -54,44 +54,24 @@ const AdminOrdersTab = () => {
 		},
 	});
 
-	const { mutate: updateOrderStatus } = useMutation({
-		mutationFn: ({ orderId, status }) => {
-			return axios.put(`/orders/${orderId}/status`, { status });
+	const { mutate: updateOrderStatus, isPending: isUpdatingStatus } = useMutation({
+		mutationFn: ({ orderId, status, paymentStatus, refundStatus, rejectionReason }) => {
+			return axios.put(`/orders/${orderId}/status`, {
+				status,
+				paymentStatus,
+				refundStatus,
+				rejectionReason,
+			});
 		},
 		onSuccess: () => {
-			toast.success("Order status updated successfully");
+			toast.success("Order updated successfully");
 			refetchOrders();
 		},
 		onError: (error) => {
-			toast.error(error.response.data.message);
+			toast.error(error.response?.data?.message || "Failed to update order");
 		},
 	});
 
-	const { mutate: updatePaymentStatus } = useMutation({
-		mutationFn: ({ orderId, status }) => {
-			return axios.put(`/orders/${orderId}/payment-status`, { status });
-		},
-		onSuccess: () => {
-			toast.success("Payment status updated successfully");
-			refetchOrders();
-		},
-		onError: (error) => {
-			toast.error(error.response.data.message);
-		},
-	});
-
-	const { mutate: updateRefundStatus } = useMutation({
-		mutationFn: ({ orderId, status, rejectionReason }) => {
-			return axios.put(`/orders/${orderId}/refund/status`, { status, rejectionReason });
-		},
-		onSuccess: () => {
-			toast.success("Refund status updated successfully");
-			refetchOrders();
-		},
-		onError: (error) => {
-			toast.error(error.response.data.message);
-		},
-	});
 
 	if (isLoading) return <LoadingSpinner />;
 	if (isError) return <div>Error: {error.message}</div>;
@@ -108,9 +88,9 @@ const AdminOrdersTab = () => {
 
 	const handleRejectSubmit = (rejectionReason) => {
 		if (!rejectionModalOrder) return;
-		updateRefundStatus({
+		updateOrderStatus({
 			orderId: rejectionModalOrder._id,
-			status: "rejected",
+			refundStatus: "rejected",
 			rejectionReason,
 		});
 		setRejectionModalOrder(null);
@@ -122,7 +102,7 @@ const AdminOrdersTab = () => {
 				<RejectionReasonModal
 					onClose={() => setRejectionModalOrder(null)}
 					onSubmit={handleRejectSubmit}
-					isPending={false} // You might want to wire this to the mutation's isPending state
+					isPending={isUpdatingStatus}
 				/>
 			)}
 			{proofViewerUrl && <ProofViewerModal proofUrl={proofViewerUrl} onClose={() => setProofViewerUrl(null)} />}
@@ -257,7 +237,7 @@ const AdminOrdersTab = () => {
 													<div className='mt-4 flex gap-2'>
 														<button
 															onClick={() =>
-																updateRefundStatus({ orderId: order._id, status: "approved" })
+																updateOrderStatus({ orderId: order._id, refundStatus: "approved" })
 															}
 															className='bg-green-600 hover:bg-green-700 text-white py-1 px-2 rounded-md text-xs'
 														>
@@ -301,7 +281,7 @@ const AdminOrdersTab = () => {
 												id={`payment-status-${order._id}`}
 												value={order.paymentStatus}
 												onChange={(e) =>
-													updatePaymentStatus({ orderId: order._id, status: e.target.value })
+													updateOrderStatus({ orderId: order._id, paymentStatus: e.target.value })
 												}
 												className='bg-gray-700 border border-gray-600 rounded-md shadow-sm'
 												disabled={order.paymentMethod === "card"} // Disable for card payments

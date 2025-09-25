@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 
-const PSGC_API_BASE_URL = process.env.PSGC_API_BASE_URL || "https://psgc.cloud/api";
-const LOCATIONIQ_API_BASE_URL = process.env.LOCATIONIQ_API_BASE_URL || "https://us1.locationiq.com/v1";
+const PSGC_API_BASE_URL = process.env.PSGC_API_BASE_URL;
+const LOCATIONIQ_API_BASE_URL = process.env.LOCATIONIQ_API_BASE_URL;
 const LOCATIONIQ_ACCESS_TOKEN = process.env.LOCATIONIQ_ACCESS_TOKEN;
 
 const CEBU_PROVINCE_CODE = "07022";

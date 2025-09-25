@@ -104,8 +104,23 @@
                 </table>
             </div>
 
-            <div class="total">
-                Total: {{TOTAL_AMOUNT}}
+            <div class="order-summary">
+                <table>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2" style="text-align: right;">Subtotal:</td>
+                            <td>{{SUBTOTAL}}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="text-align: right;">Delivery Fee:</td>
+                            <td>{{DELIVERY_FEE}}</td>
+                        </tr>
+                        <tr class="total">
+                            <td colspan="2" style="text-align: right;"><strong>Total:</strong></td>
+                            <td><strong>{{TOTAL_AMOUNT}}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
 
             <p style="text-align:center; margin-top: 30px;">

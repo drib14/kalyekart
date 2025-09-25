@@ -66,6 +66,7 @@ export const createCheckoutSession = async (req, res) => {
 				shippingAddress: JSON.stringify(shippingAddress),
 				distance: String(distance),
 				deliveryFee: String(deliveryFee),
+				subtotal: String(products.reduce((acc, p) => acc + p.price * p.quantity, 0)),
 			},
 		});
 
@@ -102,6 +103,8 @@ export const checkoutSuccess = async (req, res) => {
 			const shippingAddress = JSON.parse(session.metadata.shippingAddress);
 			const distance = parseFloat(session.metadata.distance);
 			const deliveryFee = parseFloat(session.metadata.deliveryFee);
+			const subtotal = parseFloat(session.metadata.subtotal);
+
 			const newOrder = new Order({
 				user: session.metadata.userId,
 				products: products.map((product) => ({
@@ -110,11 +113,14 @@ export const checkoutSuccess = async (req, res) => {
 					quantity: product.quantity,
 					price: product.price,
 				})),
-				totalAmount: session.amount_total / 100, // convert from cents to dollars,
+				subtotal,
+				deliveryFee,
+				totalAmount: session.amount_total / 100, // convert from cents to php
+				paymentMethod: "card",
+				paymentStatus: "paid",
 				stripeSessionId: sessionId,
 				shippingAddress,
 				distance,
-				deliveryFee,
 			});
 
 			await newOrder.save();
@@ -141,6 +147,8 @@ export const checkoutSuccess = async (req, res) => {
 					USER_NAME: user.name,
 					ORDER_ID: newOrder._id,
 					ORDER_ITEMS: orderItemsHtml,
+					SUBTOTAL: `₱${newOrder.subtotal.toFixed(2)}`,
+					DELIVERY_FEE: `₱${newOrder.deliveryFee.toFixed(2)}`,
 					TOTAL_AMOUNT: `₱${newOrder.totalAmount.toFixed(2)}`,
 					CLIENT_URL: process.env.CLIENT_URL,
 				}
