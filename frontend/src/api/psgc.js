@@ -1,24 +1,35 @@
 import axios from "axios";
 
 // NOTE: This function is specifically designed to get all cities and municipalities in Cebu.
-// It fetches all cities and municipalities and filters them based on the known PSGC codes for Cebu.
+// It fetches all cities and municipalities and filters them based on the official PSGC province code for Cebu.
 export const getCebuCitiesAndMunicipalities = async () => {
-	const municipalitiesResponse = await axios.get("https://psgc.cloud/api/municipalities");
-	const citiesResponse = await axios.get("https://psgc.cloud/api/cities");
-	const combined = [...municipalitiesResponse.data, ...citiesResponse.data];
-	const cebuProvincePrefix = "0722";
-	const cebuCityCode = "0730600000";
-	const mandaueCityCode = "0731300000";
-	const lapuLapuCityCode = "0731100000";
+	try {
+		const municipalitiesResponse = await axios.get("https://psgc.cloud/api/municipalities");
+		const citiesResponse = await axios.get("https://psgc.cloud/api/cities");
+		const combined = [...municipalitiesResponse.data, ...citiesResponse.data];
 
-	const filtered = combined.filter(
-		(m) =>
-			m.code.startsWith(cebuProvincePrefix) ||
-			m.code === cebuCityCode ||
-			m.code === mandaueCityCode ||
-			m.code === lapuLapuCityCode
-	);
-	return filtered.sort((a, b) => a.name.localeCompare(b.name));
+		const cebuProvinceCode = "072200000";
+		// HUCs (Highly Urbanized Cities) might not have a provinceCode, so we include them explicitly as a fallback.
+		const cebuCityCode = "072217000";
+		const mandaueCityCode = "072226000";
+		const lapuLapuCityCode = "072223000";
+
+		const filtered = combined.filter(
+			(loc) =>
+				loc.provinceCode === cebuProvinceCode ||
+				loc.code === cebuCityCode ||
+				loc.code === mandaueCityCode ||
+				loc.code === lapuLapuCityCode
+		);
+
+		// Remove duplicates that might occur if HUCs have the province code AND are explicitly added
+		const unique = filtered.filter((value, index, self) => index === self.findIndex((t) => t.code === value.code));
+
+		return unique.sort((a, b) => a.name.localeCompare(b.name));
+	} catch (error) {
+		console.error("Error fetching Cebu cities and municipalities:", error);
+		return []; // Return an empty array on error
+	}
 };
 
 // NOTE: This API fetches all barangays and filters them on the client side.
