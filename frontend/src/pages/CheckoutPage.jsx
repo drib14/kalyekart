@@ -26,7 +26,7 @@ const CheckoutPage = () => {
 	const [locations, setLocations] = useState([]);
 	const [barangays, setBarangays] = useState([]);
 	const [isLocating, setIsLocating] = useState(false);
-	const [targetBarangay, setTargetBarangay] = useState(null); // Used for auto-filling
+	const [targetBarangay, setTargetBarangay] = useState(null);
 
 	// Fetch cities and municipalities on component mount
 	useEffect(() => {
@@ -66,16 +66,15 @@ const CheckoutPage = () => {
 	// Set barangay after auto-locating
 	useEffect(() => {
 		if (targetBarangay && barangays.length > 0) {
-			const matchedBarangay = barangays.find(b => b.name === targetBarangay);
+			const matchedBarangay = barangays.find(b => b.name.includes(targetBarangay) || targetBarangay.includes(b.name));
 			if (matchedBarangay) {
 				setBarangay(matchedBarangay.name);
 			} else {
 				toast.info(`We've set your city. Please select your barangay from the list.`);
 			}
-			setTargetBarangay(null); // Reset target
+			setTargetBarangay(null);
 		}
 	}, [barangays, targetBarangay]);
-
 
 	// Fetch delivery fee when address changes
 	useEffect(() => {
@@ -90,7 +89,7 @@ const CheckoutPage = () => {
 					toast.error("Could not calculate delivery fee.");
 					setDeliveryFee(0);
 				}
-			}, 500); // Debounce
+			}, 500);
 
 			return () => clearTimeout(handler);
 		}
@@ -126,13 +125,14 @@ const CheckoutPage = () => {
 					const response = await axios.post("/locations/reverse-geocode", { lat: latitude, lon: longitude });
 					const address = response.data;
 
-					// Normalize city name from API response for better matching
-					const apiCityName = (address.city || address.town || address.county || "").replace(/City of\s/g, "").trim();
+					const apiCityName = address.city || address.town || address.county || "";
 
-					// Find the best match from our list of locations
+					const normalize = (str) => str.replace(/City of|City/g, "").replace(/-/g, " ").trim().toLowerCase();
+					const normalizedApiCity = normalize(apiCityName);
+
 					const matchedLocation = locations.find(loc => {
-						const normalizedLocName = loc.name.replace(/City/g, "").trim();
-						return normalizedLocName === apiCityName;
+						const normalizedLocName = normalize(loc.name);
+						return normalizedLocName.includes(normalizedApiCity) || normalizedApiCity.includes(normalizedLocName);
 					});
 
 					if (matchedLocation) {
@@ -140,10 +140,10 @@ const CheckoutPage = () => {
 						const sitioInfo = [address.road, address.house_number].filter(Boolean).join(", ");
 
 						setCity(matchedLocation.name);
-						setTargetBarangay(barangayName); // Set target to find after barangays load
+						setTargetBarangay(barangayName);
 						setSitio(sitioInfo);
 					} else {
-						toast.error("Your location appears to be outside our delivery area.");
+						toast.error(`DEBUG: Could not match location. API Response: ${JSON.stringify(address)}`);
 					}
 				} catch (error) {
 					toast.error("Could not determine your address. Please enter it manually.");
@@ -206,7 +206,7 @@ const CheckoutPage = () => {
 								type="button"
 								onClick={handleUseCurrentLocation}
 								className="text-sm font-medium text-emerald-400 hover:text-emerald-300 disabled:opacity-50 flex items-center"
-								disabled={isLocating}
+								disabled={isLocating || locations.length === 0}
 							>
 								<svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
 								{isLocating ? 'Locating...' : 'Use Current Location'}
