@@ -7,6 +7,7 @@ import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+
 const CheckoutPage = () => {
 	const { cart, subtotal, total, coupon } = useCartStore();
 	const { user } = useUserStore();
@@ -15,75 +16,48 @@ const CheckoutPage = () => {
 	const [fullName, setFullName] = useState(user?.name || "");
 	const [streetAddress, setStreetAddress] = useState("");
 	const [city, setCity] = useState("");
-	const [barangay, setBarangay] = useState("");
 	const [province, setProvince] = useState("Cebu");
-	const [postalCode, setPostalCode] = useState("");
+	const [postalCode, setPostalCode] = useState(""); // This can be improved later
 	const [contactNumber, setContactNumber] = useState(user?.phoneNumber || "");
 	const [deliveryFee, setDeliveryFee] = useState(0);
 	const [finalTotal, setFinalTotal] = useState(total);
 
-	const [cities, setCities] = useState([]);
-	const [municipalities, setMunicipalities] = useState([]);
-	const [barangays, setBarangays] = useState([]);
+	const [locations, setLocations] = useState([]);
 
+	// Fetch locations on component mount
 	useEffect(() => {
-		const fetchCitiesAndMunicipalities = async () => {
+		const fetchLocations = async () => {
 			try {
-				const [citiesRes, municipalitiesRes] = await Promise.all([
-					axios.get("/locations/cities"),
-					axios.get("/locations/municipalities"),
-				]);
-				setCities(citiesRes.data);
-				setMunicipalities(municipalitiesRes.data);
+				const response = await axios.get("/api/delivery/locations");
+				setLocations(response.data);
 			} catch (error) {
-				toast.error("Could not fetch locations");
+				toast.error("Failed to fetch locations.");
 			}
 		};
-		fetchCitiesAndMunicipalities();
+		fetchLocations();
 	}, []);
 
+	// Fetch delivery fee when city changes
 	useEffect(() => {
-		const fetchBarangays = async () => {
-			if (city) {
-				const selectedCity = [...cities, ...municipalities].find(
-					(m) => m.name === city
-				);
-				if (selectedCity) {
-					try {
-						const res = await axios.get(
-							`/locations/barangays/${selectedCity.code}`
-						);
-						setBarangays(res.data);
-						setPostalCode(selectedCity.zip_code || "");
-					} catch (error) {
-						toast.error("Could not fetch barangays");
-					}
-				}
-			}
-		};
-		fetchBarangays();
-	}, [city, cities, municipalities]);
-
-	useEffect(() => {
-		const calculateDeliveryFee = async () => {
-			if (streetAddress && city && barangay) {
+		if (city) {
+			const fetchFee = async () => {
 				try {
-					const res = await axios.post("/locations/delivery-fee", {
-						shippingAddress: {
-							street: streetAddress,
-							barangay,
-							city,
-						},
+					const response = await axios.post("/api/delivery/calculate-fee", {
+						shippingAddress: { city },
 					});
-					setDeliveryFee(res.data.deliveryFee);
+					setDeliveryFee(response.data.deliveryFee);
 				} catch (error) {
-					toast.error("Could not calculate delivery fee");
+					toast.error("Could not calculate delivery fee.");
+					setDeliveryFee(0);
 				}
-			}
-		};
-		calculateDeliveryFee();
-	}, [streetAddress, city, barangay]);
+			};
+			fetchFee();
+		} else {
+			setDeliveryFee(0);
+		}
+	}, [city]);
 
+	// Update final total when delivery fee or cart total changes
 	useEffect(() => {
 		setFinalTotal(total + deliveryFee);
 	}, [total, deliveryFee]);
@@ -112,7 +86,6 @@ const CheckoutPage = () => {
 			fullName,
 			streetAddress,
 			city,
-			barangay,
 			province,
 			postalCode,
 		};
@@ -123,7 +96,7 @@ const CheckoutPage = () => {
 			contactNumber,
 			couponCode: coupon?.code,
 			subtotal,
-			totalAmount: finalTotal,
+			// No deliveryFee or totalAmount sent, backend calculates them
 		});
 	};
 
@@ -187,33 +160,25 @@ const CheckoutPage = () => {
 										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
 									>
 										<option value=''>Select a city</option>
-										{[...cities, ...municipalities]
-											.sort((a, b) => a.name.localeCompare(b.name))
-											.map((m) => (
-												<option key={m.code} value={m.name}>
-													{m.name}
-												</option>
-											))}
-									</select>
-								</div>
-								<div>
-									<label htmlFor='barangay' className='block text-sm font-medium text-gray-300 mb-1'>
-										Barangay
-									</label>
-									<select
-										id='barangay'
-										required
-										value={barangay}
-										onChange={(e) => setBarangay(e.target.value)}
-										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
-									>
-										<option value=''>Select a barangay</option>
-										{barangays.map((b) => (
-											<option key={b.code} value={b.name}>
-												{b.name}
+										{locations.map((loc) => (
+											<option key={loc} value={loc}>
+												{loc}
 											</option>
 										))}
 									</select>
+								</div>
+								<div>
+									<label htmlFor='postalCode' className='block text-sm font-medium text-gray-300 mb-1'>
+										Postal Code
+									</label>
+									<input
+										id='postalCode'
+										type='text'
+										value={postalCode}
+										onChange={(e) => setPostalCode(e.target.value)}
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+										placeholder='e.g. 6000'
+									/>
 								</div>
 							</div>
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
@@ -232,33 +197,19 @@ const CheckoutPage = () => {
 									/>
 								</div>
 								<div>
-									<label htmlFor='postalCode' className='block text-sm font-medium text-gray-300 mb-1'>
-										Postal Code
+									<label htmlFor='contactNumber' className='block text-sm font-medium text-gray-300 mb-1'>
+										Contact Number
 									</label>
 									<input
-										id='postalCode'
+										id='contactNumber'
 										type='text'
 										required
-										value={postalCode}
-										onChange={(e) => setPostalCode(e.target.value)}
+										value={contactNumber}
+										onChange={(e) => setContactNumber(e.target.value)}
 										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
-										readOnly
+										placeholder='09123456789'
 									/>
 								</div>
-							</div>
-							<div>
-								<label htmlFor='contactNumber' className='block text-sm font-medium text-gray-300 mb-1'>
-									Contact Number
-								</label>
-								<input
-									id='contactNumber'
-									type='text'
-									required
-									value={contactNumber}
-									onChange={(e) => setContactNumber(e.target.value)}
-									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
-									placeholder='09123456789'
-								/>
 							</div>
 
 							<div className='pt-6'>
@@ -315,7 +266,7 @@ const CheckoutPage = () => {
 							)}
 							<div className='flex justify-between text-gray-300'>
 								<span>Delivery Fee</span>
-								<span>₱{deliveryFee}</span>
+								<span>₱{deliveryFee.toFixed(2)}</span>
 							</div>
 							<div className='flex justify-between font-bold text-xl text-white pt-2'>
 								<span>Total</span>
