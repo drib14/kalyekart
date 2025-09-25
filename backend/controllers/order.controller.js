@@ -49,6 +49,23 @@ export const createCodOrder = async (req, res) => {
 	}
 };
 
+export const getOrderById = async (req, res) => {
+	try {
+		const order = await Order.findById(req.params.orderId).populate("products.product");
+		if (!order) {
+			return res.status(404).json({ message: "Order not found" });
+		}
+		// Ensure the user owns the order unless they are an admin
+		if (order.user.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+			return res.status(401).json({ message: "Not authorized" });
+		}
+		res.json(order);
+	} catch (error) {
+		console.log("Error in getOrderById controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const createStripeCheckoutSession = async (req, res) => {
 	try {
 		const { products, shippingAddress, contactNumber, couponCode, subtotal, deliveryFee, distance, totalAmount } =

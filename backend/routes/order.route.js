@@ -3,6 +3,7 @@ import {
 	createCodOrder,
 	createStripeCheckoutSession,
 	getOrders,
+	getOrderById,
 	updateOrderStatus,
 	requestRefund,
 	getRefunds,
@@ -14,6 +15,7 @@ import upload from "../middleware/multer.middleware.js";
 const router = express.Router();
 
 router.get("/", protectRoute, getOrders);
+router.get("/:orderId", protectRoute, getOrderById);
 router.post("/cod", protectRoute, createCodOrder);
 router.post("/create-checkout-session", protectRoute, createStripeCheckoutSession);
 router.put("/:orderId/status", protectRoute, adminRoute, updateOrderStatus);
