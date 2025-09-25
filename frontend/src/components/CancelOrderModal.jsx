@@ -8,7 +8,7 @@ const CancelOrderModal = ({ orderId, onClose, refetchOrders }) => {
 
 	const { mutate: cancelOrder, isPending } = useMutation({
 		mutationFn: () => {
-			return axios.put(`/orders/${orderId}/cancel`, { reason });
+			return axios.post(`/orders/cancel/${orderId}`, { reason });
 		},
 		onSuccess: () => {
 			toast.success("Order cancelled successfully");

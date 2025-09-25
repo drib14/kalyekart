@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import axios from "../lib/axios";
@@ -5,9 +6,11 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { CheckCircle, Clock, Package, ShoppingCart, User, Home, Phone, CreditCard } from "lucide-react";
 import CountdownTimer from "../components/CountdownTimer";
 import ProgressBar from "../components/ProgressBar";
+import RefundModal from "../components/RefundModal";
 
 const OrderDetailPage = () => {
 	const { orderId } = useParams();
+	const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
 
 	const {
 		data: order,
@@ -59,6 +62,20 @@ const OrderDetailPage = () => {
 								</div>
 							)}
 						</div>
+						<button
+							className='mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-500'
+							disabled={order.status !== "Delivered" || order.refundRequest}
+							onClick={() => setIsRefundModalOpen(true)}
+							title={
+								order.status !== "Delivered"
+									? "You can only request a refund for delivered orders."
+									: order.refundRequest
+									? "You have already requested a refund for this order."
+									: "Request a refund for this order"
+							}
+						>
+							Request Refund
+						</button>
 					</div>
 				</header>
 
@@ -164,6 +181,12 @@ const OrderDetailPage = () => {
 					</div>
 				</main>
 			</div>
+			{isRefundModalOpen && (
+				<RefundModal
+					orderId={order._id}
+					onClose={() => setIsRefundModalOpen(false)}
+				/>
+			)}
 		</div>
 	);
 };

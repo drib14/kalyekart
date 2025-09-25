@@ -62,6 +62,31 @@ export const createCodOrder = async (req, res) => {
 	}
 };
 
+export const cancelOrder = async (req, res) => {
+	try {
+		const { orderId } = req.params;
+		const { cancellationReason } = req.body;
+
+		const order = await Order.findById(orderId);
+		if (!order) {
+			return res.status(404).json({ message: "Order not found" });
+		}
+
+		// Optional: Check if the user is authorized to cancel the order
+		if (order.user.toString() !== req.user._id.toString()) {
+			return res.status(401).json({ message: "Not authorized to cancel this order" });
+		}
+
+		order.status = "Cancelled";
+		order.cancellationReason = cancellationReason || "Order cancelled by user.";
+		await order.save();
+		res.json({ message: "Order cancelled successfully", order });
+	} catch (error) {
+		console.log("Error in cancelOrder controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const getOrderById = async (req, res) => {
 	try {
 		const order = await Order.findById(req.params.orderId).populate("products.product");
@@ -161,7 +186,12 @@ export const createStripeCheckoutSession = async (req, res) => {
 
 export const getOrders = async (req, res) => {
 	try {
-		const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+		const orders = await Order.find({ user: req.user._id })
+			.populate({
+				path: "products.product",
+				select: "name image", // Explicitly select the fields needed for the frontend
+			})
+			.sort({ createdAt: -1 });
 		res.json(orders);
 	} catch (error) {
 		console.log("Error in getOrders controller", error.message);

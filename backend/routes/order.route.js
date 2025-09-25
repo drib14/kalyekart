@@ -8,6 +8,7 @@ import {
 	requestRefund,
 	getRefunds,
 	updateRefundStatus,
+	cancelOrder,
 } from "../controllers/order.controller.js";
 import { protectRoute, adminRoute } from "../middleware/auth.middleware.js";
 import upload from "../middleware/multer.middleware.js";
@@ -22,5 +23,6 @@ router.put("/:orderId/status", protectRoute, adminRoute, updateOrderStatus);
 router.post("/:orderId/refund", protectRoute, upload.single("proof"), requestRefund);
 router.get("/refunds", protectRoute, adminRoute, getRefunds);
 router.put("/refunds/:refundId/status", protectRoute, adminRoute, updateRefundStatus);
+router.post("/cancel/:orderId", protectRoute, cancelOrder);
 
 export default router;
