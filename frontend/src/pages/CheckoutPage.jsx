@@ -125,12 +125,20 @@ const CheckoutPage = () => {
 				try {
 					const response = await axios.post("/locations/reverse-geocode", { lat: latitude, lon: longitude });
 					const address = response.data;
-					const cityName = address.city || address.town || address.county;
-					const barangayName = address.village || address.suburb;
-					const sitioInfo = [address.road, address.house_number].filter(Boolean).join(", ");
 
-					const matchedLocation = locations.find(loc => loc.name.includes(cityName.replace("City of ", "")));
+					// Normalize city name from API response for better matching
+					const apiCityName = (address.city || address.town || address.county || "").replace(/City of\s/g, "").trim();
+
+					// Find the best match from our list of locations
+					const matchedLocation = locations.find(loc => {
+						const normalizedLocName = loc.name.replace(/City/g, "").trim();
+						return normalizedLocName === apiCityName;
+					});
+
 					if (matchedLocation) {
+						const barangayName = address.village || address.suburb;
+						const sitioInfo = [address.road, address.house_number].filter(Boolean).join(", ");
+
 						setCity(matchedLocation.name);
 						setTargetBarangay(barangayName); // Set target to find after barangays load
 						setSitio(sitioInfo);
