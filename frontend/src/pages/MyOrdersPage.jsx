@@ -5,7 +5,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { toast } from "sonner";
 import { useState } from "react";
 import CancelOrderModal from "../components/CancelOrderModal";
-import RequestRefundModal from "../components/RequestRefundModal";
+import RefundModal from "../components/RefundModal";
 import OrdersTab from "../components/OrdersTab";
 import Pagination from "../components/Pagination";
 
@@ -66,10 +66,9 @@ const MyOrdersPage = () => {
 				/>
 			)}
 			{isRefundModalOpen && (
-				<RequestRefundModal
+				<RefundModal
 					orderId={selectedOrder._id}
 					onClose={() => setIsRefundModalOpen(false)}
-					refetchOrders={refetchOrders}
 				/>
 			)}
 			<h1 className='text-3xl font-extrabold text-emerald-400 mb-8 text-center'>My Orders</h1>

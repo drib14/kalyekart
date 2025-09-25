@@ -81,10 +81,10 @@ const RefundModal = ({ orderId, onClose }) => {
 						</button>
 						<button
 							type='submit'
-							className='px-4 py-2 bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-500 flex items-center'
+							className='px-4 py-2 bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-500 flex items-center justify-center min-w-[120px]'
 							disabled={isPending}
 						>
-							{isPending ? <LoadingSpinner /> : "Submit Request"}
+							{isPending ? <LoadingSpinner size='sm' /> : "Submit Request"}
 						</button>
 					</div>
 				</form>

@@ -89,14 +89,19 @@ export const cancelOrder = async (req, res) => {
 
 export const getOrderById = async (req, res) => {
 	try {
-		const order = await Order.findById(req.params.orderId).populate("products.product");
+		const order = await Order.findById(req.params.orderId)
+			.populate("products.product")
+			.populate("user", "name email"); // Populate user details
+
 		if (!order) {
 			return res.status(404).json({ message: "Order not found" });
 		}
-		// Ensure the user owns the order unless they are an admin
-		if (order.user.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+
+		// Ensure the user owns the order OR is an admin
+		if (order.user._id.toString() !== req.user._id.toString() && !req.user.isAdmin) {
 			return res.status(401).json({ message: "Not authorized" });
 		}
+
 		res.json(order);
 	} catch (error) {
 		console.log("Error in getOrderById controller", error.message);
@@ -222,14 +227,21 @@ export const requestRefund = async (req, res) => {
 	try {
 		const { orderId } = req.params;
 		const { reason } = req.body;
-		const proof = req.file;
+
+		if (!req.file) {
+			return res.status(400).json({ message: "Proof of image is required." });
+		}
 
 		const order = await Order.findById(orderId);
 		if (!order) {
 			return res.status(404).json({ message: "Order not found" });
 		}
 
-		const result = await cloudinary.uploader.upload(proof.path, {
+		// Convert buffer to data URI
+		const b64 = Buffer.from(req.file.buffer).toString("base64");
+		let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+
+		const result = await cloudinary.uploader.upload(dataURI, {
 			folder: "refunds",
 		});
 
