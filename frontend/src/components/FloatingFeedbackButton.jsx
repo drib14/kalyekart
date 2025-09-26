@@ -1,63 +1,41 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { MessageSquarePlus } from "lucide-react";
 
 const FloatingFeedbackButton = ({ onClick }) => {
 	const [isHovered, setIsHovered] = useState(false);
-	const [showText, setShowText] = useState(false);
-
-	useEffect(() => {
-		const interval = setInterval(() => {
-			setShowText(true);
-			setTimeout(() => setShowText(false), 5000); // Show text for 5 seconds
-		}, 300000); // Animate every 5 minutes
-
-		return () => clearInterval(interval);
-	}, []);
 
 	return (
-		<div
-			className='fixed bottom-5 right-5 z-50'
-			onMouseEnter={() => {
-				setIsHovered(true);
-				setShowText(true);
-			}}
-			onMouseLeave={() => {
-				setIsHovered(false);
-				setShowText(false);
-			}}
+		<motion.div
+			className='fixed bottom-5 right-5 z-50 flex items-center'
+			onHoverStart={() => setIsHovered(true)}
+			onHoverEnd={() => setIsHovered(false)}
+			initial={{ scale: 0, opacity: 0 }}
+			animate={{ scale: 1, opacity: 1 }}
+			transition={{ type: "spring", stiffness: 260, damping: 20, delay: 1.5 }}
 		>
-			<div className='relative flex items-center'>
-				<AnimatePresence>
-					{showText && (
-						<motion.div
-							initial={{ width: 0, opacity: 0 }}
-							animate={{ width: "auto", opacity: 1 }}
-							exit={{ width: 0, opacity: 0 }}
-							transition={{ duration: 0.5 }}
-							className='absolute right-14 whitespace-nowrap bg-gray-800 text-white p-2 rounded-md'
-						>
-							How's the app?
-						</motion.div>
-					)}
-				</AnimatePresence>
-				<button className='bg-emerald-500 text-white rounded-full p-4 shadow-lg' onClick={onClick}>
-					<svg
-						xmlns='http://www.w3.org/2000/svg'
-						className='h-6 w-6'
-						fill='none'
-						viewBox='0 0 24 24'
-						stroke='currentColor'
+			<AnimatePresence>
+				{isHovered && (
+					<motion.div
+						initial={{ width: 0, opacity: 0, x: 20 }}
+						animate={{ width: "auto", opacity: 1, x: 0 }}
+						exit={{ width: 0, opacity: 0, x: 20 }}
+						transition={{ duration: 0.3, ease: "easeInOut" }}
+						className='absolute right-16 whitespace-nowrap bg-gray-800 text-white p-2 rounded-lg shadow-md'
 					>
-						<path
-							strokeLinecap='round'
-							strokeLinejoin='round'
-							strokeWidth={2}
-							d='M8 10h.01M12 10h.01M16 10h.01M9 16h6m2 5a9 9 0 11-18 0 9 9 0 0118 0z'
-						/>
-					</svg>
-				</button>
-			</div>
-		</div>
+						Got feedback?
+					</motion.div>
+				)}
+			</AnimatePresence>
+			<motion.button
+				className='bg-emerald-600 hover:bg-emerald-700 text-white rounded-full p-4 shadow-lg flex items-center justify-center'
+				onClick={onClick}
+				whileHover={{ scale: 1.15, rotate: 15 }}
+				transition={{ type: "spring", stiffness: 300, damping: 10 }}
+			>
+				<MessageSquarePlus size={24} />
+			</motion.button>
+		</motion.div>
 	);
 };
 

@@ -24,27 +24,32 @@ export const updateUserProfile = async (req, res) => {
 			user.operatingHours = operatingHours || user.operatingHours;
 		}
 
+		// Handle profile picture upload
 		if (req.file) {
-			const profilePictureUpload = await uploadOnCloudinary(req.file.path);
-			if (profilePictureUpload) {
+			const localFilePath = req.file.path;
+			const profilePictureUpload = await uploadOnCloudinary(localFilePath);
+
+			if (profilePictureUpload && profilePictureUpload.secure_url) {
 				user.profilePicture = profilePictureUpload.secure_url;
 			} else {
-				// Don't fail the whole request if only image upload fails
-				console.error("Cloudinary upload failed, but profile data will be saved.");
+				// If upload fails, stop the process and return an error
+				return res.status(500).json({ message: "Failed to upload profile picture to Cloudinary." });
 			}
 		}
 
+		// Save all changes to the user
 		await user.save();
 
+		// Prepare user object to return to the client (without sensitive info)
 		const userToReturn = user.toObject();
 		delete userToReturn.password;
-		delete userToReturn.securityQuestions;
 
 		res.status(200).json({
 			message: "Profile updated successfully",
 			user: userToReturn,
 		});
 	} catch (error) {
+		console.error("Error in updateUserProfile controller:", error);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
