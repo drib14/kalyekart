@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Kalyekart!</title>
+    <title>New Feedback Submission</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
             margin: 0;
-            padding: 0;
+            padding: 20px;
+            color: #333;
         }
         .container {
             max-width: 600px;
-            margin: 20px auto;
+            margin: 0 auto;
             background-color: #ffffff;
             padding: 20px;
             border-radius: 8px;
@@ -29,47 +30,50 @@
         }
         .header h1 {
             margin: 0;
-            font-size: 24px;
         }
         .content {
             padding: 20px;
-            text-align: center;
             line-height: 1.6;
-            color: #333;
         }
-        .content h2 {
-            color: #10B981;
+        .info-grid {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
         }
-        .button {
-            display: inline-block;
-            background-color: #10B981;
-            color: #ffffff;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 5px;
+        .info-grid strong {
+            font-weight: bold;
+        }
+        .feedback-box {
             margin-top: 20px;
-        }
-        .footer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #777;
-            text-align: center;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #10B981;
+            font-style: italic;
+            color: #555;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Kalyekart</h1>
+            <h1>New Feedback Received</h1>
         </div>
         <div class="content">
-            <h2>Welcome, {{USER_NAME}}!</h2>
-            <p>We are thrilled to have you join our community. Get ready to discover amazing products and enjoy a seamless shopping experience.</p>
-            <p>Your journey with Kalyekart starts now!</p>
-            <a href="{{CLIENT_URL}}" class="button">Start Shopping</a>
-        </div>
-        <div class="footer">
-            <p>&copy; 2024 Kalyekart. All rights reserved.</p>
+            <p>You have received a new feedback submission from a user.</p>
+            <div class="info-grid">
+                <strong>From:</strong>
+                <span>{{USER_NAME}}</span>
+                <strong>Email:</strong>
+                <span>{{USER_EMAIL}}</span>
+                <strong>Rating:</strong>
+                <span>{{RATING}}/5</span>
+            </div>
+            <hr>
+            <h3>Feedback Message:</h3>
+            <div class="feedback-box">
+                <p>"{{FEEDBACK_MESSAGE}}"</p>
+            </div>
         </div>
     </div>
 </body>

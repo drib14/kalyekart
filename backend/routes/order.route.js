@@ -7,6 +7,7 @@ import {
 	updateOrderStatus,
 	requestRefund,
 	getRefunds,
+	updateRefundStatus,
 	cancelOrder,
 	getAllOrders,
 } from "../controllers/order.controller.js";
@@ -23,6 +24,7 @@ router.post("/create-checkout-session", protectRoute, createStripeCheckoutSessio
 router.put("/:orderId/status", protectRoute, adminRoute, updateOrderStatus);
 router.post("/:orderId/refund", protectRoute, upload.single("proof"), requestRefund);
 router.get("/refunds", protectRoute, adminRoute, getRefunds);
+router.put("/refunds/:refundId/status", protectRoute, adminRoute, updateRefundStatus);
 router.post("/cancel/:orderId", protectRoute, cancelOrder);
 
 export default router;

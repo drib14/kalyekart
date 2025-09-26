@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from "uuid";
 import cloudinary from "../lib/cloudinary.js";
 
 import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
-import { sendEmail } from "../lib/email.js";
 
 const WAREHOUSE_COORDINATES = { lat: 10.2983, lon: 123.8991 }; // USC Main Campus (for Pungko-pungko sa salazar)
 
@@ -55,34 +54,6 @@ export const createCodOrder = async (req, res) => {
 		const user = await User.findById(req.user._id);
 		user.cartItems = [];
 		await user.save();
-
-		// Send order confirmation email
-		const orderItemsHtml = newOrder.products
-			.map(
-				(item) => `
-			<tr>
-				<td>${item.name}</td>
-				<td>${item.quantity}</td>
-				<td>₱${item.price.toFixed(2)}</td>
-			</tr>
-		`
-			)
-			.join("");
-
-		await sendEmail(
-			user.email,
-			`Your Kalyekart Order #${newOrder._id} is Confirmed!`,
-			"orderConfirmation",
-			{
-				USER_NAME: user.name,
-				ORDER_ID: newOrder._id,
-				ORDER_ITEMS: orderItemsHtml,
-				SUBTOTAL: `₱${newOrder.subtotal.toFixed(2)}`,
-				DELIVERY_FEE: `₱${newOrder.deliveryFee.toFixed(2)}`,
-				TOTAL_AMOUNT: `₱${newOrder.totalAmount.toFixed(2)}`,
-				CLIENT_URL: process.env.CLIENT_URL,
-			}
-		);
 
 		res.status(201).json({ message: "Order created successfully", orderId: newOrder._id });
 	} catch (error) {
@@ -252,94 +223,15 @@ export const getOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
 	try {
 		const { orderId } = req.params;
-		const { status, paymentStatus, refundStatus, rejectionReason } = req.body;
+		const { status } = req.body;
 
-		const order = await Order.findById(orderId).populate("user", "name email");
+		const order = await Order.findById(orderId);
 		if (!order) {
 			return res.status(404).json({ message: "Order not found" });
 		}
 
-		// Handle various status updates
-		if (status) {
-			order.status = status;
-		}
-		if (paymentStatus) {
-			order.paymentStatus = paymentStatus;
-		}
-		if (refundStatus) {
-			if (!order.refundRequest) {
-				return res.status(400).json({ message: "No refund request found for this order." });
-			}
-			order.refundRequest.status = refundStatus;
-			if (rejectionReason) {
-				order.refundRequest.rejectionReason = rejectionReason;
-			}
-		}
-
+		order.status = status;
 		await order.save();
-
-		// If the main order status changed, send an email notification.
-		if (status) {
-			// --- Send Order Update Email ---
-			const statusMessages = {
-				Processing: "Your order is being processed and prepared for shipment.",
-				Shipped: "Your order has been shipped and is on its way to you.",
-				"Out for Delivery": "Your order is out for delivery and should arrive soon.",
-				Delivered: "Your order has been delivered. Thank you for shopping with us!",
-				Cancelled: "Your order has been cancelled.",
-			};
-
-			await sendEmail(
-				order.user.email,
-				`Your Kalyekart Order Status is now: ${status}`,
-				"orderUpdate",
-				{
-					USER_NAME: order.user.name,
-					ORDER_ID: order._id,
-					ORDER_STATUS: status,
-					STATUS_MESSAGE: statusMessages[status] || "Your order status has been updated.",
-					CLIENT_URL: process.env.CLIENT_URL,
-				}
-			);
-
-			// --- Send Virtual Receipt on Delivery ---
-			if (status === "Delivered") {
-				const orderItemsHtml = order.products
-					.map(
-						(item) => `
-					<tr>
-						<td>${item.name}</td>
-						<td>${item.quantity}</td>
-						<td>₱${item.price.toFixed(2)}</td>
-					</tr>
-				`
-					)
-					.join("");
-
-				await sendEmail(
-					order.user.email,
-					`Your Receipt for Kalyekart Order #${order._id}`,
-					"virtualReceipt",
-					{
-						USER_NAME: order.user.name,
-						ORDER_ID: order._id,
-						ORDER_ITEMS: orderItemsHtml,
-						SUBTOTAL: `₱${order.subtotal.toFixed(2)}`,
-						DELIVERY_FEE: `₱${order.deliveryFee.toFixed(2)}`,
-						TOTAL_AMOUNT: `₱${order.totalAmount.toFixed(2)}`,
-						PAYMENT_METHOD: order.paymentMethod.toUpperCase(),
-						TRANSACTION_ID: order.stripeSessionId || order._id, // Use stripeSessionId if available
-						DATE: new Date(order.createdAt).toLocaleDateString("en-US", {
-							year: "numeric",
-							month: "long",
-							day: "numeric",
-						}),
-						ADMIN_NAME: req.user.name, // The admin who marked the order as delivered
-					}
-				);
-			}
-		}
-
 		res.json(order);
 	} catch (error) {
 		console.log("Error in updateOrderStatus controller", error.message);
@@ -388,6 +280,25 @@ export const getRefunds = async (req, res) => {
 		res.json(orders);
 	} catch (error) {
 		console.log("Error in getRefunds controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const updateRefundStatus = async (req, res) => {
+	try {
+		const { refundId } = req.params;
+		const { status } = req.body;
+
+		const order = await Order.findOne({ "refundRequest._id": refundId });
+		if (!order) {
+			return res.status(404).json({ message: "Refund request not found" });
+		}
+
+		order.refundRequest.status = status;
+		await order.save();
+		res.json(order);
+	} catch (error) {
+		console.log("Error in updateRefundStatus controller", error.message);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };

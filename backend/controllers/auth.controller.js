@@ -3,7 +3,35 @@ import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { sendEmail } from "../lib/email.js";
+import nodemailer from "nodemailer";
+
+// --- Email Sending Utility ---
+const sendPasswordResetEmail = async (email, code) => {
+	const transporter = nodemailer.createTransport({
+		host: "smtp.gmail.com",
+		port: 465,
+		secure: true,
+		auth: {
+			user: process.env.EMAIL_USER,
+			pass: process.env.EMAIL_PASS,
+		},
+	});
+
+	const mailOptions = {
+		from: `"Kalyekart" <${process.env.EMAIL_USER}>`,
+		to: email,
+		subject: "Your Password Reset Code",
+		html: `
+			<h1>Password Reset Request</h1>
+			<p>You requested a password reset. Use the code below to reset your password.</p>
+			<h2 style="font-size: 24px; letter-spacing: 2px; text-align: center;">${code}</h2>
+			<p>This code will expire in 10 minutes.</p>
+			<p>If you did not request a password reset, please ignore this email.</p>
+		`,
+	};
+
+	await transporter.sendMail(mailOptions);
+};
 
 const generateTokens = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -52,17 +80,12 @@ export const signup = async (req, res) => {
 
 		setCookies(res, accessToken, refreshToken);
 
-		// Send welcome email
-		await sendEmail(user.email, "Welcome to Kalyekart!", "welcome", {
-			USER_NAME: user.name,
-			CLIENT_URL: process.env.CLIENT_URL,
-		});
-
 		res.status(201).json({
 			_id: user._id,
 			name: user.name,
 			email: user.email,
 			role: user.role,
+			hasSetSecurityQuestions: user.hasSetSecurityQuestions,
 		});
 	} catch (error) {
 		console.log("Error in signup controller", error.message);
@@ -85,6 +108,7 @@ export const login = async (req, res) => {
 				name: user.name,
 				email: user.email,
 				role: user.role,
+				hasSetSecurityQuestions: user.hasSetSecurityQuestions,
 			});
 		} else {
 			res.status(400).json({ message: "Invalid email or password" });
@@ -112,6 +136,27 @@ export const logout = async (req, res) => {
 	}
 };
 
+export const setSecurityQuestions = async (req, res) => {
+	try {
+		const { securityQuestions } = req.body;
+		const userId = req.user._id;
+
+		const user = await User.findById(userId);
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		user.securityQuestions = securityQuestions;
+		user.hasSetSecurityQuestions = true;
+		await user.save();
+
+		res.json({ message: "Security questions set successfully" });
+	} catch (error) {
+		console.error("Error setting security questions:", error);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const forgotPassword = async (req, res) => {
 	try {
 		const { email } = req.body;
@@ -130,9 +175,9 @@ export const forgotPassword = async (req, res) => {
 
 		await user.save();
 
-		await sendEmail(user.email, "Your Password Reset Code", "passwordReset", {
-			RESET_CODE: resetCode,
-		});
+		// Hash the code before sending (or assume pre-save hook handles it if configured)
+		// For this implementation, let's just send the plain code
+		await sendPasswordResetEmail(user.email, resetCode);
 
 		res.status(200).json({ message: "A password reset code has been sent to your email." });
 

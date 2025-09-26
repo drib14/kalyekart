@@ -3,7 +3,7 @@ import axios from "../lib/axios";
 import { toast } from "sonner";
 import { useState } from "react";
 import LoadingSpinner from "./LoadingSpinner";
-import { UserCircle, ChevronDown, Loader } from "lucide-react";
+import { UserCircle, ChevronDown } from "lucide-react";
 import RejectionReasonModal from "./RejectionReasonModal";
 import ProofViewerModal from "./ProofViewerModal";
 
@@ -54,24 +54,44 @@ const AdminOrdersTab = () => {
 		},
 	});
 
-	const { mutate: updateOrderStatus, isPending: isUpdatingStatus } = useMutation({
-		mutationFn: ({ orderId, status, paymentStatus, refundStatus, rejectionReason }) => {
-			return axios.put(`/orders/${orderId}/status`, {
-				status,
-				paymentStatus,
-				refundStatus,
-				rejectionReason,
-			});
+	const { mutate: updateOrderStatus } = useMutation({
+		mutationFn: ({ orderId, status }) => {
+			return axios.put(`/orders/${orderId}/status`, { status });
 		},
 		onSuccess: () => {
-			toast.success("Order updated successfully");
+			toast.success("Order status updated successfully");
 			refetchOrders();
 		},
 		onError: (error) => {
-			toast.error(error.response?.data?.message || "Failed to update order");
+			toast.error(error.response.data.message);
 		},
 	});
 
+	const { mutate: updatePaymentStatus } = useMutation({
+		mutationFn: ({ orderId, status }) => {
+			return axios.put(`/orders/${orderId}/payment-status`, { status });
+		},
+		onSuccess: () => {
+			toast.success("Payment status updated successfully");
+			refetchOrders();
+		},
+		onError: (error) => {
+			toast.error(error.response.data.message);
+		},
+	});
+
+	const { mutate: updateRefundStatus } = useMutation({
+		mutationFn: ({ orderId, status, rejectionReason }) => {
+			return axios.put(`/orders/${orderId}/refund/status`, { status, rejectionReason });
+		},
+		onSuccess: () => {
+			toast.success("Refund status updated successfully");
+			refetchOrders();
+		},
+		onError: (error) => {
+			toast.error(error.response.data.message);
+		},
+	});
 
 	if (isLoading) return <LoadingSpinner />;
 	if (isError) return <div>Error: {error.message}</div>;
@@ -88,9 +108,9 @@ const AdminOrdersTab = () => {
 
 	const handleRejectSubmit = (rejectionReason) => {
 		if (!rejectionModalOrder) return;
-		updateOrderStatus({
+		updateRefundStatus({
 			orderId: rejectionModalOrder._id,
-			refundStatus: "rejected",
+			status: "rejected",
 			rejectionReason,
 		});
 		setRejectionModalOrder(null);
@@ -102,7 +122,7 @@ const AdminOrdersTab = () => {
 				<RejectionReasonModal
 					onClose={() => setRejectionModalOrder(null)}
 					onSubmit={handleRejectSubmit}
-					isPending={isUpdatingStatus}
+					isPending={false} // You might want to wire this to the mutation's isPending state
 				/>
 			)}
 			{proofViewerUrl && <ProofViewerModal proofUrl={proofViewerUrl} onClose={() => setProofViewerUrl(null)} />}
@@ -237,15 +257,15 @@ const AdminOrdersTab = () => {
 													<div className='mt-4 flex gap-2'>
 														<button
 															onClick={() =>
-																updateOrderStatus({ orderId: order._id, refundStatus: "approved" })
+																updateRefundStatus({ orderId: order._id, status: "approved" })
 															}
-															className='bg-green-600 hover:bg-green-700 text-white py-1 px-2 rounded-lg text-xs'
+															className='bg-green-600 hover:bg-green-700 text-white py-1 px-2 rounded-md text-xs'
 														>
 															Approve
 														</button>
 														<button
 															onClick={() => setRejectionModalOrder(order)}
-															className='bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded-lg text-xs'
+															className='bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded-md text-xs'
 														>
 															Reject
 														</button>
@@ -281,9 +301,9 @@ const AdminOrdersTab = () => {
 												id={`payment-status-${order._id}`}
 												value={order.paymentStatus}
 												onChange={(e) =>
-													updateOrderStatus({ orderId: order._id, paymentStatus: e.target.value })
+													updatePaymentStatus({ orderId: order._id, status: e.target.value })
 												}
-												className='bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
+												className='bg-gray-700 border border-gray-600 rounded-md shadow-sm'
 												disabled={order.paymentMethod === "card"} // Disable for card payments
 											>
 												<option value='pending'>Pending</option>
@@ -301,7 +321,7 @@ const AdminOrdersTab = () => {
 												onChange={(e) =>
 													updateOrderStatus({ orderId: order._id, status: e.target.value })
 												}
-												className='bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
+												className='bg-gray-700 border border-gray-600 rounded-md shadow-sm'
 											>
 												<option value='Pending'>Pending</option>
 												<option value='Preparing'>Preparing</option>

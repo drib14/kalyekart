@@ -43,6 +43,6 @@ export const sendEmail = async (to, subject, templateName, data) => {
         console.log(`Email sent to ${to} with subject: ${subject}`);
     } catch (error) {
         console.error(`Error sending email to ${to}:`, error);
-        // We don't want to throw an error here to not interrupt the main flow (e.g., user signup)
+        // We don't want to throw an error here to not interrupt the main flow
     }
 };

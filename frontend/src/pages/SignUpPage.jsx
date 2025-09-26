@@ -133,7 +133,10 @@ const SignUpPage = () => {
 							disabled={loading}
 						>
 							{loading ? (
-								<Loader className='animate-spin' />
+								<>
+									<Loader className='mr-2 h-5 w-5 animate-spin' aria-hidden='true' />
+									Loading...
+								</>
 							) : (
 								<>
 									<UserPlus className='mr-2 h-5 w-5' aria-hidden='true' />

@@ -1,4 +1,3 @@
-import nodemailer from "nodemailer";
 import { sendEmail } from "../lib/email.js";
 
 export const submitFeedback = async (req, res) => {
@@ -10,30 +9,17 @@ export const submitFeedback = async (req, res) => {
 
 	try {
 		// 1. Send the detailed feedback to the admin
-		const transporter = nodemailer.createTransport({
-			host: "smtp.gmail.com",
-			port: 465,
-			secure: true,
-			auth: {
-				user: process.env.EMAIL_USER,
-				pass: process.env.EMAIL_PASS,
-			},
-		});
-
-		const adminMailOptions = {
-			from: `"Kalyekart Feedback" <${process.env.EMAIL_USER}>`,
-			to: process.env.EMAIL_USER,
-			subject: `New Feedback Submission (Rating: ${rating}/5)`,
-			html: `
-				<h1>New Feedback Submission</h1>
-				<p><strong>From:</strong> ${user?.name || "Anonymous"} (${user?.email || "No email provided"})</p>
-				<p><strong>Rating:</strong> ${rating}/5</p>
-				<p><strong>Feedback:</strong></p>
-				<p>${feedback}</p>
-			`,
-		};
-
-		await transporter.sendMail(adminMailOptions);
+		await sendEmail(
+			process.env.EMAIL_USER,
+			`New Feedback Submission (Rating: ${rating}/5)`,
+			"adminFeedbackNotification",
+			{
+				USER_NAME: user?.name || "Anonymous",
+				USER_EMAIL: user?.email || "No email provided",
+				RATING: rating,
+				FEEDBACK_MESSAGE: feedback,
+			}
+		);
 
 		// 2. Send a confirmation email to the user, if they are logged in
 		if (user && user.email) {

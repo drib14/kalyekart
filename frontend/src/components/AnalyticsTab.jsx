@@ -93,7 +93,7 @@ const AnalyticsTab = () => {
 						<button
 							key={f}
 							onClick={() => setFilter(f)}
-							className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+							className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
 								filter === f ? "bg-emerald-600 text-white" : "text-gray-300 hover:bg-gray-700"
 							}`}
 						>
