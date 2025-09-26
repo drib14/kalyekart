@@ -27,7 +27,6 @@ const setCookies = (res, accessToken, refreshToken) => {
 		httpOnly: true,
 		secure: isProduction,
 		sameSite: isProduction ? "none" : "strict",
-		domain: isProduction ? ".onrender.com" : undefined,
 	};
 
 	res.cookie("accessToken", accessToken, {
@@ -55,7 +54,7 @@ export const signup = async (req, res) => {
 		await storeRefreshToken(user._id, refreshToken);
 		setCookies(res, accessToken, refreshToken);
 
-		await sendEmail(user.email, "Welcome to Kalyekart!", "welcome", {
+		await sendEmail(user.email, "Welcome to KalyeKart!", "welcome", {
 			NAME: user.name,
 			CTA_LINK: `${process.env.CLIENT_URL}/`,
 		});
@@ -178,7 +177,6 @@ export const refreshToken = async (req, res) => {
 			httpOnly: true,
 			secure: isProduction,
 			sameSite: isProduction ? "none" : "strict",
-			domain: isProduction ? ".onrender.com" : undefined,
 			maxAge: 15 * 60 * 1000,
 		});
 
