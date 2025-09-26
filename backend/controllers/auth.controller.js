@@ -50,7 +50,7 @@ export const signup = async (req, res) => {
 		await storeRefreshToken(user._id, refreshToken);
 		setCookies(res, accessToken, refreshToken);
 
-		await sendEmail(user.email, "Welcome to Kalyekart!", "welcome", {
+		await sendEmail(user.email, "Welcome to KalyeKart!", "welcome", {
 			NAME: user.name,
 			CTA_LINK: `${process.env.CLIENT_URL}/`,
 		});
