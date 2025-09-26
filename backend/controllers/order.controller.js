@@ -59,8 +59,6 @@ export const createCodOrder = async (req, res) => {
 		user.cartItems = [];
 		await user.save();
 
-		// Send order confirmation email
-		// Use the original products array from the request body which contains the names
 		const orderItemsHtml = products
 			.map(
 				(item) => `
@@ -261,14 +259,13 @@ export const updateOrderStatus = async (req, res) => {
 		}
 
 		if (order.status === status) {
-			return res.json(order); // No change, no email needed
+			return res.json(order);
 		}
 
 		order.status = status;
 		await order.save();
 
-		// Send order update email
-		if (order.user) {
+		if (order.user && order.user.email) {
 			await sendEmail(
 				order.user.email,
 				`Your KalyeKart Order #${order._id.toString().slice(-6)} has been updated!`,
