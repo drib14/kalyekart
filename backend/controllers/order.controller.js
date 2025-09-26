@@ -80,6 +80,29 @@ export const createCodOrder = async (req, res) => {
 	}
 };
 
+export const updatePaymentStatus = async (req, res) => {
+	try {
+		const { orderId } = req.params;
+		const { paymentStatus } = req.body;
+
+		if (!paymentStatus) {
+			return res.status(400).json({ message: "Payment status is required." });
+		}
+
+		const order = await Order.findById(orderId);
+		if (!order) {
+			return res.status(404).json({ message: "Order not found" });
+		}
+
+		order.paymentStatus = paymentStatus;
+		await order.save();
+		res.json(order);
+	} catch (error) {
+		console.log("Error in updatePaymentStatus controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const getAllOrders = async (req, res) => {
 	try {
 		const orders = await Order.find()

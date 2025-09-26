@@ -5,6 +5,7 @@ import {
 	getOrders,
 	getOrderById,
 	updateOrderStatus,
+	updatePaymentStatus,
 	requestRefund,
 	getRefunds,
 	updateRefundStatus,
@@ -22,6 +23,7 @@ router.get("/:orderId", protectRoute, getOrderById);
 router.post("/cod", protectRoute, createCodOrder);
 router.post("/create-checkout-session", protectRoute, createStripeCheckoutSession);
 router.put("/:orderId/status", protectRoute, adminRoute, updateOrderStatus);
+router.put("/:orderId/payment-status", protectRoute, adminRoute, updatePaymentStatus);
 router.post("/:orderId/refund", protectRoute, upload.single("proof"), requestRefund);
 router.get("/refunds", protectRoute, adminRoute, getRefunds);
 router.put("/refunds/:refundId/status", protectRoute, adminRoute, updateRefundStatus);
