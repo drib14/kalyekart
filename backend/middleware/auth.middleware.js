@@ -11,9 +11,9 @@ export const protectRoute = async (req, res, next) => {
 
 		try {
 			const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
-			// Explicitly select all necessary fields to ensure profilePicture is included
+			// Explicitly select all necessary fields to ensure the user object is complete
 			const user = await User.findById(decoded.userId).select(
-				"_id name email role profilePicture storeName storeAddress operatingHours"
+				"_id name email role profilePicture storeName storeAddress operatingHours cartItems"
 			);
 
 			if (!user) {
