@@ -2,36 +2,7 @@ import { redis } from "../lib/redis.js";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import bcrypt from "bcryptjs";
-import nodemailer from "nodemailer";
-
-// --- Email Sending Utility ---
-const sendPasswordResetEmail = async (email, code) => {
-	const transporter = nodemailer.createTransport({
-		host: "smtp.gmail.com",
-		port: 465,
-		secure: true,
-		auth: {
-			user: process.env.EMAIL_USER,
-			pass: process.env.EMAIL_PASS,
-		},
-	});
-
-	const mailOptions = {
-		from: `"Kalyekart" <${process.env.EMAIL_USER}>`,
-		to: email,
-		subject: "Your Password Reset Code",
-		html: `
-			<h1>Password Reset Request</h1>
-			<p>You requested a password reset. Use the code below to reset your password.</p>
-			<h2 style="font-size: 24px; letter-spacing: 2px; text-align: center;">${code}</h2>
-			<p>This code will expire in 10 minutes.</p>
-			<p>If you did not request a password reset, please ignore this email.</p>
-		`,
-	};
-
-	await transporter.sendMail(mailOptions);
-};
+import { sendEmail } from "../lib/email.js";
 
 const generateTokens = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -51,15 +22,15 @@ const storeRefreshToken = async (userId, refreshToken) => {
 
 const setCookies = (res, accessToken, refreshToken) => {
 	res.cookie("accessToken", accessToken, {
-		httpOnly: true, // prevent XSS attacks, cross site scripting attack
+		httpOnly: true,
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict", // prevents CSRF attack, cross-site request forgery attack
+		sameSite: "strict",
 		maxAge: 15 * 60 * 1000, // 15 minutes
 	});
 	res.cookie("refreshToken", refreshToken, {
-		httpOnly: true, // prevent XSS attacks, cross site scripting attack
+		httpOnly: true,
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict", // prevents CSRF attack, cross-site request forgery attack
+		sameSite: "strict",
 		maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 	});
 };
@@ -74,18 +45,27 @@ export const signup = async (req, res) => {
 		}
 		const user = await User.create({ name, email, password });
 
-		// authenticate
 		const { accessToken, refreshToken } = generateTokens(user._id);
 		await storeRefreshToken(user._id, refreshToken);
 
 		setCookies(res, accessToken, refreshToken);
+
+		// Send welcome email
+		await sendEmail(user.email, "Welcome to Kalyekart!", {
+			name: user.name,
+			title: "Welcome Aboard!",
+			body: "We're thrilled to have you at Kalyekart. Get ready to explore a world of amazing products and deals. Happy shopping!",
+			cta: {
+				text: "Shop Now",
+				link: `${process.env.CLIENT_URL}/`,
+			},
+		});
 
 		res.status(201).json({
 			_id: user._id,
 			name: user.name,
 			email: user.email,
 			role: user.role,
-			hasSetSecurityQuestions: user.hasSetSecurityQuestions,
 		});
 	} catch (error) {
 		console.log("Error in signup controller", error.message);
@@ -108,7 +88,6 @@ export const login = async (req, res) => {
 				name: user.name,
 				email: user.email,
 				role: user.role,
-				hasSetSecurityQuestions: user.hasSetSecurityQuestions,
 			});
 		} else {
 			res.status(400).json({ message: "Invalid email or password" });
@@ -136,51 +115,27 @@ export const logout = async (req, res) => {
 	}
 };
 
-export const setSecurityQuestions = async (req, res) => {
-	try {
-		const { securityQuestions } = req.body;
-		const userId = req.user._id;
-
-		const user = await User.findById(userId);
-		if (!user) {
-			return res.status(404).json({ message: "User not found" });
-		}
-
-		user.securityQuestions = securityQuestions;
-		user.hasSetSecurityQuestions = true;
-		await user.save();
-
-		res.json({ message: "Security questions set successfully" });
-	} catch (error) {
-		console.error("Error setting security questions:", error);
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
-};
-
 export const forgotPassword = async (req, res) => {
 	try {
 		const { email } = req.body;
 		const user = await User.findOne({ email });
 
 		if (!user) {
-			// To prevent user enumeration, we send a success response even if the user doesn't exist.
 			return res.status(200).json({ message: "If a user with that email exists, a password reset code has been sent." });
 		}
 
-		// Generate a 6-digit code
 		const resetCode = crypto.randomInt(100000, 999999).toString();
-
-		user.passwordResetCode = resetCode; // Storing plain code temporarily for hashing in pre-save hook
+		user.passwordResetCode = resetCode;
 		user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-
 		await user.save();
 
-		// Hash the code before sending (or assume pre-save hook handles it if configured)
-		// For this implementation, let's just send the plain code
-		await sendPasswordResetEmail(user.email, resetCode);
+		await sendEmail(user.email, "Your Password Reset Code", {
+			name: user.name,
+			title: "Password Reset Request",
+			body: `You requested a password reset. Use the code below to reset your password. This code is valid for 10 minutes. <br>Your code is: <strong>${resetCode}</strong>`,
+		});
 
 		res.status(200).json({ message: "A password reset code has been sent to your email." });
-
 	} catch (error) {
 		console.error("Error in forgotPassword controller:", error.message);
 		res.status(500).json({ message: "Server error" });
@@ -196,36 +151,25 @@ export const resetPassword = async (req, res) => {
 			passwordResetExpires: { $gt: Date.now() },
 		});
 
-		if (!user) {
+		if (!user || user.passwordResetCode !== code) {
 			return res.status(400).json({ message: "Invalid code or code has expired." });
-		}
-
-		// This is a simplified comparison. In a real-world scenario, you'd compare a hashed code.
-		// However, since we stored the plain code, we can do a direct comparison here.
-		if (user.passwordResetCode !== code) {
-			return res.status(400).json({ message: "Invalid code." });
 		}
 
 		user.password = password;
 		user.passwordResetCode = undefined;
 		user.passwordResetExpires = undefined;
-
 		await user.save();
 
 		res.status(200).json({ message: "Password has been reset successfully." });
-
 	} catch (error) {
 		console.error("Error in resetPassword controller:", error.message);
 		res.status(500).json({ message: "Server error" });
 	}
 };
 
-
-// this will refresh the access token
 export const refreshToken = async (req, res) => {
 	try {
 		const refreshToken = req.cookies.refreshToken;
-
 		if (!refreshToken) {
 			return res.status(401).json({ message: "No refresh token provided" });
 		}

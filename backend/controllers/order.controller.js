@@ -4,7 +4,7 @@ import Product from "../models/product.model.js";
 import { stripe } from "../lib/stripe.js";
 import { v4 as uuidv4 } from "uuid";
 import cloudinary from "../lib/cloudinary.js";
-
+import { sendEmail } from "../lib/email.js";
 import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
 
 const WAREHOUSE_COORDINATES = { lat: 10.2983, lon: 123.8991 }; // USC Main Campus (for Pungko-pungko sa salazar)
@@ -18,6 +18,12 @@ export const createCodOrder = async (req, res) => {
 			couponCode,
 			subtotal,
 		} = req.body;
+		const userId = req.user._id;
+		const user = await User.findById(userId);
+
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
 
 		// Calculate delivery fee on the server
 		const fullAddress = `${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
@@ -32,7 +38,7 @@ export const createCodOrder = async (req, res) => {
 		const totalAmount = subtotal + deliveryFee;
 
 		const newOrder = new Order({
-			user: req.user._id,
+			user: userId,
 			products: products.map((p) => ({
 				product: p._id,
 				quantity: p.quantity,
@@ -51,9 +57,21 @@ export const createCodOrder = async (req, res) => {
 		});
 
 		await newOrder.save();
-		const user = await User.findById(req.user._id);
+
+		// Clear user's cart
 		user.cartItems = [];
 		await user.save();
+
+		// Send order confirmation email
+		await sendEmail(user.email, `Your Kalyekart Order #${newOrder._id.toString().slice(-6)} is Confirmed!`, {
+			name: user.name,
+			title: "Order Confirmation",
+			body: `Thank you for your purchase! We've received your order and are getting it ready. You can view your order details here: <a href="${process.env.CLIENT_URL}/my-orders/${newOrder._id}">View Order</a>`,
+			cta: {
+				text: "Track Your Order",
+				link: `${process.env.CLIENT_URL}/my-orders/${newOrder._id}`,
+			},
+		});
 
 		res.status(201).json({ message: "Order created successfully", orderId: newOrder._id });
 	} catch (error) {
@@ -216,7 +234,7 @@ export const getOrders = async (req, res) => {
 		res.json(orders);
 	} catch (error) {
 		console.log("Error in getOrders controller", error.message);
-		res.status(500).json({ message: "Server error", error: error.message });
+		res.status(500).json({ message: "Server error", error:.message });
 	}
 };
 

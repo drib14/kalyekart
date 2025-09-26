@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { User, Mail, Phone, MapPin, CreditCard, ShoppingBag, Heart, Lock, Bell, HelpCircle, Camera, Save } from "lucide-react";
+import { User, Mail, Phone, MapPin, CreditCard, ShoppingBag, Heart, Camera, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useUserStore } from "../stores/useUserStore";
 import { useMutation } from "@tanstack/react-query";
@@ -14,12 +14,6 @@ const CustomerProfilePage = () => {
 	const [profilePicture, setProfilePicture] = useState(null);
 	const [previewUrl, setPreviewUrl] = useState(user?.profilePicture || null);
 	const fileInputRef = useRef(null);
-
-	const [securityQuestions, setSecurityQuestions] = useState(
-		user?.securityQuestions?.length > 0
-			? user.securityQuestions
-			: [{ question: "", answer: "" }, { question: "", answer: "" }]
-	);
 
 	const { mutate: updateProfile, isPending } = useMutation({
 		mutationFn: (formData) => {
@@ -41,34 +35,6 @@ const CustomerProfilePage = () => {
 		if (file) {
 			setProfilePicture(file);
 			setPreviewUrl(URL.createObjectURL(file));
-		}
-	};
-
-	const { mutate: updateSecurityQuestions, isPending: isUpdatingQuestions } = useMutation({
-		mutationFn: (questions) => {
-			return axios.post("/auth/set-security-questions", { securityQuestions: questions });
-		},
-		onSuccess: () => {
-			toast.success("Security questions updated successfully");
-		},
-		onError: (error) => {
-			toast.error(error.response?.data?.message || "Failed to update security questions");
-		},
-	});
-
-	const handleSecurityQuestionChange = (index, field, value) => {
-		const newQuestions = [...securityQuestions];
-		newQuestions[index][field] = value;
-		setSecurityQuestions(newQuestions);
-	};
-
-	const handleSecuritySubmit = (e) => {
-		e.preventDefault();
-		const filteredQuestions = securityQuestions.filter(q => q.question && q.answer);
-		if (filteredQuestions.length > 0) {
-			updateSecurityQuestions(filteredQuestions);
-		} else {
-			toast.info("Please fill out at least one security question and answer.");
 		}
 	};
 
@@ -169,41 +135,6 @@ const CustomerProfilePage = () => {
 							<div className='space-y-3'>
 								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><MapPin className="mr-2"/> Manage Delivery Addresses</button>
 								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><CreditCard className="mr-2"/> Manage Payment Methods</button>
-							</div>
-						</div>
-
-						{/* Security Questions */}
-						<div className='bg-gray-800 p-6 rounded-lg md:col-span-2'>
-							<h2 className='text-xl font-semibold mb-4 flex items-center'><Lock className="mr-2"/> Security Questions (Optional 2FA)</h2>
-							<div className='space-y-4'>
-								{securityQuestions.map((qa, index) => (
-									<div key={index} className="space-y-2">
-										<input
-											type='text'
-											placeholder={`Question ${index + 1}`}
-											value={qa.question}
-											onChange={(e) => handleSecurityQuestionChange(index, "question", e.target.value)}
-											className='w-full bg-gray-700 rounded-md p-2'
-										/>
-										<input
-											type='text'
-											placeholder={`Answer ${index + 1}`}
-											value={qa.answer}
-											onChange={(e) => handleSecurityQuestionChange(index, "answer", e.target.value)}
-											className='w-full bg-gray-700 rounded-md p-2'
-										/>
-									</div>
-								))}
-							</div>
-							<div className="mt-4 flex justify-end">
-								<button
-									type="button"
-									onClick={handleSecuritySubmit}
-									className='bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center'
-									disabled={isUpdatingQuestions}
-								>
-									{isUpdatingQuestions ? <LoadingSpinner size="sm" /> : <>Save Questions</>}
-								</button>
 							</div>
 						</div>
 
