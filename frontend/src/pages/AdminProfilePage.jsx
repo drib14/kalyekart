@@ -8,7 +8,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import EditBusinessInfoModal from "../components/EditBusinessInfoModal";
 
 const AdminProfilePage = () => {
-	const { user, setUser } = useUserStore();
+	const { user, checkAuth } = useUserStore();
 	const [name, setName] = useState(user?.name || "");
 	const [email, setEmail] = useState(user?.email || "");
 	const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
@@ -29,9 +29,9 @@ const AdminProfilePage = () => {
 				headers: { "Content-Type": "multipart/form-data" },
 			});
 		},
-		onSuccess: (data) => {
+		onSuccess: () => {
 			toast.success("Profile updated successfully");
-			setUser(data.data.user);
+			checkAuth(); // Refetch user data to ensure global state is updated
 		},
 		onError: (error) => {
 			toast.error(error.response?.data?.message || "Failed to update profile");

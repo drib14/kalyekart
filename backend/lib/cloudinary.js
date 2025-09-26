@@ -1,5 +1,4 @@
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
 
 cloudinary.config({
 	cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -8,36 +7,33 @@ cloudinary.config({
 	secure: true,
 });
 
-const uploadOnCloudinary = async (localFilePath) => {
+/**
+ * Uploads a file buffer to Cloudinary.
+ * @param {object} file - The file object from multer's memory storage.
+ * @param {Buffer} file.buffer - The file's buffer data.
+ * @param {string} file.mimetype - The mime type of the file.
+ * @param {string} [folder="kalyekart_uploads"] - The folder in Cloudinary to upload to.
+ * @returns {Promise<object|null>} The Cloudinary upload response or null if failed.
+ */
+const uploadOnCloudinary = async (file, folder = "kalyekart_uploads") => {
 	try {
-		if (!localFilePath) {
-			console.error("Cloudinary upload failed: No local file path provided.");
+		if (!file || !file.buffer) {
+			console.error("Cloudinary upload failed: No file buffer provided.");
 			return null;
 		}
 
-		console.log(`Uploading file to Cloudinary: ${localFilePath}`);
-		const response = await cloudinary.uploader.upload(localFilePath, {
-			resource_type: "auto",
-			folder: "kalyekart_profiles",
-		});
-		console.log("Cloudinary upload successful:", response.secure_url);
+		// Convert buffer to data URI
+		const b64 = Buffer.from(file.buffer).toString("base64");
+		let dataURI = "data:" + file.mimetype + ";base64," + b64;
 
-		// Clean up the locally saved temporary file
-		fs.unlink(localFilePath, (err) => {
-			if (err) console.error(`Failed to delete temporary file: ${localFilePath}`, err);
+		const response = await cloudinary.uploader.upload(dataURI, {
+			resource_type: "auto",
+			folder: folder,
 		});
 
 		return response;
 	} catch (error) {
 		console.error("Cloudinary upload failed. Details:", error.message || error);
-
-		// Attempt to clean up the temporary file even if upload fails
-		if (fs.existsSync(localFilePath)) {
-			fs.unlink(localFilePath, (err) => {
-				if (err) console.error(`Failed to delete temporary file after error: ${localFilePath}`, err);
-			});
-		}
-
 		return null;
 	}
 };

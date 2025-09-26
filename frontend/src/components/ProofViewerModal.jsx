@@ -15,11 +15,11 @@ const ProofViewerModal = ({ proofUrl, onClose }) => {
 
 				<div className='max-h-[85vh]'>
 					{isVideo ? (
-						<video src={proofUrl} controls autoPlay className='w-full h-full object-contain rounded-md'>
+						<video src={proofUrl} controls autoPlay className='w-full h-full object-contain rounded-lg'>
 							Your browser does not support the video tag.
 						</video>
 					) : (
-						<img src={proofUrl} alt='Refund Proof' className='w-full h-full object-contain rounded-md' />
+						<img src={proofUrl} alt='Refund Proof' className='w-full h-full object-contain rounded-lg' />
 					)}
 				</div>
 			</div>

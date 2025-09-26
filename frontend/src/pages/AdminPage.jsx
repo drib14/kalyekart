@@ -40,7 +40,7 @@ const AdminPage = () => {
 						<button
 							key={tab.id}
 							onClick={() => setActiveTab(tab.id)}
-							className={`flex items-center justify-center sm:justify-start px-3 sm:px-4 py-2 mx-1 sm:mx-2 rounded-md transition-colors duration-200 ${
+							className={`flex items-center justify-center sm:justify-start px-3 sm:px-4 py-2 mx-1 sm:mx-2 rounded-lg transition-colors duration-200 ${
 								activeTab === tab.id
 									? "bg-emerald-600 text-white"
 									: "bg-gray-700 text-gray-300 hover:bg-gray-600"

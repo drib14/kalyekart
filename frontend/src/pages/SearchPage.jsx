@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import useSearchStore from "../stores/useSearchStore";
 import ProductCard from "../components/ProductCard";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -11,6 +11,7 @@ const useQuery = () => {
 const SearchPage = () => {
 	const query = useQuery().get("q");
 	const { results, isLoading, error, searchProducts, addToHistory } = useSearchStore();
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (query) {
@@ -18,6 +19,10 @@ const SearchPage = () => {
 			addToHistory(query);
 		}
 	}, [query, searchProducts, addToHistory]);
+
+	const handleCardClick = (product) => {
+		navigate(`/product/${product._id}`);
+	};
 
 	return (
 		<div className='container mx-auto px-4 py-8'>
@@ -33,7 +38,7 @@ const SearchPage = () => {
 					{results.length > 0 ? (
 						<div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'>
 							{results.map((product) => (
-								<ProductCard key={product._id} product={product} />
+								<ProductCard key={product._id} product={product} onCardClick={handleCardClick} />
 							))}
 						</div>
 					) : (

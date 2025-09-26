@@ -54,7 +54,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
 								setSubmitted(false);
 								onClose();
 							}}
-							className='mt-4 bg-emerald-500 text-white rounded-md px-4 py-2'
+							className='mt-4 bg-emerald-500 text-white rounded-lg px-4 py-2'
 						>
 							Close
 						</button>
@@ -92,7 +92,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
 									id='feedback'
 									value={feedback}
 									onChange={(e) => setFeedback(e.target.value)}
-									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
 									rows='4'
 								></textarea>
 							</div>
@@ -100,13 +100,13 @@ const FeedbackModal = ({ isOpen, onClose }) => {
 								<button
 									type='button'
 									onClick={onClose}
-									className='mr-4 bg-gray-600 text-white rounded-md px-4 py-2'
+									className='mr-4 bg-gray-600 text-white rounded-lg px-4 py-2'
 								>
 									Cancel
 								</button>
 								<button
 									type='submit'
-									className='bg-emerald-500 text-white rounded-md px-4 py-2'
+									className='bg-emerald-500 text-white rounded-lg px-4 py-2'
 									disabled={mutation.isPending}
 								>
 									{mutation.isPending ? "Submitting..." : "Submit"}

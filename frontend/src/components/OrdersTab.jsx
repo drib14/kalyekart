@@ -71,7 +71,7 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 												return (
 													<div key={item._id} className='flex items-center justify-between'>
 														<div className='flex items-center gap-2'>
-															<div className='w-10 h-10 bg-gray-700 rounded-md flex items-center justify-center'>
+															<div className='w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center'>
 																<p className='text-gray-500'>?</p>
 															</div>
 															<p className='font-medium text-red-400 italic'>
@@ -91,7 +91,7 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 														<img
 															src={item.product.image}
 															alt={item.product.name}
-															className='w-10 h-10 object-cover rounded-md'
+															className='w-10 h-10 object-cover rounded-lg'
 														/>
 														<p className='font-medium text-white truncate'>
 															{item.product.name}
@@ -133,7 +133,7 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 										{order.status === "Pending" && (
 											<button
 												onClick={(e) => handleButtonClick(e, () => openCancelModal(order))}
-												className='bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md text-sm z-10 relative'
+												className='bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm z-10 relative'
 											>
 												Cancel Order
 											</button>
@@ -141,7 +141,7 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 										{order.status === "Delivered" && !order.refundRequest && (
 											<button
 												onClick={(e) => handleButtonClick(e, () => openRefundModal(order))}
-												className='bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm z-10 relative'
+												className='bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm z-10 relative'
 											>
 												Request Refund
 											</button>

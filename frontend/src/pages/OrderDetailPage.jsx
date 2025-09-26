@@ -128,7 +128,7 @@ const OrderDetailPage = () => {
 							</h3>
 							<div className='bg-gray-700 p-4 rounded-lg space-y-2'>
 								<p>
-									<strong>Address:</strong> {order.shippingAddress.streetAddress},{" "}
+									<strong>Address:</strong> {order.shippingAddress.sitio}, {order.shippingAddress.barangay},{" "}
 									{order.shippingAddress.city}, {order.shippingAddress.province},{" "}
 									{order.shippingAddress.postalCode}
 								</p>

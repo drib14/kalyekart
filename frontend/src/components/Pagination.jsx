@@ -11,14 +11,14 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 			<button
 				onClick={() => onPageChange(1)}
 				disabled={currentPage === 1}
-				className='p-2 rounded-md bg-gray-700 text-white disabled:opacity-50'
+				className='p-2 rounded-lg bg-gray-700 text-white disabled:opacity-50'
 			>
 				<ChevronsLeft size={20} />
 			</button>
 			<button
 				onClick={() => onPageChange(currentPage - 1)}
 				disabled={currentPage === 1}
-				className='p-2 rounded-md bg-gray-700 text-white disabled:opacity-50'
+				className='p-2 rounded-lg bg-gray-700 text-white disabled:opacity-50'
 			>
 				<ChevronLeft size={20} />
 			</button>
@@ -26,7 +26,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 				<button
 					key={number}
 					onClick={() => onPageChange(number)}
-					className={`px-4 py-2 rounded-md ${
+					className={`px-4 py-2 rounded-lg ${
 						currentPage === number ? "bg-emerald-600 text-white" : "bg-gray-700 text-white"
 					}`}
 				>
@@ -36,14 +36,14 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 			<button
 				onClick={() => onPageChange(currentPage + 1)}
 				disabled={currentPage === totalPages}
-				className='p-2 rounded-md bg-gray-700 text-white disabled:opacity-50'
+				className='p-2 rounded-lg bg-gray-700 text-white disabled:opacity-50'
 			>
 				<ChevronRight size={20} />
 			</button>
 			<button
 				onClick={() => onPageChange(totalPages)}
 				disabled={currentPage === totalPages}
-				className='p-2 rounded-md bg-gray-700 text-white disabled:opacity-50'
+				className='p-2 rounded-lg bg-gray-700 text-white disabled:opacity-50'
 			>
 				<ChevronsRight size={20} />
 			</button>

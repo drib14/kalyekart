@@ -282,8 +282,7 @@ export const requestRefund = async (req, res) => {
 			return res.status(404).json({ message: "Order not found" });
 		}
 
-		const localFilePath = req.file.path;
-		const proofUpload = await uploadOnCloudinary(localFilePath);
+		const proofUpload = await uploadOnCloudinary(req.file, "kalyekart_refunds");
 
 		if (!proofUpload) {
 			return res.status(500).json({ message: "Failed to upload proof to Cloudinary." });

@@ -27,8 +27,7 @@ export const updateUserProfile = async (req, res) => {
 
 		// Handle profile picture upload
 		if (req.file) {
-			const localFilePath = req.file.path;
-			const profilePictureUpload = await uploadOnCloudinary(localFilePath);
+			const profilePictureUpload = await uploadOnCloudinary(req.file, "kalyekart_profiles");
 
 			if (profilePictureUpload && profilePictureUpload.secure_url) {
 				user.profilePicture = profilePictureUpload.secure_url;
