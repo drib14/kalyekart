@@ -22,16 +22,20 @@ const storeRefreshToken = async (userId, refreshToken) => {
 };
 
 const setCookies = (res, accessToken, refreshToken) => {
-	res.cookie("accessToken", accessToken, {
+	const isProduction = process.env.NODE_ENV === "production";
+	const cookieOptions = {
 		httpOnly: true,
-		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict",
+		secure: isProduction,
+		sameSite: isProduction ? "none" : "strict",
+	};
+
+	res.cookie("accessToken", accessToken, {
+		...cookieOptions,
 		maxAge: 15 * 60 * 1000, // 15 minutes
 	});
+
 	res.cookie("refreshToken", refreshToken, {
-		httpOnly: true,
-		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict",
+		...cookieOptions,
 		maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 	});
 };
@@ -50,7 +54,7 @@ export const signup = async (req, res) => {
 		await storeRefreshToken(user._id, refreshToken);
 		setCookies(res, accessToken, refreshToken);
 
-		await sendEmail(user.email, "Welcome to KalyeKart!", "welcome", {
+		await sendEmail(user.email, "Welcome to Kalyekart!", "welcome", {
 			NAME: user.name,
 			CTA_LINK: `${process.env.CLIENT_URL}/`,
 		});
@@ -168,10 +172,11 @@ export const refreshToken = async (req, res) => {
 
 		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
 
+		const isProduction = process.env.NODE_ENV === "production";
 		res.cookie("accessToken", accessToken, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "strict",
+			secure: isProduction,
+			sameSite: isProduction ? "none" : "strict",
 			maxAge: 15 * 60 * 1000,
 		});
 
