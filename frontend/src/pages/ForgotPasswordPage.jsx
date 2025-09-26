@@ -70,7 +70,7 @@ const ForgotPasswordPage = () => {
 								<label htmlFor='email' className='block text-sm font-medium text-gray-300'>
 									Email address
 								</label>
-								<div className='mt-1 relative rounded-md shadow-sm'>
+								<div className='mt-1 relative rounded-lg shadow-sm'>
 									<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
 										<Mail className='h-5 w-5 text-gray-400' aria-hidden='true' />
 									</div>
@@ -80,14 +80,14 @@ const ForgotPasswordPage = () => {
 										required
 										value={email}
 										onChange={(e) => setEmail(e.target.value)}
-										className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md'
+										className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-lg'
 										placeholder='you@example.com'
 									/>
 								</div>
 							</div>
 							<button
 								type='submit'
-								className='w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700'
+								className='w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700'
 								disabled={isRequesting}
 							>
 								{isRequesting ? <LoadingSpinner size='sm' /> : "Send Reset Code"}
@@ -113,7 +113,7 @@ const ForgotPasswordPage = () => {
 								<label htmlFor='code' className='block text-sm font-medium text-gray-300'>
 									Reset Code
 								</label>
-								<div className='mt-1 relative rounded-md shadow-sm'>
+								<div className='mt-1 relative rounded-lg shadow-sm'>
 									<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
 										<KeyRound className='h-5 w-5 text-gray-400' aria-hidden='true' />
 									</div>
@@ -123,7 +123,7 @@ const ForgotPasswordPage = () => {
 										required
 										value={code}
 										onChange={(e) => setCode(e.target.value)}
-										className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md'
+										className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-lg'
 										placeholder='6-digit code'
 									/>
 								</div>
@@ -132,7 +132,7 @@ const ForgotPasswordPage = () => {
 								<label htmlFor='password' className='block text-sm font-medium text-gray-300'>
 									New Password
 								</label>
-								<div className='mt-1 relative rounded-md shadow-sm'>
+								<div className='mt-1 relative rounded-lg shadow-sm'>
 									<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
 										<Lock className='h-5 w-5 text-gray-400' aria-hidden='true' />
 									</div>
@@ -142,14 +142,14 @@ const ForgotPasswordPage = () => {
 										required
 										value={password}
 										onChange={(e) => setPassword(e.target.value)}
-										className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md'
+										className='block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-lg'
 										placeholder='New password'
 									/>
 								</div>
 							</div>
 							<button
 								type='submit'
-								className='w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700'
+								className='w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700'
 								disabled={isResetting}
 							>
 								{isResetting ? <LoadingSpinner size='sm' /> : "Reset Password"}

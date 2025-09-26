@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Feedback Submission</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .header { background-color: #dc3545; /* Red for admin alert */ color: #ffffff; padding: 40px; text-align: center; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+        .content { padding: 35px; line-height: 1.7; color: #495057; }
+        .content h2 { font-size: 22px; color: #343a40; margin-top: 0; }
+        .info-grid { display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin: 25px 0; }
+        .info-grid dt { font-weight: 700; color: #343a40; }
+        .info-grid dd { margin: 0; }
+        .feedback-box { background-color: #f8f9fa; border-left: 4px solid #dc3545; padding: 20px; margin: 25px 0; font-style: italic; color: #6c757d; }
+        .footer { background-color: #e9ecef; color: #6c757d; padding: 25px; text-align: center; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>New Feedback Received</h1>
+        </div>
+        <div class="content">
+            <h2>Admin Notification,</h2>
+            <p>A new piece of feedback has been submitted on Kalyekart. Please review the details below.</p>
+
+            <dl class="info-grid">
+                <dt>User:</dt>
+                <dd>{{USER_NAME}}</dd>
+                <dt>Email:</dt>
+                <dd>{{USER_EMAIL}}</dd>
+                <dt>Rating:</dt>
+                <dd><strong>{{RATING}} / 5</strong></dd>
+            </dl>
+
+            <h3>Feedback Message:</h3>
+            <div class="feedback-box">
+                <p>"{{FEEDBACK_MESSAGE}}"</p>
+            </div>
+
+            <p>No action is required from this email, but please log in to the admin panel if you need to follow up.</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated notification from the Kalyekart system.</p>
+        </div>
+    </div>
+</body>
+</html>

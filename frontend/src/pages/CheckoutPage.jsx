@@ -223,7 +223,7 @@ const CheckoutPage = () => {
 									required
 									value={fullName}
 									onChange={(e) => setFullName(e.target.value)}
-									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
 								/>
 							</div>
 							<div>
@@ -235,7 +235,7 @@ const CheckoutPage = () => {
 									type='text'
 									value={sitio}
 									onChange={(e) => setSitio(e.target.value)}
-									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
 								/>
 							</div>
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
@@ -248,7 +248,7 @@ const CheckoutPage = () => {
 										required
 										value={city}
 										onChange={(e) => setCity(e.target.value)}
-										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
 									>
 										<option value=''>Select a city</option>
 										{locations.map((loc) => (
@@ -267,7 +267,7 @@ const CheckoutPage = () => {
 										required
 										value={barangay}
 										onChange={(e) => setBarangay(e.target.value)}
-										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
 										disabled={!city}
 									>
 										<option value=''>Select a barangay</option>
@@ -290,7 +290,7 @@ const CheckoutPage = () => {
 										required
 										value={province}
 										onChange={(e) => setProvince(e.target.value)}
-										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
 										disabled
 									/>
 								</div>
@@ -303,7 +303,7 @@ const CheckoutPage = () => {
 										type='text'
 										value={postalCode}
 										onChange={(e) => setPostalCode(e.target.value)}
-										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
 										placeholder='e.g. 6000'
 										readOnly
 									/>
@@ -319,7 +319,7 @@ const CheckoutPage = () => {
 									required
 									value={contactNumber}
 									onChange={(e) => setContactNumber(e.target.value)}
-									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
 									placeholder='09123456789'
 								/>
 							</div>
@@ -328,7 +328,7 @@ const CheckoutPage = () => {
 								<button
 									type='submit'
 									className='w-full flex justify-center py-3 px-4 border border-transparent
-									rounded-md shadow-sm text-lg font-medium text-white bg-emerald-600
+									rounded-lg shadow-sm text-lg font-medium text-white bg-emerald-600
 									 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2
 									  focus:ring-emerald-500 transition duration-150 ease-in-out disabled:opacity-50'
 									disabled={isPending || cart.length === 0}
@@ -349,7 +349,7 @@ const CheckoutPage = () => {
 											<img
 												src={item.product.image}
 												alt={item.product.name}
-												className='w-16 h-16 object-cover rounded-md mr-4'
+												className='w-16 h-16 object-cover rounded-lg mr-4'
 											/>
 											<div>
 												<p className='font-medium text-white'>{item.product.name}</p>

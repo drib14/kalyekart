@@ -51,7 +51,7 @@ const RefundModal = ({ orderId, onClose }) => {
 						<textarea
 							id='reason'
 							rows='4'
-							className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm'
+							className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
 							value={reason}
 							onChange={(e) => setReason(e.target.value)}
 							required
@@ -65,7 +65,7 @@ const RefundModal = ({ orderId, onClose }) => {
 							id='proof'
 							type='file'
 							accept='image/*,video/*'
-							className='w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-emerald-500 file:text-white hover:file:bg-emerald-600'
+							className='w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-500 file:text-white hover:file:bg-emerald-600'
 							onChange={(e) => setProof(e.target.files[0])}
 							required
 						/>
@@ -74,14 +74,14 @@ const RefundModal = ({ orderId, onClose }) => {
 						<button
 							type='button'
 							onClick={onClose}
-							className='px-4 py-2 bg-gray-600 rounded-md hover:bg-gray-700'
+							className='px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700'
 							disabled={isPending}
 						>
 							Cancel
 						</button>
 						<button
 							type='submit'
-							className='px-4 py-2 bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-500 flex items-center justify-center min-w-[120px]'
+							className='px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-500 flex items-center justify-center min-w-[120px]'
 							disabled={isPending}
 						>
 							{isPending ? <LoadingSpinner size='sm' /> : "Submit Request"}

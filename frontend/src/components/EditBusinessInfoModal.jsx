@@ -54,7 +54,7 @@ const EditBusinessInfoModal = ({ onClose }) => {
 								type='text'
 								value={storeName}
 								onChange={(e) => setStoreName(e.target.value)}
-								className='w-full bg-gray-700 rounded-md p-2'
+								className='w-full bg-gray-700 rounded-lg p-2'
 							/>
 						</div>
 						<div>
@@ -63,7 +63,7 @@ const EditBusinessInfoModal = ({ onClose }) => {
 								type='text'
 								value={storeAddress}
 								onChange={(e) => setStoreAddress(e.target.value)}
-								className='w-full bg-gray-700 rounded-md p-2'
+								className='w-full bg-gray-700 rounded-lg p-2'
 							/>
 						</div>
 						<div>
@@ -72,7 +72,7 @@ const EditBusinessInfoModal = ({ onClose }) => {
 								type='text'
 								value={operatingHours}
 								onChange={(e) => setOperatingHours(e.target.value)}
-								className='w-full bg-gray-700 rounded-md p-2'
+								className='w-full bg-gray-700 rounded-lg p-2'
 								placeholder='e.g., 9:00 AM - 5:00 PM'
 							/>
 						</div>

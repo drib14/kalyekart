@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your KalyeKart Order is Confirmed!</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .header { background-color: #059669; color: #ffffff; padding: 40px; text-align: center; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+        .content { padding: 35px; line-height: 1.7; color: #495057; }
+        .content h2 { font-size: 22px; color: #343a40; margin-top: 0; }
+        .content p { margin: 15px 0; }
+        .order-summary { width: 100%; border-collapse: collapse; margin: 25px 0; }
+        .order-summary th, .order-summary td { text-align: left; padding: 12px; border-bottom: 1px solid #dee2e6; }
+        .order-summary th { background-color: #f1f3f5; font-weight: 600; }
+        .order-summary .total-row td { font-weight: 700; font-size: 18px; border-top: 2px solid #343a40; }
+        .cta-button { display: block; width: fit-content; margin: 30px auto; padding: 14px 28px; background-color: #059669; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 500; text-align: center; }
+        .footer { background-color: #e9ecef; color: #6c757d; padding: 25px; text-align: center; font-size: 12px; }
+        .footer p { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Confirmed!</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {{NAME}},</h2>
+            <p>Thank you for your purchase! We've received your order <strong>#{{ORDER_ID}}</strong> and are getting it ready for shipment. Here is a summary of your order:</p>
+
+            <table class="order-summary">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ORDER_ITEMS}}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2">Subtotal</td>
+                        <td>₱{{SUBTOTAL}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Delivery Fee</td>
+                        <td>₱{{DELIVERY_FEE}}</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="2">Total</td>
+                        <td>₱{{TOTAL}}</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <p>You can view the full details and track your order status by clicking the button below.</p>
+            <a href="{{CTA_LINK}}" class="cta-button">View Your Order</a>
+            <p>Thank you for shopping with us!</p>
+            <p><strong>— The KalyeKart Team</strong></p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 KalyeKart. All rights reserved.</p>
+            <p>You are receiving this email because you placed an order on our website.</p>
+        </div>
+    </div>
+</body>
+</html>

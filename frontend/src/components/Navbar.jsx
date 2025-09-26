@@ -62,7 +62,7 @@ const Navbar = () => {
 						)}
 						{isAdmin && (
 							<Link
-								className='bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1 rounded-md font-medium transition duration-300 ease-in-out flex items-center'
+								className='bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1 rounded-lg font-medium transition duration-300 ease-in-out flex items-center'
 								to={"/secret-dashboard"}
 							>
 								<Lock className='inline-block mr-1' size={18} />
@@ -84,7 +84,7 @@ const Navbar = () => {
 									)}
 								</button>
 								{isDropdownOpen && (
-									<div className='absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50'>
+									<div className='absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-1 z-50'>
 										<Link
 											to={isAdmin ? "/profile/admin" : "/profile/customer"}
 											className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
@@ -125,14 +125,14 @@ const Navbar = () => {
 							<>
 								<Link
 									to={"/signup"}
-									className='bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-md flex items-center transition duration-300 ease-in-out'
+									className='bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-lg flex items-center transition duration-300 ease-in-out'
 								>
 									<UserPlus className='mr-2' size={18} />
 									Sign Up
 								</Link>
 								<Link
 									to={"/login"}
-									className='bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md flex items-center transition duration-300 ease-in-out'
+									className='bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg flex items-center transition duration-300 ease-in-out'
 								>
 									<LogIn className='mr-2' size={18} />
 									Login

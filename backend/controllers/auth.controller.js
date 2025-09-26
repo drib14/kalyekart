@@ -3,6 +3,7 @@ import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { sendEmail } from "../lib/email.js";
+import { prepareUserResponse } from "../lib/prepareUserResponse.js";
 
 const generateTokens = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -47,26 +48,15 @@ export const signup = async (req, res) => {
 
 		const { accessToken, refreshToken } = generateTokens(user._id);
 		await storeRefreshToken(user._id, refreshToken);
-
 		setCookies(res, accessToken, refreshToken);
 
-		// Send welcome email
-		await sendEmail(user.email, "Welcome to Kalyekart!", {
-			name: user.name,
-			title: "Welcome Aboard!",
-			body: "We're thrilled to have you at Kalyekart. Get ready to explore a world of amazing products and deals. Happy shopping!",
-			cta: {
-				text: "Shop Now",
-				link: `${process.env.CLIENT_URL}/`,
-			},
+		await sendEmail(user.email, "Welcome to Kalyekart!", "welcome", {
+			NAME: user.name,
+			CTA_LINK: `${process.env.CLIENT_URL}/`,
 		});
 
-		res.status(201).json({
-			_id: user._id,
-			name: user.name,
-			email: user.email,
-			role: user.role,
-		});
+		const userToReturn = prepareUserResponse(user);
+		res.status(201).json(userToReturn);
 	} catch (error) {
 		console.log("Error in signup controller", error.message);
 		res.status(500).json({ message: error.message });
@@ -83,12 +73,8 @@ export const login = async (req, res) => {
 			await storeRefreshToken(user._id, refreshToken);
 			setCookies(res, accessToken, refreshToken);
 
-			res.json({
-				_id: user._id,
-				name: user.name,
-				email: user.email,
-				role: user.role,
-			});
+			const userToReturn = prepareUserResponse(user);
+			res.json(userToReturn);
 		} else {
 			res.status(400).json({ message: "Invalid email or password" });
 		}
@@ -129,10 +115,9 @@ export const forgotPassword = async (req, res) => {
 		user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 		await user.save();
 
-		await sendEmail(user.email, "Your Password Reset Code", {
-			name: user.name,
-			title: "Password Reset Request",
-			body: `You requested a password reset. Use the code below to reset your password. This code is valid for 10 minutes. <br>Your code is: <strong>${resetCode}</strong>`,
+		await sendEmail(user.email, "Your Password Reset Code", "passwordReset", {
+			NAME: user.name,
+			CODE: resetCode,
 		});
 
 		res.status(200).json({ message: "A password reset code has been sent to your email." });
@@ -199,7 +184,8 @@ export const refreshToken = async (req, res) => {
 
 export const getProfile = async (req, res) => {
 	try {
-		res.json(req.user);
+		const userToReturn = prepareUserResponse(req.user);
+		res.json(userToReturn);
 	} catch (error) {
 		res.status(500).json({ message: "Server error", error: error.message });
 	}

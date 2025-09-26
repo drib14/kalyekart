@@ -63,7 +63,7 @@ const OrderDetailPage = () => {
 							)}
 						</div>
 						<button
-							className='mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-500'
+							className='mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-500'
 							disabled={order.status !== "Delivered" || order.refundRequest}
 							onClick={() => setIsRefundModalOpen(true)}
 							title={
@@ -93,7 +93,7 @@ const OrderDetailPage = () => {
 									return (
 										<div key={item._id} className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'>
 											<div className='flex items-center gap-4'>
-												<div className='w-16 h-16 bg-gray-600 rounded-md flex items-center justify-center'>
+										<div className='w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center'>
 													<p className='text-gray-400 text-lg'>?</p>
 												</div>
 												<div>
@@ -106,7 +106,7 @@ const OrderDetailPage = () => {
 								return (
 									<div key={item._id} className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'>
 										<div className='flex items-center gap-4'>
-											<img src={item.product.image} alt={item.product.name} className='w-16 h-16 rounded-md object-cover'/>
+									<img src={item.product.image} alt={item.product.name} className='w-16 h-16 rounded-lg object-cover'/>
 											<div>
 												<p className='font-bold text-white'>{item.product.name}</p>
 												<p className='text-sm text-gray-400'>

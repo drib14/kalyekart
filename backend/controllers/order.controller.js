@@ -1,13 +1,7 @@
 import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
-import Product from "../models/product.model.js";
-import { stripe } from "../lib/stripe.js";
-import { v4 as uuidv4 } from "uuid";
-import cloudinary from "../lib/cloudinary.js";
 import { sendEmail } from "../lib/email.js";
-import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
-
-const WAREHOUSE_COORDINATES = { lat: 10.2983, lon: 123.8991 }; // USC Main Campus (for Pungko-pungko sa salazar)
+import { uploadOnCloudinary } from "../lib/cloudinary.js";
 
 export const createCodOrder = async (req, res) => {
 	try {
@@ -63,15 +57,32 @@ export const createCodOrder = async (req, res) => {
 		await user.save();
 
 		// Send order confirmation email
-		await sendEmail(user.email, `Your Kalyekart Order #${newOrder._id.toString().slice(-6)} is Confirmed!`, {
-			name: user.name,
-			title: "Order Confirmation",
-			body: `Thank you for your purchase! We've received your order and are getting it ready. You can view your order details here: <a href="${process.env.CLIENT_URL}/my-orders/${newOrder._id}">View Order</a>`,
-			cta: {
-				text: "Track Your Order",
-				link: `${process.env.CLIENT_URL}/my-orders/${newOrder._id}`,
-			},
-		});
+		const orderItemsHtml = newOrder.products
+			.map(
+				(item) => `
+				<tr>
+					<td>${item.name}</td>
+					<td>${item.quantity}</td>
+					<td>₱${item.price.toFixed(2)}</td>
+				</tr>
+			`
+			)
+			.join("");
+
+		await sendEmail(
+			user.email,
+			`Your Kalyekart Order #${newOrder._id.toString().slice(-6)} is Confirmed!`,
+			"orderConfirmation",
+			{
+				NAME: user.name,
+				ORDER_ID: newOrder._id.toString(),
+				ORDER_ITEMS: orderItemsHtml,
+				SUBTOTAL: newOrder.subtotal.toFixed(2),
+				DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
+				TOTAL: newOrder.totalAmount.toFixed(2),
+				CTA_LINK: `${process.env.CLIENT_URL}/my-orders/${newOrder._id}`,
+			}
+		);
 
 		res.status(201).json({ message: "Order created successfully", orderId: newOrder._id });
 	} catch (error) {
@@ -129,7 +140,6 @@ export const cancelOrder = async (req, res) => {
 			return res.status(404).json({ message: "Order not found" });
 		}
 
-		// Optional: Check if the user is authorized to cancel the order
 		if (order.user.toString() !== req.user._id.toString()) {
 			return res.status(401).json({ message: "Not authorized to cancel this order" });
 		}
@@ -148,14 +158,13 @@ export const getOrderById = async (req, res) => {
 	try {
 		const order = await Order.findById(req.params.orderId)
 			.populate("products.product")
-			.populate("user", "name email"); // Populate user details
+			.populate("user", "name email");
 
 		if (!order) {
 			return res.status(404).json({ message: "Order not found" });
 		}
 
-		// Ensure the user owns the order OR is an admin
-		if (order.user._id.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+		if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
 			return res.status(401).json({ message: "Not authorized" });
 		}
 
@@ -166,92 +175,12 @@ export const getOrderById = async (req, res) => {
 	}
 };
 
-export const createStripeCheckoutSession = async (req, res) => {
-	try {
-		const { products, shippingAddress, contactNumber, couponCode, subtotal } =
-			req.body;
-		const idempotencyKey = uuidv4();
-
-		// Calculate delivery fee on the server
-		const fullAddress = `${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
-		const coordinates = await getCoordinates(fullAddress);
-		if (!coordinates) {
-			return res.status(400).json({ message: "Could not determine coordinates for the provided address." });
-		}
-		const distance = calculateHaversineDistance(WAREHOUSE_COORDINATES.lat, WAREHOUSE_COORDINATES.lon, coordinates.lat, coordinates.lon);
-		const baseFee = 15;
-		const feePerKm = 5;
-		const deliveryFee = Math.round(baseFee + (distance * feePerKm));
-		const totalAmount = subtotal + deliveryFee;
-
-		const line_items = products.map((product) => ({
-			price_data: {
-				currency: "php",
-				product_data: {
-					name: product.name,
-					images: [product.image],
-				},
-				unit_amount: product.price * 100,
-			},
-			quantity: product.quantity,
-		}));
-
-		if (deliveryFee > 0) {
-			line_items.push({
-				price_data: {
-					currency: "php",
-					product_data: {
-						name: "Delivery Fee",
-					},
-					unit_amount: deliveryFee * 100,
-				},
-				quantity: 1,
-			});
-		}
-
-		const session = await stripe.checkout.sessions.create(
-			{
-				payment_method_types: ["card"],
-				line_items,
-				mode: "payment",
-				success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-				cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
-				metadata: {
-					userId: req.user._id.toString(),
-					products: JSON.stringify(
-						products.map((p) => ({
-							product: p._id,
-							quantity: p.quantity,
-							price: p.price,
-							name: p.name,
-						}))
-					),
-					shippingAddress: JSON.stringify(shippingAddress),
-					contactNumber,
-					paymentMethod: "card",
-					couponCode,
-					subtotal,
-					deliveryFee,
-					distance,
-					totalAmount,
-				},
-			},
-			{ idempotencyKey }
-		);
-
-		res.json({ id: session.id });
-	} catch (error) {
-		console.log("Error in createStripeCheckoutSession controller", error.message);
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
-};
-
 export const getOrders = async (req, res) => {
 	try {
 		const orders = await Order.find({ user: req.user._id })
 			.populate({
 				path: "products.product",
-				select: "name image", // Explicitly select the fields needed for the frontend
+				select: "name image",
 			})
 			.sort({ createdAt: -1 });
 		res.json(orders);
@@ -294,17 +223,16 @@ export const requestRefund = async (req, res) => {
 			return res.status(404).json({ message: "Order not found" });
 		}
 
-		// Convert buffer to data URI
-		const b64 = Buffer.from(req.file.buffer).toString("base64");
-		let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+		const localFilePath = req.file.path;
+		const proofUpload = await uploadOnCloudinary(localFilePath);
 
-		const result = await cloudinary.uploader.upload(dataURI, {
-			folder: "refunds",
-		});
+		if (!proofUpload) {
+			return res.status(500).json({ message: "Failed to upload proof to Cloudinary." });
+		}
 
 		order.refundRequest = {
 			reason,
-			proof: result.secure_url,
+			proof: proofUpload.secure_url,
 			status: "pending",
 		};
 		await order.save();
@@ -328,7 +256,7 @@ export const getRefunds = async (req, res) => {
 export const updateRefundStatus = async (req, res) => {
 	try {
 		const { refundId } = req.params;
-		const { status } = req.body;
+		const { status, rejectionReason } = req.body; // Added rejectionReason
 
 		const order = await Order.findOne({ "refundRequest._id": refundId });
 		if (!order) {
@@ -336,6 +264,10 @@ export const updateRefundStatus = async (req, res) => {
 		}
 
 		order.refundRequest.status = status;
+		if (status === 'rejected') {
+			order.refundRequest.rejectionReason = rejectionReason;
+		}
+
 		await order.save();
 		res.json(order);
 	} catch (error) {

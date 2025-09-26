@@ -11,7 +11,10 @@ export const protectRoute = async (req, res, next) => {
 
 		try {
 			const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
-			const user = await User.findById(decoded.userId).select("-password");
+			// Explicitly select all necessary fields to ensure profilePicture is included
+			const user = await User.findById(decoded.userId).select(
+				"_id name email role profilePicture storeName storeAddress operatingHours"
+			);
 
 			if (!user) {
 				return res.status(401).json({ message: "User not found" });

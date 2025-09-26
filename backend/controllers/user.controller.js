@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import { uploadOnCloudinary } from "../lib/cloudinary.js";
+import { prepareUserResponse } from "../lib/prepareUserResponse.js";
 
 export const updateUserProfile = async (req, res) => {
 	try {
@@ -40,9 +41,8 @@ export const updateUserProfile = async (req, res) => {
 		// Save all changes to the user
 		await user.save();
 
-		// Prepare user object to return to the client (without sensitive info)
-		const userToReturn = user.toObject();
-		delete userToReturn.password;
+		// Prepare user object to return to the client
+		const userToReturn = prepareUserResponse(user);
 
 		res.status(200).json({
 			message: "Profile updated successfully",

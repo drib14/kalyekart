@@ -12,13 +12,12 @@ export const submitFeedback = async (req, res) => {
 		await sendEmail(
 			process.env.EMAIL_USER,
 			`New Feedback Submission (Rating: ${rating}/5)`,
+			"adminFeedbackNotification",
 			{
-				name: "Admin",
-				title: "New Feedback Received",
-				body: `A user has submitted new feedback.<br><br>
-					   <strong>User:</strong> ${user?.name || "Anonymous"} (${user?.email || "No email provided"})<br>
-					   <strong>Rating:</strong> ${rating}/5<br>
-					   <strong>Message:</strong><br>${feedback}`,
+				USER_NAME: user?.name || "Anonymous",
+				USER_EMAIL: user?.email || "No email provided",
+				RATING: rating,
+				FEEDBACK_MESSAGE: feedback,
 			}
 		);
 
@@ -27,14 +26,11 @@ export const submitFeedback = async (req, res) => {
 			await sendEmail(
 				user.email,
 				"We've Received Your Feedback!",
+				"userFeedbackConfirmation",
 				{
-					name: user.name,
-					title: "Thank You For Your Feedback!",
-					body: "We have successfully received your feedback and appreciate you taking the time to help us improve. Our team will review your comments shortly.",
-					cta: {
-						text: "Continue Shopping",
-						link: `${process.env.CLIENT_URL}/`,
-					},
+					NAME: user.name,
+					FEEDBACK_MESSAGE: feedback,
+					CTA_LINK: `${process.env.CLIENT_URL}/`,
 				}
 			);
 		}
