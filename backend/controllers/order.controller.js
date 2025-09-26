@@ -60,7 +60,8 @@ export const createCodOrder = async (req, res) => {
 		await user.save();
 
 		// Send order confirmation email
-		const orderItemsHtml = newOrder.products
+		// Use the original products array from the request body which contains the names
+		const orderItemsHtml = products
 			.map(
 				(item) => `
 				<tr>
@@ -254,13 +255,33 @@ export const updateOrderStatus = async (req, res) => {
 		const { orderId } = req.params;
 		const { status } = req.body;
 
-		const order = await Order.findById(orderId);
+		const order = await Order.findById(orderId).populate("user", "name email");
 		if (!order) {
 			return res.status(404).json({ message: "Order not found" });
 		}
 
+		if (order.status === status) {
+			return res.json(order); // No change, no email needed
+		}
+
 		order.status = status;
 		await order.save();
+
+		// Send order update email
+		if (order.user) {
+			await sendEmail(
+				order.user.email,
+				`Your KalyeKart Order #${order._id.toString().slice(-6)} has been updated!`,
+				"orderUpdate",
+				{
+					NAME: order.user.name,
+					ORDER_ID: order._id.toString(),
+					NEW_STATUS: status,
+					CTA_LINK: `${process.env.CLIENT_URL}/my-orders/${order._id}`,
+				}
+			);
+		}
+
 		res.json(order);
 	} catch (error) {
 		console.log("Error in updateOrderStatus controller", error.message);

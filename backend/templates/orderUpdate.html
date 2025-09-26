@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your KalyeKart Order has been Updated</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .header { background-color: #059669; color: #ffffff; padding: 40px; text-align: center; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+        .content { padding: 35px; line-height: 1.7; color: #495057; }
+        .content h2 { font-size: 22px; color: #343a40; margin-top: 0; }
+        .content p { margin: 15px 0; }
+        .status-update { background-color: #e9ecef; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; text-align: center; }
+        .status-text { font-size: 20px; font-weight: 700; color: #343a40; }
+        .cta-button { display: block; width: fit-content; margin: 30px auto; padding: 14px 28px; background-color: #059669; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 500; text-align: center; }
+        .footer { background-color: #e9ecef; color: #6c757d; padding: 25px; text-align: center; font-size: 12px; }
+        .footer p { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Your Order has been Updated!</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {{NAME}},</h2>
+            <p>This is an update regarding your KalyeKart order <strong>#{{ORDER_ID}}</strong>. The status of your order has been changed to:</p>
+
+            <div class="status-update">
+                <p class="status-text">{{NEW_STATUS}}</p>
+            </div>
+
+            <p>You can view the full details and track the progress of your order by clicking the button below.</p>
+            <a href="{{CTA_LINK}}" class="cta-button">Track Your Order</a>
+            <p>Thank you for your patience!</p>
+            <p><strong>— The KalyeKart Team</strong></p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 KalyeKart. All rights reserved.</p>
+            <p>You are receiving this email because you placed an order on our website.</p>
+        </div>
+    </div>
+</body>
+</html>
