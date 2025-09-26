@@ -6,6 +6,7 @@ import {
 	getFeaturedProducts,
 	getProductsByCategory,
 	getRecommendedProducts,
+	getProductById,
 	searchProducts,
 	toggleFeaturedProduct,
 } from "../controllers/product.controller.js";
@@ -18,6 +19,7 @@ router.get("/search", searchProducts);
 router.get("/featured", getFeaturedProducts);
 router.get("/category/:category", getProductsByCategory);
 router.get("/recommendations", getRecommendedProducts);
+router.get("/:id", getProductById); // Must be after other specific GET routes
 router.post("/", protectRoute, adminRoute, createProduct);
 router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct);
 router.delete("/:id", protectRoute, adminRoute, deleteProduct);
