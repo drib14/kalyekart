@@ -27,6 +27,7 @@ const setCookies = (res, accessToken, refreshToken) => {
 		httpOnly: true,
 		secure: isProduction,
 		sameSite: isProduction ? "none" : "strict",
+		domain: isProduction ? ".onrender.com" : undefined,
 	};
 
 	res.cookie("accessToken", accessToken, {
@@ -177,6 +178,7 @@ export const refreshToken = async (req, res) => {
 			httpOnly: true,
 			secure: isProduction,
 			sameSite: isProduction ? "none" : "strict",
+			domain: isProduction ? ".onrender.com" : undefined,
 			maxAge: 15 * 60 * 1000,
 		});
 
