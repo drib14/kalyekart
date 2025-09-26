@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { User, Mail, Phone, MapPin, CreditCard, ShoppingBag, Heart, Camera, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useUserStore } from "../stores/useUserStore";
@@ -14,6 +14,12 @@ const CustomerProfilePage = () => {
 	const [profilePicture, setProfilePicture] = useState(null);
 	const [previewUrl, setPreviewUrl] = useState(user?.profilePicture || null);
 	const fileInputRef = useRef(null);
+
+	useEffect(() => {
+		if (user?.profilePicture) {
+			setPreviewUrl(user.profilePicture);
+		}
+	}, [user?.profilePicture]);
 
 	const { mutate: updateProfile, isPending } = useMutation({
 		mutationFn: (formData) => {
@@ -104,7 +110,7 @@ const CustomerProfilePage = () => {
 										type='text'
 										value={name}
 										onChange={(e) => setName(e.target.value)}
-										className='w-full bg-gray-700 rounded-md p-2'
+										className='w-full bg-gray-700 rounded-lg p-2'
 									/>
 								</div>
 								<div>
@@ -113,7 +119,7 @@ const CustomerProfilePage = () => {
 										type='email'
 										value={email}
 										onChange={(e) => setEmail(e.target.value)}
-										className='w-full bg-gray-700 rounded-md p-2'
+										className='w-full bg-gray-700 rounded-lg p-2'
 									/>
 								</div>
 								<div>
@@ -122,7 +128,7 @@ const CustomerProfilePage = () => {
 										type='tel'
 										value={phoneNumber}
 										onChange={(e) => setPhoneNumber(e.target.value)}
-										className='w-full bg-gray-700 rounded-md p-2'
+										className='w-full bg-gray-700 rounded-lg p-2'
 										placeholder='e.g., 09123456789'
 									/>
 								</div>
@@ -154,7 +160,7 @@ const CustomerProfilePage = () => {
 							className='bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg flex items-center'
 							disabled={isPending}
 						>
-							{isPending ? <LoadingSpinner /> : <><Save className="mr-2"/> Save Changes</>}
+							{isPending ? <LoadingSpinner size="sm" /> : <><Save className="mr-2"/> Save Changes</>}
 						</button>
 					</div>
 				</form>

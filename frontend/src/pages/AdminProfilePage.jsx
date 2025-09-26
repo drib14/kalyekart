@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { User, Building, Mail, Phone, Clock, BarChart, Camera, Save, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { useUserStore } from "../stores/useUserStore";
@@ -16,6 +16,12 @@ const AdminProfilePage = () => {
 	const [previewUrl, setPreviewUrl] = useState(user?.profilePicture || null);
 	const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
 	const fileInputRef = useRef(null);
+
+	useEffect(() => {
+		if (user?.profilePicture) {
+			setPreviewUrl(user.profilePicture);
+		}
+	}, [user?.profilePicture]);
 
 	const { mutate: updateProfile, isPending } = useMutation({
 		mutationFn: (formData) => {
@@ -106,7 +112,7 @@ const AdminProfilePage = () => {
 										type='text'
 										value={name}
 										onChange={(e) => setName(e.target.value)}
-										className='w-full bg-gray-700 rounded-md p-2'
+										className='w-full bg-gray-700 rounded-lg p-2'
 									/>
 								</div>
 								<div>
@@ -115,7 +121,7 @@ const AdminProfilePage = () => {
 										type='email'
 										value={email}
 										onChange={(e) => setEmail(e.target.value)}
-										className='w-full bg-gray-700 rounded-md p-2'
+										className='w-full bg-gray-700 rounded-lg p-2'
 									/>
 								</div>
 								<div>
@@ -125,7 +131,7 @@ const AdminProfilePage = () => {
 										value={phoneNumber}
 										onChange={(e) => setPhoneNumber(e.target.value)}
 										placeholder='e.g., 09123456789'
-										className='w-full bg-gray-700 rounded-md p-2'
+										className='w-full bg-gray-700 rounded-lg p-2'
 									/>
 								</div>
 							</div>
@@ -159,7 +165,7 @@ const AdminProfilePage = () => {
 							className='bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg flex items-center'
 							disabled={isPending}
 						>
-							{isPending ? <LoadingSpinner /> : <><Save className="mr-2"/> Save Changes</>}
+							{isPending ? <LoadingSpinner size="sm" /> : <><Save className="mr-2"/> Save Changes</>}
 						</button>
 					</div>
 				</form>
