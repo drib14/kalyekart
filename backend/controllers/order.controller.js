@@ -1,7 +1,13 @@
 import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
-import { sendEmail } from "../lib/email.js";
+import Product from "../models/product.model.js";
+import { stripe } from "../lib/stripe.js";
+import { v4 as uuidv4 } from "uuid";
 import { uploadOnCloudinary } from "../lib/cloudinary.js";
+import { sendEmail } from "../lib/email.js";
+import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
+
+const WAREHOUSE_COORDINATES = { lat: 10.2983, lon: 123.8991 }; // USC Main Campus (for Pungko-pungko sa salazar)
 
 export const createCodOrder = async (req, res) => {
 	try {
@@ -19,7 +25,6 @@ export const createCodOrder = async (req, res) => {
 			return res.status(404).json({ message: "User not found" });
 		}
 
-		// Calculate delivery fee on the server
 		const fullAddress = `${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
 		const coordinates = await getCoordinates(fullAddress);
 		if (!coordinates) {
@@ -51,8 +56,6 @@ export const createCodOrder = async (req, res) => {
 		});
 
 		await newOrder.save();
-
-		// Clear user's cart
 		user.cartItems = [];
 		await user.save();
 
@@ -71,7 +74,7 @@ export const createCodOrder = async (req, res) => {
 
 		await sendEmail(
 			user.email,
-			`Your Kalyekart Order #${newOrder._id.toString().slice(-6)} is Confirmed!`,
+			`Your KalyeKart Order #${newOrder._id.toString().slice(-6)} is Confirmed!`,
 			"orderConfirmation",
 			{
 				NAME: user.name,
@@ -87,29 +90,6 @@ export const createCodOrder = async (req, res) => {
 		res.status(201).json({ message: "Order created successfully", orderId: newOrder._id });
 	} catch (error) {
 		console.log("Error in createCodOrder controller", error.message);
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
-};
-
-export const updatePaymentStatus = async (req, res) => {
-	try {
-		const { orderId } = req.params;
-		const { paymentStatus } = req.body;
-
-		if (!paymentStatus) {
-			return res.status(400).json({ message: "Payment status is required." });
-		}
-
-		const order = await Order.findById(orderId);
-		if (!order) {
-			return res.status(404).json({ message: "Order not found" });
-		}
-
-		order.paymentStatus = paymentStatus;
-		await order.save();
-		res.json(order);
-	} catch (error) {
-		console.log("Error in updatePaymentStatus controller", error.message);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
@@ -171,6 +151,85 @@ export const getOrderById = async (req, res) => {
 		res.json(order);
 	} catch (error) {
 		console.log("Error in getOrderById controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const createStripeCheckoutSession = async (req, res) => {
+	try {
+		const { products, shippingAddress, contactNumber, couponCode, subtotal } =
+			req.body;
+		const idempotencyKey = uuidv4();
+
+		const fullAddress = `${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
+		const coordinates = await getCoordinates(fullAddress);
+		if (!coordinates) {
+			return res.status(400).json({ message: "Could not determine coordinates for the provided address." });
+		}
+		const distance = calculateHaversineDistance(WAREHOUSE_COORDINATES.lat, WAREHOUSE_COORDINATES.lon, coordinates.lat, coordinates.lon);
+		const baseFee = 15;
+		const feePerKm = 5;
+		const deliveryFee = Math.round(baseFee + (distance * feePerKm));
+		const totalAmount = subtotal + deliveryFee;
+
+		const line_items = products.map((product) => ({
+			price_data: {
+				currency: "php",
+				product_data: {
+					name: product.name,
+					images: [product.image],
+				},
+				unit_amount: product.price * 100,
+			},
+			quantity: product.quantity,
+		}));
+
+		if (deliveryFee > 0) {
+			line_items.push({
+				price_data: {
+					currency: "php",
+					product_data: {
+						name: "Delivery Fee",
+					},
+					unit_amount: deliveryFee * 100,
+				},
+				quantity: 1,
+			});
+		}
+
+		const session = await stripe.checkout.sessions.create(
+			{
+				payment_method_types: ["card"],
+				line_items,
+				mode: "payment",
+				success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+				cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
+				metadata: {
+					userId: req.user._id.toString(),
+					products: JSON.stringify(
+						products.map((p) => ({
+							product: p._id,
+							quantity: p.quantity,
+							price: p.price,
+							name: p.name,
+						}))
+					),
+					shippingAddress: JSON.stringify(shippingAddress),
+					contactNumber,
+					paymentMethod: "card",
+					couponCode,
+					subtotal,
+					deliveryFee,
+					distance,
+					totalAmount,
+				},
+			},
+			{ idempotencyKey }
+		);
+
+		res.json({ id: session.id });
+	} catch (error) {
+		console.log("Error in createStripeCheckoutSession controller", error.message);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
@@ -256,7 +315,7 @@ export const getRefunds = async (req, res) => {
 export const updateRefundStatus = async (req, res) => {
 	try {
 		const { refundId } = req.params;
-		const { status, rejectionReason } = req.body; // Added rejectionReason
+		const { status } = req.body;
 
 		const order = await Order.findOne({ "refundRequest._id": refundId });
 		if (!order) {
@@ -264,14 +323,33 @@ export const updateRefundStatus = async (req, res) => {
 		}
 
 		order.refundRequest.status = status;
-		if (status === 'rejected') {
-			order.refundRequest.rejectionReason = rejectionReason;
-		}
-
 		await order.save();
 		res.json(order);
 	} catch (error) {
 		console.log("Error in updateRefundStatus controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const updatePaymentStatus = async (req, res) => {
+	try {
+		const { orderId } = req.params;
+		const { paymentStatus } = req.body;
+
+		if (!paymentStatus) {
+			return res.status(400).json({ message: "Payment status is required." });
+		}
+
+		const order = await Order.findById(orderId);
+		if (!order) {
+			return res.status(404).json({ message: "Order not found" });
+		}
+
+		order.paymentStatus = paymentStatus;
+		await order.save();
+		res.json(order);
+	} catch (error) {
+		console.log("Error in updatePaymentStatus controller", error.message);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
