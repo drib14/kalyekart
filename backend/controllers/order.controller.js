@@ -234,7 +234,7 @@ export const getOrders = async (req, res) => {
 		res.json(orders);
 	} catch (error) {
 		console.log("Error in getOrders controller", error.message);
-		res.status(500).json({ message: "Server error", error:.message });
+		res.status(500).json({ message: "Server error", error: message });
 	}
 };
 
