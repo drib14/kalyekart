@@ -1,4 +1,4 @@
-import { redis } from "../lib/redis.js";
+import { redisPromise } from "../lib/redis.js";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -18,6 +18,7 @@ const generateTokens = (userId) => {
 };
 
 const storeRefreshToken = async (userId, refreshToken) => {
+	const redis = await redisPromise;
 	await redis.set(`refresh_token:${userId}`, refreshToken, "EX", 7 * 24 * 60 * 60); // 7days
 };
 
@@ -90,6 +91,7 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
 	try {
+		const redis = await redisPromise;
 		const refreshToken = req.cookies.refreshToken;
 		if (refreshToken) {
 			const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
@@ -158,6 +160,7 @@ export const resetPassword = async (req, res) => {
 
 export const refreshToken = async (req, res) => {
 	try {
+		const redis = await redisPromise;
 		const refreshToken = req.cookies.refreshToken;
 		if (!refreshToken) {
 			return res.status(401).json({ message: "No refresh token provided" });

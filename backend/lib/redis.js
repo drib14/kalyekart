@@ -1,7 +1,7 @@
 import Redis from "ioredis";
 
-function createMockRedis() {
-	console.warn("Switching to mock Redis client. Redis operations will be no-ops.");
+const createMockRedis = () => {
+	console.warn("Using mock Redis client. All Redis operations will be no-ops.");
 	return {
 		get: async () => null,
 		set: async () => "OK",
@@ -9,43 +9,33 @@ function createMockRedis() {
 		on: () => {},
 		status: "mock",
 	};
-}
+};
 
-let activeRedisClient;
+const initializeRedis = () => {
+	return new Promise((resolve) => {
+		if (!process.env.UPSTASH_REDIS_URL) {
+			console.warn("UPSTASH_REDIS_URL not found. Redis functionality will be disabled.");
+			resolve(createMockRedis());
+			return;
+		}
 
-if (process.env.UPSTASH_REDIS_URL) {
-	const realRedisClient = new Redis(process.env.UPSTASH_REDIS_URL, {
-		connectTimeout: 10000, // 10 seconds
-		maxRetriesPerRequest: 1,
-		retryStrategy: () => null,
+		const redisClient = new Redis(process.env.UPSTASH_REDIS_URL, {
+			connectTimeout: 10000,
+			maxRetriesPerRequest: 1,
+			retryStrategy: () => null,
+		});
+
+		redisClient.on("connect", () => {
+			console.log("Connected to Redis successfully!");
+			resolve(redisClient);
+		});
+
+		redisClient.on("error", (err) => {
+			console.error("Failed to connect to Redis:", err.message);
+			redisClient.disconnect();
+			resolve(createMockRedis());
+		});
 	});
+};
 
-	activeRedisClient = realRedisClient;
-
-	realRedisClient.on("error", (error) => {
-		console.error("Redis connection error:", error.message);
-		console.log("Switching to mock Redis client.");
-		activeRedisClient = createMockRedis();
-		realRedisClient.disconnect();
-	});
-
-	realRedisClient.on("connect", () => {
-		console.log("Connected to Redis successfully!");
-	});
-} else {
-	console.warn("UPSTASH_REDIS_URL not found. Redis functionality will be disabled.");
-	activeRedisClient = createMockRedis();
-}
-
-export const redis = new Proxy(
-	{},
-	{
-		get(target, prop) {
-			const clientProp = activeRedisClient[prop];
-			if (typeof clientProp === "function") {
-				return clientProp.bind(activeRedisClient);
-			}
-			return clientProp;
-		},
-	}
-);
+export const redisPromise = initializeRedis();
