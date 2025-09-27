@@ -1,14 +1,11 @@
+// --- Load environment variables first ---
+import "./lib/config.js";
+
 import express from "express";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import path from "path";
 import cors from "cors";
-import { fileURLToPath } from "url"; // Import for resolving __dirname
-
-// Correctly configure dotenv path for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.join(__dirname, ".env") });
+import { fileURLToPath } from "url";
 
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
@@ -20,15 +17,14 @@ import orderRoutes from "./routes/order.route.js";
 import userRoutes from "./routes/user.route.js";
 import feedbackRoutes from "./routes/feedback.route.js";
 import locationRoutes from "./routes/location.route.js";
-import Order from "./models/order.model.js";
-import { calculateETA } from "./lib/eta.js";
 import { connectDB } from "./lib/db.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Since we've defined our own __dirname, we need to be careful with other path resolutions
-const projectRoot = path.resolve(__dirname, ".."); // Assumes backend is one level down from root
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, "..");
 
 app.use(
 	cors({
