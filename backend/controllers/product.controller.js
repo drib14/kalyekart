@@ -185,10 +185,12 @@ export const searchProducts = async (req, res) => {
 			return res.json([]);
 		}
 
-		const products = await Product.find(
-			{ $text: { $search: q }, isDeleted: { $ne: true } },
-			{ score: { $meta: "textScore" } }
-		).sort({ score: { $meta: "textScore" } });
+		const regex = new RegExp(q, "i"); // 'i' for case-insensitive
+
+		const products = await Product.find({
+			$or: [{ name: regex }, { description: regex }],
+			isDeleted: { $ne: true },
+		}).limit(10); // Limit results for performance
 
 		res.json(products);
 	} catch (error) {

@@ -92,18 +92,23 @@ const Searchbar = () => {
 										key={product._id}
 										onClick={() => {
 											setIsFocused(false);
-											navigate(`/product/${product._id}`); // Assuming a product detail page route
+											navigate(`/product/${product._id}`);
 										}}
-										className='flex items-center px-4 py-2 cursor-pointer hover:bg-gray-700'
+										className='flex items-start p-4 cursor-pointer hover:bg-gray-700 transition-colors duration-200'
 									>
 										<img
 											src={product.image}
 											alt={product.name}
-											className='w-10 h-10 object-cover rounded-md mr-4'
+											className='w-16 h-16 object-cover rounded-md mr-4'
 										/>
-										<div>
-											<p className='font-medium'>{product.name}</p>
-											<p className='text-sm text-gray-400'>₱{product.price.toFixed(2)}</p>
+										<div className='flex-1'>
+											<p className='font-bold text-white'>{product.name}</p>
+											<p className='text-sm text-emerald-400 mb-1'>
+												₱{product.price.toFixed(2)}
+											</p>
+											<p className='text-xs text-gray-400 custom-line-clamp-2'>
+												{product.description}
+											</p>
 										</div>
 									</li>
 								))}
