@@ -10,28 +10,44 @@ let transporter;
 let isEmailServiceEnabled = false;
 
 (async () => {
+	// Production-ready configuration (e.g., for Render with a dedicated email service)
 	if (process.env.EMAIL_HOST && process.env.EMAIL_PORT && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+		console.log("Attempting to configure email service with production settings...");
 		transporter = nodemailer.createTransport({
 			host: process.env.EMAIL_HOST,
 			port: parseInt(process.env.EMAIL_PORT, 10),
-			secure: process.env.EMAIL_SECURE === 'true', // Use 'true' for port 465, false for others
+			secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
 			auth: {
 				user: process.env.EMAIL_USER,
 				pass: process.env.EMAIL_PASS,
 			},
 			connectionTimeout: 10000, // 10 seconds
 		});
-
-		try {
-			await transporter.verify();
-			console.log("Email service is configured and ready.");
-			isEmailServiceEnabled = true;
-		} catch (error) {
-			console.error("Email service verification failed. Emails will be disabled.", error.message);
-			isEmailServiceEnabled = false;
-		}
+	// Fallback to original Gmail configuration
+	} else if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+		console.log("Production email settings not found. Falling back to Gmail SMTP configuration...");
+		transporter = nodemailer.createTransport({
+			host: "smtp.gmail.com",
+			port: 587,
+			secure: false, // Port 587 uses STARTTLS
+			auth: {
+				user: process.env.EMAIL_USER,
+				pass: process.env.EMAIL_PASS,
+			},
+			connectionTimeout: 10000, // 10 seconds
+		});
 	} else {
-		console.warn("Email service environment variables not fully configured. Email sending will be disabled.");
+		console.warn("Email credentials not found. Email sending will be disabled.");
+		return; // Exit if no credentials are provided
+	}
+
+	try {
+		await transporter.verify();
+		console.log("Email service is configured and ready.");
+		isEmailServiceEnabled = true;
+	} catch (error) {
+		console.error("Email service verification failed. Emails will be disabled.", error.message);
+		isEmailServiceEnabled = false;
 	}
 })();
 
