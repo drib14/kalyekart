@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -6,32 +6,16 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let transporter;
+let resend;
 let isEmailServiceEnabled = false;
 
 (async () => {
-	if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-		transporter = nodemailer.createTransport({
-			host: "smtp.gmail.com",
-			port: 587,
-			secure: false, // Port 587 uses STARTTLS
-			auth: {
-				user: process.env.EMAIL_USER,
-				pass: process.env.EMAIL_PASS,
-			},
-			connectionTimeout: 10000, // 10 seconds
-		});
-
-		try {
-			await transporter.verify();
-			console.log("Email service is configured and ready.");
-			isEmailServiceEnabled = true;
-		} catch (error) {
-			console.error("Email service verification failed. Emails will be disabled.", error.message);
-			isEmailServiceEnabled = false;
-		}
+	if (process.env.RESEND_SECRET) {
+		resend = new Resend(process.env.RESEND_SECRET);
+		console.log("Email service is configured and ready.");
+		isEmailServiceEnabled = true;
 	} else {
-		console.warn("Email credentials not found. Email sending will be disabled.");
+		console.warn("Resend secret not found. Email sending will be disabled.");
 	}
 })();
 
@@ -57,13 +41,12 @@ export const sendEmail = async (to, subject, templateName, data) => {
 
 	try {
 		const htmlContent = loadTemplate(templateName, data);
-		const mailOptions = {
-			from: `"Kalyekart" <${process.env.EMAIL_USER}>`,
+		await resend.emails.send({
+			from: "Kalyekart <kalyekart@gmail.com>",
 			to,
 			subject,
 			html: htmlContent,
-		};
-		await transporter.sendMail(mailOptions);
+		});
 		console.log(`Email sent to ${to} with subject: ${subject}`);
 	} catch (error) {
 		console.error(`Error sending email to ${to}:`, error.message);

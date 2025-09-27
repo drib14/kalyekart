@@ -28,6 +28,7 @@
 		"node-fetch": "^3.3.2",
 		"nodemailer": "^7.0.6",
 		"paymongo-node": "^10.17.0",
+		"resend": "^6.1.0",
 		"stripe": "^16.12.0",
 		"uuid": "^13.0.0"
 	},
