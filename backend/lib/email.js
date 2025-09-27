@@ -7,25 +7,43 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let transporter;
-let isEmailServiceConfigured = false;
+let isEmailServiceEnabled = false; // Start with the service disabled
 
-// Only configure the email service if credentials are provided in the environment
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-	transporter = nodemailer.createTransport({
-		host: "smtp.gmail.com",
-		port: 465,
-		secure: true,
-		auth: {
-			user: process.env.EMAIL_USER,
-			pass: process.env.EMAIL_PASS,
-		},
-	});
-	isEmailServiceConfigured = true;
-} else {
-	console.warn(
-		"Email credentials (EMAIL_USER, EMAIL_PASS) not found. Email sending will be disabled."
-	);
-}
+// --- Email Service Initialization ---
+// We use an async IIFE to handle the async verification process on startup.
+(async () => {
+	if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+		transporter = nodemailer.createTransport({
+			host: "smtp.gmail.com",
+			port: 465,
+			secure: true,
+			auth: {
+				user: process.env.EMAIL_USER,
+				pass: process.env.EMAIL_PASS,
+			},
+			// Add a timeout to prevent long hangs on verification
+			connectionTimeout: 10000, // 10 seconds
+		});
+
+		try {
+			// Verify the connection and credentials
+			await transporter.verify();
+			console.log("Email service is configured and ready.");
+			isEmailServiceEnabled = true;
+		} catch (error) {
+			console.error(
+				"Email service verification failed. Emails will be disabled.",
+				error.message
+			);
+			// Ensure the service remains disabled
+			isEmailServiceEnabled = false;
+		}
+	} else {
+		console.warn(
+			"Email credentials (EMAIL_USER, EMAIL_PASS) not found. Email sending will be disabled."
+		);
+	}
+})();
 
 const loadTemplate = (templateName, data) => {
 	const templatePath = path.join(__dirname, `../templates/${templateName}.html`);
@@ -45,9 +63,9 @@ const loadTemplate = (templateName, data) => {
 };
 
 export const sendEmail = async (to, subject, templateName, data) => {
-	// If the email service is not configured, log a warning and do nothing.
-	if (!isEmailServiceConfigured) {
-		console.warn(`Skipping email to ${to} because email service is not configured.`);
+	// If the email service is not enabled (due to missing creds or verification failure), do nothing.
+	if (!isEmailServiceEnabled) {
+		console.warn(`Skipping email to ${to} because email service is not enabled.`);
 		return;
 	}
 
