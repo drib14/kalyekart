@@ -10,11 +10,11 @@ let transporter;
 let isEmailServiceEnabled = false;
 
 (async () => {
-	if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+	if (process.env.EMAIL_HOST && process.env.EMAIL_PORT && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
 		transporter = nodemailer.createTransport({
-			host: "smtp.gmail.com",
-			port: 587,
-			secure: false, // Port 587 uses STARTTLS
+			host: process.env.EMAIL_HOST,
+			port: parseInt(process.env.EMAIL_PORT, 10),
+			secure: process.env.EMAIL_SECURE === 'true', // Use 'true' for port 465, false for others
 			auth: {
 				user: process.env.EMAIL_USER,
 				pass: process.env.EMAIL_PASS,
@@ -31,7 +31,7 @@ let isEmailServiceEnabled = false;
 			isEmailServiceEnabled = false;
 		}
 	} else {
-		console.warn("Email credentials not found. Email sending will be disabled.");
+		console.warn("Email service environment variables not fully configured. Email sending will be disabled.");
 	}
 })();
 
