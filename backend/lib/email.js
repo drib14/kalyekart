@@ -1,7 +1,5 @@
 import sgMail from "@sendgrid/mail";
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const brevo = require("@getbrevo/brevo");
+import { TransactionalEmailsApi, SendSmtpEmail } from "@getbrevo/brevo";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -15,11 +13,10 @@ if (process.env.SENDGRID_API_KEY) {
 	sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
-// Configure Brevo
-let defaultClient = brevo.ApiClient.instance;
-let apiKey = defaultClient.authentications["api-key"];
-apiKey.apiKey = process.env.BREVO_KEY;
-const brevoApi = new brevo.TransactionalEmailsApi();
+// Configure Brevo using the correct method from the official documentation
+const brevoApi = new TransactionalEmailsApi();
+const brevoApiKey = brevoApi.authentications["apiKey"];
+brevoApiKey.apiKey = process.env.BREVO_KEY;
 
 /**
  * Loads a specific email template and populates it with dynamic data.
@@ -77,7 +74,7 @@ const _sendEmail = async (to, subject, templateName, data) => {
 	// If SendGrid was not used or failed, try Brevo
 	if (!emailSent) {
 		try {
-			let sendSmtpEmail = new brevo.SendSmtpEmail();
+			const sendSmtpEmail = new SendSmtpEmail();
 			sendSmtpEmail.sender = { email: process.env.EMAIL_USER, name: "KalyeKart" };
 			sendSmtpEmail.to = [{ email: to }];
 			sendSmtpEmail.subject = subject;
