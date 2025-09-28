@@ -12,7 +12,11 @@ axiosInstance.interceptors.response.use(
 		if (error.response.status === 401 && !originalRequest._retry) {
 			originalRequest._retry = true;
 			try {
-				await axiosInstance.post("/auth/refresh-token");
+				const refreshAxios = axios.create({
+					baseURL: import.meta.env.VITE_API_URL || "/api",
+					withCredentials: true,
+				});
+				await refreshAxios.post("/auth/refresh-token");
 				return axiosInstance(originalRequest);
 			} catch (refreshError) {
 				// Here you should handle failed refresh

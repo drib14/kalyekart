@@ -24,6 +24,9 @@ import Order from "./models/order.model.js";
 import { calculateETA } from "./lib/eta.js";
 import { connectDB } from "./lib/db.js";
 
+// Import the worker to start it
+import "./workers/email-worker.js";
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
