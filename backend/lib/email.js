@@ -15,7 +15,7 @@ if (process.env.SENDGRID_API_KEY) {
 
 // Configure Brevo
 const brevoApi = new Brevo.TransactionalEmailsApi();
-brevoApi.authentications["apiKey"].apiKey = process.env.BREVO_KEY;
+brevoApi.authentications["api-key"].apiKey = process.env.BREVO_KEY;
 
 /**
  * Loads a specific email template and populates it with dynamic data.
