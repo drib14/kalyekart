@@ -80,20 +80,10 @@ const _sendEmail = async (to, subject, templateName, data) => {
 			sendSmtpEmail.subject = subject;
 			sendSmtpEmail.htmlContent = htmlContent;
 
-			// Add enhanced logging to debug the 401 error
-			const apiKey = brevoApi.authentications.apiKey.apiKey;
-			const maskedKey = apiKey ? `${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}` : "Not Found";
-			console.log(`[BREVO_DEBUG] Attempting to send email via Brevo.`);
-			console.log(`[BREVO_DEBUG] API Key Loaded: ${maskedKey}`);
-			console.log(`[BREVO_DEBUG] Target API Host: ${brevoApi.basePath}`);
-
 			await brevoApi.sendTransacEmail(sendSmtpEmail);
 			console.log(`Email sent to ${to} via Brevo.`);
 			emailSent = true;
 		} catch (error) {
-			if (error.statusCode === 401) {
-				console.error(`[BREVO_ERROR] Received a 401 Unauthorized error. This strongly indicates that the BREVO_KEY is invalid, expired, or does not have the required permissions. Please generate a new v3 API key from your Brevo account and update the environment variable.`);
-			}
 			console.error(`Error sending email to ${to} via Brevo:`, error);
 			// The email was not sent, so we will fall through to the final error.
 		}
