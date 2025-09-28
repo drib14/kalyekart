@@ -1,6 +1,6 @@
 import sgMail from "@sendgrid/mail";
 import pkg from '@getbrevo/brevo';
-const { ApiClient, TransactionalEmailsApi, SendSmtpEmail } = pkg;
+const { ApiClient, TransactionalEmailsApi, SendSmtpEmail } = pkg.default;
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
