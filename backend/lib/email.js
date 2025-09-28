@@ -14,9 +14,11 @@ if (process.env.SENDGRID_API_KEY) {
 }
 
 // Configure Brevo
-const apiClient = new Brevo.ApiClient();
-apiClient.authentications["api-key"].apiKey = process.env.BREVO_KEY;
-const brevoApi = new Brevo.TransactionalEmailsApi(apiClient);
+const defaultClient = Brevo.ApiClient.instance;
+const apiKey = defaultClient.authentications["api-key"];
+apiKey.apiKey = process.env.BREVO_KEY;
+
+const brevoApi = new Brevo.TransactionalEmailsApi();
 
 
 /**
