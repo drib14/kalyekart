@@ -1,5 +1,5 @@
 import sgMail from "@sendgrid/mail";
-import { TransactionalEmailsApi, SendSmtpEmail } from "@getbrevo/brevo";
+import { ApiClient, TransactionalEmailsApi, SendSmtpEmail } from "@getbrevo/brevo";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -13,10 +13,11 @@ if (process.env.SENDGRID_API_KEY) {
 	sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
-// Configure Brevo using the correct method from the official documentation
+// Configure Brevo
+const defaultClient = ApiClient.instance;
+const apiKey = defaultClient.authentications["api-key"];
+apiKey.apiKey = process.env.BREVO_KEY;
 const brevoApi = new TransactionalEmailsApi();
-const brevoApiKey = brevoApi.authentications["apiKey"];
-brevoApiKey.apiKey = process.env.BREVO_KEY;
 
 /**
  * Loads a specific email template and populates it with dynamic data.
