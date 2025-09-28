@@ -1,4 +1,5 @@
 import sgMail from "@sendgrid/mail";
+import * as Brevo from "@getbrevo/brevo";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -8,7 +9,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Set the SendGrid API key
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+if (process.env.SENDGRID_API_KEY) {
+	sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
+
+// Configure Brevo
+const brevoApi = new Brevo.TransactionalEmailsApi();
+brevoApi.authentications["apiKey"].apiKey = process.env.BREVO_KEY;
 
 /**
  * Loads a specific email template and populates it with dynamic data.
@@ -43,24 +50,47 @@ const loadTemplate = (templateName, data) => {
  * @param {object} data - The data to populate the template with.
  */
 const _sendEmail = async (to, subject, templateName, data) => {
-	try {
-		const htmlContent = loadTemplate(templateName, data);
+	const htmlContent = loadTemplate(templateName, data);
+	let emailSent = false;
 
-		const msg = {
-			to: to,
-			from: process.env.EMAIL_USER, // This must be a verified sender in SendGrid
-			subject: subject,
-			html: htmlContent,
-		};
-
-		await sgMail.send(msg);
-		console.log(`Email sent to ${to} with subject: ${subject} via SendGrid.`);
-	} catch (error) {
-		console.error(`Error sending email to ${to} via SendGrid:`, error);
-		if (error.response) {
-			console.error("SendGrid Error Body:", error.response.body);
+	// First, try sending with SendGrid if the API key is available
+	if (process.env.SENDGRID_API_KEY) {
+		try {
+			const msg = {
+				to: to,
+				from: process.env.EMAIL_USER,
+				subject: subject,
+				html: htmlContent,
+			};
+			await sgMail.send(msg);
+			console.log(`Email sent to ${to} via SendGrid.`);
+			emailSent = true;
+		} catch (error) {
+			console.error(`SendGrid failed: ${error.message}. Trying Brevo as a fallback.`);
 		}
-		throw error; // Re-throw the error to be caught by the worker
+	}
+
+	// If SendGrid was not used or failed, try Brevo
+	if (!emailSent) {
+		try {
+			const sendSmtpEmail = new Brevo.SendSmtpEmail();
+			sendSmtpEmail.sender = { email: process.env.EMAIL_USER, name: "KalyeKart" };
+			sendSmtpEmail.to = [{ email: to }];
+			sendSmtpEmail.subject = subject;
+			sendSmtpEmail.htmlContent = htmlContent;
+
+			await brevoApi.sendTransacEmail(sendSmtpEmail);
+			console.log(`Email sent to ${to} via Brevo.`);
+			emailSent = true;
+		} catch (error) {
+			console.error(`Error sending email to ${to} via Brevo:`, error);
+			// The email was not sent, so we will fall through to the final error.
+		}
+	}
+
+	// If the email was still not sent after trying all providers, throw an error.
+	if (!emailSent) {
+		throw new Error(`Failed to send email to ${to} using all available providers.`);
 	}
 };
 
