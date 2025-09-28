@@ -8,7 +8,7 @@ import { fileURLToPath } from "url"; // Import for resolving __dirname
 // Correctly configure dotenv path for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.join(__dirname, ".env") });
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
