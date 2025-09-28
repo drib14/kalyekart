@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { Worker } from "bullmq";
 import { redis } from "../lib/redis.js";
 import { _sendEmail } from "../lib/email.js";

@@ -103,7 +103,7 @@ const _sendEmail = async (to, subject, templateName, data) => {
  * @param {object} data - The data to populate the template with.
  */
 export const sendEmail = async (to, subject, templateName, data) => {
-	console.log(`[EMAIL_QUEUE] Adding SendGrid job for ${to} with subject: ${subject}`);
+	console.log(`[EMAIL_QUEUE] Adding email job for ${to} with subject: ${subject}`);
 	await emailQueue.add("send-email", { to, subject, templateName, data });
 };
 
