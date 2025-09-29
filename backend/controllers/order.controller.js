@@ -134,7 +134,7 @@ export const cancelOrder = async (req, res) => {
 			return res.status(404).json({ message: "Order not found" });
 		}
 
-		if (order.user.toString() !== req.user._id.toString()) {
+		if (order.user._id.toString() !== req.user._id.toString()) {
 			return res.status(401).json({ message: "Not authorized to cancel this order" });
 		}
 
