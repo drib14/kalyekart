@@ -60,7 +60,7 @@ if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(projectRoot, "frontend/dist")));
 
 	// Catch-all route to serve the frontend
-	app.get("/*", (req, res) => {
+	app.get(/.*/, (req, res) => {
 		res.sendFile(path.resolve(projectRoot, "frontend", "dist", "index.html"));
 	});
 }
