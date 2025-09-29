@@ -333,18 +333,6 @@ export const updateOrderStatus = async (req, res) => {
 			}
 		);
 
-		// Also notify the customer
-		await sendEmail(
-			order.user.email,
-			`We've Received Your Refund Request for Order #${order._id.toString().slice(-6)}`,
-			"customerRefundRequested",
-			{
-				NAME: order.user.name,
-				ORDER_ID: order._id.toString(),
-				CTA_LINK: `https://kalyekart.app/my-orders/${order._id}`,
-			}
-		);
-
 		res.json(order);
 	} catch (error) {
 		console.log("Error in updateOrderStatus controller", error.message);
