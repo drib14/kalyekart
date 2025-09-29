@@ -57,9 +57,10 @@ app.use("/api/locations", locationRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 if (process.env.NODE_ENV === "production") {
-	app.use(express.static(path.join(projectRoot, "/frontend/dist")));
+	app.use(express.static(path.join(projectRoot, "frontend/dist")));
 
-	app.get("*", (req, res) => {
+	// Catch-all route to serve the frontend
+	app.get("/*", (req, res) => {
 		res.sendFile(path.resolve(projectRoot, "frontend", "dist", "index.html"));
 	});
 }
