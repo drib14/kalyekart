@@ -4,7 +4,9 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
-		"start": "node backend/server.js"
+		"start": "node backend/server.js",
+		"build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
+		"heroku-postbuild": "npm install --prefix frontend && npm run build --prefix frontend"
 	},
 	"dependencies": {
 		"@sendgrid/mail": "^8.1.6",
