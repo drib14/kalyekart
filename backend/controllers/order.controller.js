@@ -1,5 +1,6 @@
 import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
+import Notification from "../models/notification.model.js";
 import { stripe } from "../lib/stripe.js";
 import { v4 as uuidv4 } from "uuid";
 import { uploadOnCloudinary } from "../lib/cloudinary.js";
@@ -101,6 +102,27 @@ export const createCodOrder = async (req, res) => {
 			}
 		);
 
+		// Create in-app notifications
+		const admin = await User.findOne({ role: "admin" });
+		if (admin) {
+			const adminNotification = new Notification({
+				recipient: admin._id,
+				sender: user._id,
+				type: "new_order",
+				message: `${user.name} has placed a new order (#${newOrder._id.toString().slice(-6)}).`,
+				link: `/order/${newOrder._id}`,
+			});
+			await adminNotification.save();
+		}
+
+		const customerNotification = new Notification({
+			recipient: user._id,
+			type: "new_order",
+			message: `Your order #${newOrder._id.toString().slice(-6)} has been placed successfully!`,
+			link: `/my-orders`,
+		});
+		await customerNotification.save();
+
 		res.status(201).json({ message: "Order created successfully", orderId: newOrder._id });
 	} catch (error) {
 		console.log("Error in createCodOrder controller", error.message);
@@ -167,6 +189,27 @@ export const cancelOrder = async (req, res) => {
 				CTA_LINK: `https://kalyekart.app`,
 			}
 		);
+
+		// Create in-app notifications
+		const admin = await User.findOne({ role: "admin" });
+		if (admin) {
+			const adminNotification = new Notification({
+				recipient: admin._id,
+				sender: order.user._id,
+				type: "order_cancelled",
+				message: `Order #${order._id.toString().slice(-6)} has been cancelled by ${order.user.name}.`,
+				link: `/order/${order._id}`,
+			});
+			await adminNotification.save();
+		}
+
+		const customerNotification = new Notification({
+			recipient: order.user._id,
+			type: "order_cancelled",
+			message: `Your order #${order._id.toString().slice(-6)} has been successfully cancelled.`,
+			link: `/my-orders`,
+		});
+		await customerNotification.save();
 
 		res.json({ message: "Order cancelled successfully", order });
 	} catch (error) {
@@ -333,6 +376,27 @@ export const updateOrderStatus = async (req, res) => {
 			}
 		);
 
+		// Create in-app notifications
+		const admin = await User.findOne({ role: "admin" });
+		if (admin) {
+			const adminNotification = new Notification({
+				recipient: admin._id,
+				sender: order.user._id,
+				type: "order_status_update",
+				message: `The status of order #${order._id.toString().slice(-6)} has been updated to ${status}.`,
+				link: `/order/${order._id}`,
+			});
+			await adminNotification.save();
+		}
+
+		const customerNotification = new Notification({
+			recipient: order.user._id,
+			type: "order_status_update",
+			message: `The status of your order #${order._id.toString().slice(-6)} has been updated to ${status}.`,
+			link: `/my-orders`,
+		});
+		await customerNotification.save();
+
 		res.json(order);
 	} catch (error) {
 		console.log("Error in updateOrderStatus controller", error.message);
@@ -391,6 +455,27 @@ export const requestRefund = async (req, res) => {
 				CTA_LINK: `https://kalyekart.app/my-orders/${order._id}`,
 			}
 		);
+
+		// Create in-app notifications
+		const admin = await User.findOne({ role: "admin" });
+		if (admin) {
+			const adminNotification = new Notification({
+				recipient: admin._id,
+				sender: order.user._id,
+				type: "refund_request",
+				message: `${order.user.name} has requested a refund for order #${order._id.toString().slice(-6)}.`,
+				link: `/order/${order._id}`,
+			});
+			await adminNotification.save();
+		}
+
+		const customerNotification = new Notification({
+			recipient: order.user._id,
+			type: "refund_request",
+			message: `Your refund request for order #${order._id.toString().slice(-6)} has been submitted.`,
+			link: `/my-orders`,
+		});
+		await customerNotification.save();
 
 		res.json(order);
 	} catch (error) {
@@ -466,6 +551,27 @@ export const updateRefundStatus = async (req, res) => {
 			"refundStatusUpdate",
 			emailData
 		);
+
+		// Create in-app notifications
+		const admin = await User.findOne({ role: "admin" });
+		if (admin) {
+			const adminNotification = new Notification({
+				recipient: admin._id,
+				sender: order.user._id,
+				type: "refund_status_update",
+				message: `The refund request for order #${order._id.toString().slice(-6)} has been ${status}.`,
+				link: `/order/${order._id}`,
+			});
+			await adminNotification.save();
+		}
+
+		const customerNotification = new Notification({
+			recipient: order.user._id,
+			type: "refund_status_update",
+			message: `Your refund request for order #${order._id.toString().slice(-6)} has been ${status}.`,
+			link: `/my-orders`,
+		});
+		await customerNotification.save();
 
 		res.json(order);
 	} catch (error) {

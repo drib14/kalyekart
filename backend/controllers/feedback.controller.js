@@ -1,4 +1,6 @@
 import { sendEmail } from "../lib/email.js";
+import Notification from "../models/notification.model.js";
+import User from "../models/user.model.js";
 
 export const submitFeedback = async (req, res) => {
 	const { rating, feedback, user } = req.body;
@@ -33,6 +35,29 @@ export const submitFeedback = async (req, res) => {
 					CTA_LINK: "https://kalyekart.app",
 				}
 			);
+		}
+
+		// Create in-app notifications
+		const admin = await User.findOne({ role: "admin" });
+		if (admin) {
+			const adminNotification = new Notification({
+				recipient: admin._id,
+				sender: user?._id,
+				type: "new_feedback",
+				message: `${user?.name || "An anonymous user"} has submitted new feedback.`,
+				link: `/secret-dashboard`,
+			});
+			await adminNotification.save();
+		}
+
+		if (user && user._id) {
+			const customerNotification = new Notification({
+				recipient: user._id,
+				type: "new_feedback",
+				message: "Thank you for your feedback! We appreciate you helping us improve.",
+				link: `/`,
+			});
+			await customerNotification.save();
 		}
 
 		res.status(200).json({ message: "Feedback submitted successfully" });

@@ -26,6 +26,8 @@ import AdminProfilePage from "./pages/AdminProfilePage";
 import CustomerProfilePage from "./pages/CustomerProfilePage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import BottomNav from "./components/BottomNav";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -53,7 +55,7 @@ function App() {
 				</div>
 			</div>
 
-			<div className='relative z-50 pt-20'>
+			<div className='relative z-10 pt-20 pb-20 sm:pb-0'>
 				<Navbar />
 				<Routes>
 					<Route path='/' element={<HomePage />} />
@@ -76,6 +78,10 @@ function App() {
 					<Route path='/checkout' element={user ? <CheckoutPage /> : <Navigate to='/login' />} />
 					<Route path='/my-orders' element={user ? <MyOrdersPage /> : <Navigate to='/login' />} />
 					<Route
+						path='/notifications'
+						element={user ? <NotificationsPage /> : <Navigate to='/login' />}
+					/>
+					<Route
 						path='/profile/admin'
 						element={user?.role === "admin" ? <AdminProfilePage /> : <Navigate to='/login' />}
 					/>
@@ -88,6 +94,7 @@ function App() {
 				</Routes>
 			</div>
 			<Toaster theme='dark' />
+			{user && <BottomNav />}
 			<FloatingFeedbackButton onClick={() => setIsFeedbackModalOpen(true)} />
 			<FeedbackModal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} />
 		</div>

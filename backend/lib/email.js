@@ -1,5 +1,5 @@
 import sgMail from "@sendgrid/mail";
-import { TransactionalEmailsApi, SendSmtpEmail } from "@getbrevo/brevo";
+import SibApiV3Sdk from 'sib-api-v3-sdk';
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -14,8 +14,10 @@ if (process.env.SENDGRID_API_KEY) {
 }
 
 // Configure Brevo
-const brevoApi = new TransactionalEmailsApi();
-brevoApi.authentications.apiKey.apiKey = process.env.BREVO_KEY;
+const defaultClient = SibApiV3Sdk.ApiClient.instance;
+const apiKey = defaultClient.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_KEY;
+const brevoApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
 
 /**
@@ -74,17 +76,18 @@ const _sendEmail = async (to, subject, templateName, data) => {
 	// If SendGrid was not used or failed, try Brevo
 	if (!emailSent) {
 		try {
-			const sendSmtpEmail = new SendSmtpEmail();
-			sendSmtpEmail.sender = { email: process.env.EMAIL_USER, name: "KalyeKart" };
-			sendSmtpEmail.to = [{ email: to }];
-			sendSmtpEmail.subject = subject;
-			sendSmtpEmail.htmlContent = htmlContent;
+			const sendSmtpEmail = {
+				sender: { email: process.env.EMAIL_USER, name: "KalyeKart" },
+				to: [{ email: to }],
+				subject: subject,
+				htmlContent: htmlContent,
+			};
 
 			await brevoApi.sendTransacEmail(sendSmtpEmail);
 			console.log(`Email sent to ${to} via Brevo.`);
 			emailSent = true;
 		} catch (error) {
-			console.error(`Error sending email to ${to} via Brevo:`, error);
+			console.error(`Error sending email to ${to} via Brevo:`, error.response ? error.response.data : error.message);
 			// The email was not sent, so we will fall through to the final error.
 		}
 	}

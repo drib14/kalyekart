@@ -1,6 +1,9 @@
 import Coupon from "../models/coupon.model.js";
 import Order from "../models/order.model.js";
+import User from "../models/user.model.js";
+import Notification from "../models/notification.model.js";
 import { stripe } from "../lib/stripe.js";
+import { sendEmail } from "../lib/email.js";
 
 export const createCheckoutSession = async (req, res) => {
 	try {
@@ -13,7 +16,7 @@ export const createCheckoutSession = async (req, res) => {
 		let totalAmount = 0;
 
 		const lineItems = products.map((product) => {
-			const amount = Math.round(product.price * 100); // stripe wants u to send in the format of cents
+			const amount = Math.round(product.price * 100);
 			totalAmount += amount * product.quantity;
 
 			return {
@@ -41,8 +44,8 @@ export const createCheckoutSession = async (req, res) => {
 			payment_method_types: ["card"],
 			line_items: lineItems,
 			mode: "payment",
-			success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-			cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
+			success_url: `https://kalyekart.app/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+			cancel_url: `https://kalyekart.app/purchase-cancel`,
 			discounts: coupon
 				? [
 						{
@@ -55,9 +58,10 @@ export const createCheckoutSession = async (req, res) => {
 				couponCode: couponCode || "",
 				products: JSON.stringify(
 					products.map((p) => ({
-						id: p._id,
+						product: p._id,
 						quantity: p.quantity,
 						price: p.price,
+						name: p.name,
 					}))
 				),
 				shippingAddress: JSON.stringify(shippingAddress),
@@ -94,7 +98,11 @@ export const checkoutSuccess = async (req, res) => {
 				);
 			}
 
-			// create a new Order
+			const user = await User.findById(session.metadata.userId);
+			if (!user) {
+				return res.status(404).json({ message: "User not found" });
+			}
+
 			const products = JSON.parse(session.metadata.products);
 			const shippingAddress = JSON.parse(session.metadata.shippingAddress);
 			const distance = parseFloat(session.metadata.distance);
@@ -102,18 +110,85 @@ export const checkoutSuccess = async (req, res) => {
 			const newOrder = new Order({
 				user: session.metadata.userId,
 				products: products.map((product) => ({
-					product: product.id,
+					product: product.product,
 					quantity: product.quantity,
 					price: product.price,
+					name: product.name,
 				})),
-				totalAmount: session.amount_total / 100, // convert from cents to dollars,
+				totalAmount: session.amount_total / 100,
 				stripeSessionId: sessionId,
 				shippingAddress,
 				distance,
 				deliveryFee,
+				paymentMethod: "card",
+				paymentStatus: "paid",
 			});
 
 			await newOrder.save();
+
+			const orderItemsHtml = products
+				.map(
+					(item) => `
+				<tr>
+					<td>${item.name}</td>
+					<td>${item.quantity}</td>
+					<td>₱${item.price.toFixed(2)}</td>
+				</tr>
+			`
+				)
+				.join("");
+
+			// Send confirmation email to customer
+			await sendEmail(
+				user.email,
+				`Your KalyeKart Order #${newOrder._id.toString().slice(-6)} is Confirmed!`,
+				"orderConfirmation",
+				{
+					NAME: user.name,
+					ORDER_ID: newOrder._id.toString(),
+					ORDER_ITEMS: orderItemsHtml,
+					SUBTOTAL: (newOrder.totalAmount - newOrder.deliveryFee).toFixed(2),
+					DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
+					TOTAL: newOrder.totalAmount.toFixed(2),
+					CTA_LINK: `https://kalyekart.app/my-orders/${newOrder._id}`,
+				}
+			);
+
+			// Send notification email to admin
+			await sendEmail(
+				process.env.EMAIL_USER,
+				`New Order Received: #${newOrder._id.toString().slice(-6)}`,
+				"adminNewOrderNotification",
+				{
+					ORDER_ID: newOrder._id.toString(),
+					CUSTOMER_NAME: user.name,
+					CUSTOMER_EMAIL: user.email,
+					ORDER_ITEMS: orderItemsHtml,
+					TOTAL: newOrder.totalAmount.toFixed(2),
+					CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+				}
+			);
+
+			// Create in-app notifications
+			const admin = await User.findOne({ role: "admin" });
+			if (admin) {
+				const adminNotification = new Notification({
+					recipient: admin._id,
+					sender: user._id,
+					type: "new_order",
+					message: `${user.name} has placed a new order (#${newOrder._id.toString().slice(-6)}).`,
+					link: `/order/${newOrder._id}`,
+				});
+				await adminNotification.save();
+			}
+
+			const customerNotification = new Notification({
+				recipient: user._id,
+				type: "new_order",
+				message: `Your order #${newOrder._id.toString().slice(-6)} has been placed successfully!`,
+				link: `/my-orders`,
+			});
+			await customerNotification.save();
 
 			res.status(200).json({
 				success: true,

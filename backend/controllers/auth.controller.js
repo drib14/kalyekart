@@ -1,5 +1,6 @@
 import { redis } from "../lib/redis.js";
 import User from "../models/user.model.js";
+import Notification from "../models/notification.model.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { sendEmail } from "../lib/email.js";
@@ -56,8 +57,17 @@ export const signup = async (req, res) => {
 
 		await sendEmail(user.email, "Welcome to KalyeKart!", "welcome", {
 			NAME: user.name,
-			CTA_LINK: `${process.env.CLIENT_URL}/`,
+			CTA_LINK: "https://kalyekart.app",
 		});
+
+		// Create a welcome notification for the new user
+		const customerNotification = new Notification({
+			recipient: user._id,
+			type: "welcome",
+			message: "Welcome to KalyeKart! We're thrilled to have you.",
+			link: "/",
+		});
+		await customerNotification.save();
 
 		const userToReturn = prepareUserResponse(user);
 		res.status(201).json(userToReturn);

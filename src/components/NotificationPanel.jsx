@@ -1,0 +1,60 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "../lib/axios";
+import { Link } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+import { useNotifications } from "../lib/useNotifications";
+
+const NotificationPanel = ({ onClose }) => {
+	const { notifications } = useNotifications();
+	const queryClient = useQueryClient();
+
+	const markAsReadMutation = useMutation({
+		mutationFn: (notificationId) => axios.put(`/api/notifications/${notificationId}/read`),
+		onSuccess: () => {
+			queryClient.invalidateQueries(["notifications"]);
+		},
+	});
+
+	const handleNotificationClick = (notification) => {
+		if (!notification.isRead) {
+			markAsReadMutation.mutate(notification._id);
+		}
+		onClose();
+	};
+
+	return (
+		<div className='absolute top-16 right-0 w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50'>
+			<div className='p-4 border-b border-gray-700'>
+				<h3 className='font-bold text-white'>Notifications</h3>
+			</div>
+			<div className='max-h-96 overflow-y-auto'>
+				{notifications && notifications.length > 0 ? (
+					notifications.map((notification) => (
+						<Link
+							key={notification._id}
+							to={notification.link}
+							onClick={() => handleNotificationClick(notification)}
+							className={`block p-4 border-b border-gray-700 hover:bg-gray-700 ${
+								notification.isRead ? "opacity-60" : ""
+							}`}
+						>
+							<p className='text-sm text-white'>{notification.message}</p>
+							<p className='text-xs text-gray-400 mt-1'>
+								{formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+							</p>
+						</Link>
+					))
+				) : (
+					<div className='p-4 text-center text-gray-400'>You have no new notifications.</div>
+				)}
+			</div>
+			<div className='p-2 text-center border-t border-gray-700'>
+				<Link to='/notifications' onClick={onClose} className='text-sm text-emerald-400 hover:underline'>
+					View all notifications
+				</Link>
+			</div>
+		</div>
+	);
+};
+
+export default NotificationPanel;
