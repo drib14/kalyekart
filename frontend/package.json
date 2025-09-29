@@ -1,0 +1,12 @@
+{
+  "name": "frontend-delegator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "This package is a workaround to delegate build commands to the root directory for Render's build system.",
+  "scripts": {
+    "postinstall": "cd .. && npm install",
+    "build": "cd .. && npm run build"
+  },
+  "author": "Jules",
+  "license": "ISC"
+}
