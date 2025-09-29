@@ -157,7 +157,7 @@ export const checkoutSuccess = async (req, res) => {
 
 			if (admin) {
 				await sendEmail(
-					process.env.ADMIN_EMAIL,
+					process.env.EMAIL_USER,
 					`New Order Received: #${newOrder._id.toString().slice(-6)}`,
 					"adminNewOrderNotification",
 					{

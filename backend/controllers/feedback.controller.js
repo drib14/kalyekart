@@ -15,7 +15,7 @@ export const submitFeedback = async (req, res) => {
 		// 1. Send the detailed feedback to the admin
 		if (admin) {
 			await sendEmail(
-				process.env.ADMIN_EMAIL,
+				process.env.EMAIL_USER,
 				`New Feedback Submission (Rating: ${rating}/5)`,
 				"adminFeedbackNotification",
 				{

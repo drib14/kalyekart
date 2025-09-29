@@ -89,7 +89,7 @@ export const createCodOrder = async (req, res) => {
 
 		if (admin) {
 			await sendEmail(
-				process.env.ADMIN_EMAIL,
+				process.env.EMAIL_USER,
 				`New Order Received: #${newOrder._id.toString().slice(-6)}`,
 				"adminNewOrderNotification",
 				{
@@ -165,7 +165,7 @@ export const cancelOrder = async (req, res) => {
 
 		if (admin) {
 			await sendEmail(
-				process.env.ADMIN_EMAIL,
+				process.env.EMAIL_USER,
 				`Order #${order._id.toString().slice(-6)} has been Cancelled`,
 				"adminOrderCancelled",
 				{
@@ -405,7 +405,7 @@ export const requestRefund = async (req, res) => {
 
 		if (admin) {
 			await sendEmail(
-				process.env.ADMIN_EMAIL,
+				process.env.EMAIL_USER,
 				`Refund Requested for Order #${order._id.toString().slice(-6)}`,
 				"adminRefundRequested",
 				{
