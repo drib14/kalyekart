@@ -7,7 +7,7 @@ const FloatingFeedbackButton = ({ onClick }) => {
 
 	return (
 		<motion.div
-			className='fixed bottom-5 right-5 z-50 flex items-center'
+			className='fixed bottom-20 right-5 sm:bottom-5 z-50 flex items-center'
 			onHoverStart={() => setIsHovered(true)}
 			onHoverEnd={() => setIsHovered(false)}
 			initial={{ scale: 0, opacity: 0 }}

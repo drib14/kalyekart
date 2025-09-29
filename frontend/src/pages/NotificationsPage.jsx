@@ -38,6 +38,9 @@ const NotificationsPage = () => {
 	if (isLoading) return <LoadingSpinner />;
 	if (isError) return <div>Error: {error.message}</div>;
 
+	// Ensure notifications is always an array to prevent crashes
+	const safeNotifications = Array.isArray(notifications) ? notifications : [];
+
 	return (
 		<main className='container my-10'>
 			<div className='max-w-4xl mx-auto'>
@@ -46,14 +49,14 @@ const NotificationsPage = () => {
 					<button
 						onClick={() => markAllAsReadMutation.mutate()}
 						className='text-sm text-emerald-400 hover:underline'
-						disabled={notifications.every((n) => n.isRead)}
+						disabled={safeNotifications.every((n) => n.isRead)}
 					>
 						Mark all as read
 					</button>
 				</div>
 				<div className='space-y-4'>
-					{notifications && notifications.length > 0 ? (
-						notifications.map((notification) => (
+					{safeNotifications.length > 0 ? (
+						safeNotifications.map((notification) => (
 							<Link
 								key={notification._id}
 								to={notification.link}
