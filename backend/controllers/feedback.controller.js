@@ -30,7 +30,7 @@ export const submitFeedback = async (req, res) => {
 				{
 					NAME: user.name,
 					FEEDBACK_MESSAGE: feedback,
-					CTA_LINK: `${process.env.CLIENT_URL}/`,
+					CTA_LINK: `https://KalyeKart.app/`,
 				}
 			);
 		}

@@ -82,7 +82,22 @@ export const createCodOrder = async (req, res) => {
 				SUBTOTAL: newOrder.subtotal.toFixed(2),
 				DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
 				TOTAL: newOrder.totalAmount.toFixed(2),
-				CTA_LINK: `${process.env.CLIENT_URL}/my-orders/${newOrder._id}`,
+				CTA_LINK: `https://KalyeKart.app/my-orders/${newOrder._id}`,
+			}
+		);
+
+		// Also send a notification to the admin
+		await sendEmail(
+			process.env.EMAIL_USER,
+			`New Order Received: #${newOrder._id.toString().slice(-6)}`,
+			"adminNewOrderNotification",
+			{
+				ORDER_ID: newOrder._id.toString(),
+				CUSTOMER_NAME: user.name,
+				CUSTOMER_EMAIL: user.email,
+				ORDER_ITEMS: orderItemsHtml,
+				TOTAL: newOrder.totalAmount.toFixed(2),
+				CTA_LINK: `https://KalyeKart.app/secret-dashboard`, // Link to the admin dashboard
 			}
 		);
 
@@ -201,8 +216,8 @@ export const createStripeCheckoutSession = async (req, res) => {
 				payment_method_types: ["card"],
 				line_items,
 				mode: "payment",
-				success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-				cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
+				success_url: `https://KalyeKart.app/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+				cancel_url: `https://KalyeKart.app/purchase-cancel`,
 				metadata: {
 					userId: req.user._id.toString(),
 					products: JSON.stringify(
@@ -274,7 +289,7 @@ export const updateOrderStatus = async (req, res) => {
 					NAME: order.user.name,
 					ORDER_ID: order._id.toString(),
 					NEW_STATUS: status,
-					CTA_LINK: `${process.env.CLIENT_URL}/my-orders/${order._id}`,
+					CTA_LINK: `https://KalyeKart.app/my-orders/${order._id}`,
 				}
 			);
 		}
