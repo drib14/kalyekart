@@ -96,6 +96,12 @@ export const checkoutSuccess = async (req, res) => {
 				);
 			}
 
+			const user = await User.findById(session.metadata.userId);
+			if (!user) {
+				// This should ideally not happen if the session was created correctly
+				return res.status(404).json({ message: "User not found" });
+			}
+
 			// create a new Order
 			const products = JSON.parse(session.metadata.products);
 			const shippingAddress = JSON.parse(session.metadata.shippingAddress);
@@ -104,18 +110,64 @@ export const checkoutSuccess = async (req, res) => {
 			const newOrder = new Order({
 				user: session.metadata.userId,
 				products: products.map((product) => ({
-					product: product.id,
+					product: product.product, // Corrected from product.id
 					quantity: product.quantity,
 					price: product.price,
+					name: product.name, // Added product name
 				})),
 				totalAmount: session.amount_total / 100, // convert from cents to dollars,
 				stripeSessionId: sessionId,
 				shippingAddress,
 				distance,
 				deliveryFee,
+				paymentMethod: "card",
+				paymentStatus: "paid",
 			});
 
 			await newOrder.save();
+
+			const orderItemsHtml = products
+				.map(
+					(item) => `
+				<tr>
+					<td>${item.name}</td>
+					<td>${item.quantity}</td>
+					<td>₱${item.price.toFixed(2)}</td>
+				</tr>
+			`
+				)
+				.join("");
+
+			// Send confirmation email to customer
+			await sendEmail(
+				user.email,
+				`Your KalyeKart Order #${newOrder._id.toString().slice(-6)} is Confirmed!`,
+				"orderConfirmation",
+				{
+					NAME: user.name,
+					ORDER_ID: newOrder._id.toString(),
+					ORDER_ITEMS: orderItemsHtml,
+					SUBTOTAL: (newOrder.totalAmount - newOrder.deliveryFee).toFixed(2),
+					DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
+					TOTAL: newOrder.totalAmount.toFixed(2),
+					CTA_LINK: `https://kalyekart.app/my-orders/${newOrder._id}`,
+				}
+			);
+
+			// Send notification email to admin
+			await sendEmail(
+				process.env.EMAIL_USER,
+				`New Order Received: #${newOrder._id.toString().slice(-6)}`,
+				"adminNewOrderNotification",
+				{
+					ORDER_ID: newOrder._id.toString(),
+					CUSTOMER_NAME: user.name,
+					CUSTOMER_EMAIL: user.email,
+					ORDER_ITEMS: orderItemsHtml,
+					TOTAL: newOrder.totalAmount.toFixed(2),
+					CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+				}
+			);
 
 			res.status(200).json({
 				success: true,

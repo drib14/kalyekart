@@ -388,15 +388,61 @@ export const getRefunds = async (req, res) => {
 export const updateRefundStatus = async (req, res) => {
 	try {
 		const { refundId } = req.params;
-		const { status } = req.body;
+		const { status, rejectionReason } = req.body;
 
-		const order = await Order.findOne({ "refundRequest._id": refundId });
+		const order = await Order.findOne({ "refundRequest._id": refundId }).populate("user", "name email");
 		if (!order) {
 			return res.status(404).json({ message: "Refund request not found" });
 		}
 
+		if (order.refundRequest.status === status) {
+			return res.status(400).json({ message: `Refund is already ${status}.` });
+		}
+
 		order.refundRequest.status = status;
+		if (status === "rejected") {
+			order.refundRequest.rejectionReason = rejectionReason;
+		}
+
+		if (status === "approved" && order.paymentMethod === "card" && order.stripeSessionId) {
+			try {
+				const session = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
+				if (!session.payment_intent) {
+					throw new Error("Could not find Payment Intent for this order.");
+				}
+				await stripe.refunds.create({ payment_intent: session.payment_intent });
+				order.paymentStatus = "refunded";
+			} catch (stripeError) {
+				console.error("Stripe refund failed:", stripeError);
+				return res.status(500).json({ message: "Stripe refund failed. Please process manually.", error: stripeError.message });
+			}
+		} else if (status === "approved" && order.paymentMethod === "cod") {
+			order.paymentStatus = "refunded";
+		}
+
 		await order.save();
+
+		const emailData = {
+			NAME: order.user.name,
+			ORDER_ID: order._id.toString(),
+			STATUS: status.charAt(0).toUpperCase() + status.slice(1),
+			STATUS_CLASS: status,
+			CTA_LINK: `https://kalyekart.app/my-orders/${order._id}`,
+			REJECTION_REASON_STYLE: status === "rejected" ? "" : "display: none;",
+			REJECTION_REASON: rejectionReason || "",
+			STATUS_MESSAGE:
+				status === "approved"
+					? "Your refund has been processed. If you paid by card, the amount should reflect in your account within 5-10 business days."
+					: "We're sorry, but we couldn't approve your refund request at this time. Please contact support if you believe this is a mistake.",
+		};
+
+		await sendEmail(
+			order.user.email,
+			`Update on your Refund Request for Order #${order._id.toString().slice(-6)}`,
+			"refundStatusUpdate",
+			emailData
+		);
+
 		res.json(order);
 	} catch (error) {
 		console.log("Error in updateRefundStatus controller", error.message);
