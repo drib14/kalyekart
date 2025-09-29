@@ -60,8 +60,9 @@ export const signup = async (req, res) => {
 		});
 
 		// Also notify the admin
+		console.log(`[ADMIN EMAIL LOG] Attempting to send new user notification to: 'contact@kalyekart.app' (hardcoded for debugging)`);
 		await sendEmail(
-			process.env.EMAIL_USER,
+			'contact@kalyekart.app', // Temporarily hardcoded for debugging
 			`New User Registration: ${user.name}`,
 			"adminNewUserNotification",
 			{

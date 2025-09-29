@@ -87,6 +87,7 @@ export const createCodOrder = async (req, res) => {
 		);
 
 		// Also send a notification to the admin
+		console.log(`[ADMIN EMAIL LOG] Attempting to send new COD order notification to: ${process.env.EMAIL_USER}`);
 		await sendEmail(
 			process.env.EMAIL_USER,
 			`New Order Received: #${newOrder._id.toString().slice(-6)}`,
@@ -144,6 +145,7 @@ export const cancelOrder = async (req, res) => {
 		await order.save();
 
 		// Notify admin about the cancellation
+		console.log(`[ADMIN EMAIL LOG] Attempting to send order cancellation notification to: ${process.env.EMAIL_USER}`);
 		await sendEmail(
 			process.env.EMAIL_USER,
 			`Order #${order._id.toString().slice(-6)} has been Cancelled`,
@@ -322,6 +324,7 @@ export const updateOrderStatus = async (req, res) => {
 		}
 
 		// Also notify the admin
+		console.log(`[ADMIN EMAIL LOG] Attempting to send order status update notification to: ${process.env.EMAIL_USER}`);
 		await sendEmail(
 			process.env.EMAIL_USER,
 			`Order #${order._id.toString().slice(-6)} Status Updated to ${status}`,
@@ -368,6 +371,7 @@ export const requestRefund = async (req, res) => {
 		await order.save();
 
 		// Notify admin about the refund request
+		console.log(`[ADMIN EMAIL LOG] Attempting to send refund request notification to: ${process.env.EMAIL_USER}`);
 		await sendEmail(
 			process.env.EMAIL_USER,
 			`Refund Requested for Order #${order._id.toString().slice(-6)}`,
