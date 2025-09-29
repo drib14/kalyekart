@@ -155,9 +155,9 @@ export const checkoutSuccess = async (req, res) => {
 			);
 
 			// Send notification email to admin
-			console.log(`[ADMIN EMAIL LOG] Attempting to send new Stripe order notification to: ${process.env.EMAIL_USER}`);
+			console.log(`[ADMIN EMAIL LOG] Attempting to send new Stripe order notification to: ${process.env.ADMIN_EMAIL}`);
 			await sendEmail(
-				process.env.EMAIL_USER,
+				process.env.ADMIN_EMAIL,
 				`New Order Received: #${newOrder._id.toString().slice(-6)}`,
 				"adminNewOrderNotification",
 				{

@@ -89,7 +89,7 @@ export const createCodOrder = async (req, res) => {
 
 		// Also send a notification to the admin
 		await sendEmail(
-			process.env.EMAIL_USER,
+			process.env.ADMIN_EMAIL,
 			`New Order Received: #${newOrder._id.toString().slice(-6)}`,
 			"adminNewOrderNotification",
 			{
@@ -146,7 +146,7 @@ export const cancelOrder = async (req, res) => {
 
 		// Notify admin about the cancellation
 		await sendEmail(
-			process.env.EMAIL_USER,
+			process.env.ADMIN_EMAIL,
 			`Order #${order._id.toString().slice(-6)} has been Cancelled`,
 			"adminOrderCancelled",
 			{
@@ -324,7 +324,7 @@ export const updateOrderStatus = async (req, res) => {
 
 		// Also notify the admin
 		await sendEmail(
-			process.env.EMAIL_USER,
+			process.env.ADMIN_EMAIL,
 			`Order #${order._id.toString().slice(-6)} Status Updated to ${status}`,
 			"adminOrderStatusUpdate",
 			{
@@ -370,7 +370,7 @@ export const requestRefund = async (req, res) => {
 
 		// Notify admin about the refund request
 		await sendEmail(
-			process.env.EMAIL_USER,
+			process.env.ADMIN_EMAIL,
 			`Refund Requested for Order #${order._id.toString().slice(-6)}`,
 			"adminRefundRequested",
 			{

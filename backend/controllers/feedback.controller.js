@@ -10,7 +10,7 @@ export const submitFeedback = async (req, res) => {
 	try {
 		// 1. Send the detailed feedback to the admin
 		await sendEmail(
-			process.env.EMAIL_USER,
+			process.env.ADMIN_EMAIL,
 			`New Feedback Submission (Rating: ${rating}/5)`,
 			"adminFeedbackNotification",
 			{
