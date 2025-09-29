@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "../lib/axios";
 import { Link } from "react-router-dom";
@@ -5,15 +6,31 @@ import { formatDistanceToNow } from "date-fns";
 import { useNotifications } from "../lib/useNotifications";
 
 const NotificationPanel = ({ onClose }) => {
-	const { notifications } = useNotifications();
+	const { notifications, unreadCount } = useNotifications();
 	const queryClient = useQueryClient();
 
 	const markAsReadMutation = useMutation({
 		mutationFn: (notificationId) => axios.put(`/api/notifications/${notificationId}/read`),
 		onSuccess: () => {
-			queryClient.invalidateQueries(["notifications"]);
+			queryClient.invalidateQueries({ queryKey: ["notifications"] });
 		},
 	});
+
+	const markAllAsReadMutation = useMutation({
+		mutationFn: () => axios.put("/api/notifications/read-all"),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["notifications"] });
+		},
+	});
+
+	useEffect(() => {
+		// This cleanup function runs when the component unmounts (i.e., the panel closes)
+		return () => {
+			if (unreadCount > 0) {
+				markAllAsReadMutation.mutate();
+			}
+		};
+	}, [unreadCount, markAllAsReadMutation]);
 
 	const handleNotificationClick = (notification) => {
 		if (!notification.isRead) {
