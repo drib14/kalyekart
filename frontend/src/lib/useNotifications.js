@@ -15,7 +15,13 @@ export const useNotifications = () => {
 		refetchInterval: 60000,
 	});
 
-	const unreadCount = notifications?.filter((n) => !n.isRead).length || 0;
+	// Safely calculate unread count, ensuring notifications is an array
+	const unreadCount = Array.isArray(notifications)
+		? notifications.filter((n) => !n.isRead).length
+		: 0;
 
-	return { notifications: notifications || [], unreadCount, ...queryInfo };
+	// Ensure the returned notifications is always an array
+	const safeNotifications = Array.isArray(notifications) ? notifications : [];
+
+	return { notifications: safeNotifications, unreadCount, ...queryInfo };
 };

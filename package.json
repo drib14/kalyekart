@@ -9,7 +9,6 @@
 		"heroku-postbuild": "npm install --prefix frontend && npm run build --prefix frontend"
 	},
 	"dependencies": {
-		"@sendgrid/mail": "^8.1.6",
 		"bcryptjs": "^2.4.3",
 		"bullmq": "^5.59.0",
 		"cloudinary": "^2.7.0",
