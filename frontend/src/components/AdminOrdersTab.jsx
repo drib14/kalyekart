@@ -276,7 +276,7 @@ const AdminOrdersTab = () => {
 									</div>
 								)}
 
-								<div className='mt-4 flex justify-between items-center'>
+								<div className='mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4'>
 									<div>
 										<button
 											onClick={() =>
@@ -292,10 +292,10 @@ const AdminOrdersTab = () => {
 											/>
 										</button>
 									</div>
-									<div className='flex items-center gap-4'>
-										<div>
+									<div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto'>
+										<div className='flex items-center justify-between'>
 											<label htmlFor={`payment-status-${order._id}`} className='text-sm text-gray-400 mr-2'>
-												Payment Status:
+												Payment:
 											</label>
 											<select
 												id={`payment-status-${order._id}`}
@@ -303,7 +303,7 @@ const AdminOrdersTab = () => {
 												onChange={(e) =>
 													updatePaymentStatus({ orderId: order._id, paymentStatus: e.target.value })
 												}
-												className='bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
+												className='bg-gray-700 border border-gray-600 rounded-lg shadow-sm p-1 text-sm'
 												disabled={order.paymentMethod === "card"} // Disable for card payments
 											>
 												<option value='pending'>Pending</option>
@@ -311,7 +311,7 @@ const AdminOrdersTab = () => {
 												<option value='failed'>Failed</option>
 											</select>
 										</div>
-										<div>
+										<div className='flex items-center justify-between'>
 											<label htmlFor={`status-${order._id}`} className='text-sm text-gray-400 mr-2'>
 												Order Status:
 											</label>
@@ -321,7 +321,7 @@ const AdminOrdersTab = () => {
 												onChange={(e) =>
 													updateOrderStatus({ orderId: order._id, status: e.target.value })
 												}
-												className='bg-gray-700 border border-gray-600 rounded-lg shadow-sm'
+												className='bg-gray-700 border border-gray-600 rounded-lg shadow-sm p-1 text-sm'
 											>
 												<option value='Pending'>Pending</option>
 												<option value='Preparing'>Preparing</option>
