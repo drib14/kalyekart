@@ -8,10 +8,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Environment variable validation
-const { BREVO_KEY, SENDER_EMAIL, SENDER_NAME } = process.env;
+const { BREVO_KEY, EMAIL_USER, SENDER_NAME: CUSTOM_SENDER_NAME } = process.env;
+const SENDER_EMAIL = EMAIL_USER;
+const SENDER_NAME = CUSTOM_SENDER_NAME || "KalyeKart";
 
-if (!SENDER_EMAIL || !SENDER_NAME) {
-	console.error("SENDER_EMAIL and SENDER_NAME environment variables are required.");
+if (!SENDER_EMAIL) {
+	console.error("EMAIL_USER environment variable is required.");
 }
 
 // Configure Brevo
@@ -87,8 +89,8 @@ const _sendEmail = async (to, subject, templateName, data) => {
  * @param {object} data - The data to populate the template with.
  */
 export const sendEmail = async (to, subject, templateName, data) => {
-	if (!SENDER_EMAIL || !SENDER_NAME) {
-		console.error("Cannot queue email: SENDER_EMAIL or SENDER_NAME is not configured.");
+	if (!SENDER_EMAIL) {
+		console.error("Cannot queue email: EMAIL_USER is not configured.");
 		return;
 	}
 	console.log(`[EMAIL_QUEUE] Adding email job for ${to} with subject: ${subject}`);
