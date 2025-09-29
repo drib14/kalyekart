@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Status Updated</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            background-color: #121212;
+            color: #E0E0E0;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #1E1E1E;
+            border: 1px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .header {
+            background-color: #2196F3; /* Blue for updates */
+            color: #FFFFFF;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .content h2 {
+            color: #2196F3;
+        }
+        .content p {
+            line-height: 1.6;
+            font-size: 16px;
+        }
+        .status-box {
+            background-color: #282828;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .status-box .status-text {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1DB954;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #777;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #1DB954;
+            color: #FFFFFF;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Status Update</h1>
+        </div>
+        <div class="content">
+            <p>The status for order <strong>#{{ORDER_ID}}</strong> has been updated.</p>
+
+            <div class="status-box">
+                New Status:
+                <p class="status-text">{{NEW_STATUS}}</p>
+            </div>
+
+            <p>You can view the updated order details in the admin dashboard.</p>
+            <a href="{{CTA_LINK}}" class="cta-button">View Order</a>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 KalyeKart. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
