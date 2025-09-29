@@ -129,7 +129,7 @@ export const cancelOrder = async (req, res) => {
 		const { orderId } = req.params;
 		const { cancellationReason } = req.body;
 
-		const order = await Order.findById(orderId);
+		const order = await Order.findById(orderId).populate("user", "name email");
 		if (!order) {
 			return res.status(404).json({ message: "Order not found" });
 		}
@@ -139,8 +139,23 @@ export const cancelOrder = async (req, res) => {
 		}
 
 		order.status = "Cancelled";
-		order.cancellationReason = cancellationReason || "Order cancelled by user.";
+		const reason = cancellationReason || "Order cancelled by user.";
+		order.cancellationReason = reason;
 		await order.save();
+
+		// Notify admin about the cancellation
+		await sendEmail(
+			process.env.EMAIL_USER,
+			`Order #${order._id.toString().slice(-6)} has been Cancelled`,
+			"adminOrderCancelled",
+			{
+				ORDER_ID: order._id.toString(),
+				CUSTOMER_NAME: order.user.name,
+				CANCELLATION_REASON: reason,
+				CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+			}
+		);
+
 		res.json({ message: "Order cancelled successfully", order });
 	} catch (error) {
 		console.log("Error in cancelOrder controller", error.message);
@@ -289,10 +304,22 @@ export const updateOrderStatus = async (req, res) => {
 					NAME: order.user.name,
 					ORDER_ID: order._id.toString(),
 					NEW_STATUS: status,
-					CTA_LINK: `https://KalyeKart.app/my-orders/${order._id}`,
+					CTA_LINK: `https://kalyekart.app/my-orders/${order._id}`,
 				}
 			);
 		}
+
+		// Also notify the admin
+		await sendEmail(
+			process.env.EMAIL_USER,
+			`Order #${order._id.toString().slice(-6)} Status Updated to ${status}`,
+			"adminOrderStatusUpdate",
+			{
+				ORDER_ID: order._id.toString(),
+				NEW_STATUS: status,
+				CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+			}
+		);
 
 		res.json(order);
 	} catch (error) {
@@ -310,7 +337,7 @@ export const requestRefund = async (req, res) => {
 			return res.status(400).json({ message: "Proof of image is required." });
 		}
 
-		const order = await Order.findById(orderId);
+		const order = await Order.findById(orderId).populate("user", "name email");
 		if (!order) {
 			return res.status(404).json({ message: "Order not found" });
 		}
@@ -327,6 +354,20 @@ export const requestRefund = async (req, res) => {
 			status: "pending",
 		};
 		await order.save();
+
+		// Notify admin about the refund request
+		await sendEmail(
+			process.env.EMAIL_USER,
+			`Refund Requested for Order #${order._id.toString().slice(-6)}`,
+			"adminRefundRequested",
+			{
+				ORDER_ID: order._id.toString(),
+				CUSTOMER_NAME: order.user.name,
+				REFUND_REASON: reason,
+				CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+			}
+		);
+
 		res.json(order);
 	} catch (error) {
 		console.log("Error in requestRefund controller", error.message);
