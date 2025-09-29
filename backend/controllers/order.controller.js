@@ -156,6 +156,18 @@ export const cancelOrder = async (req, res) => {
 			}
 		);
 
+		// Also notify the customer
+		await sendEmail(
+			order.user.email,
+			`Your KalyeKart Order #${order._id.toString().slice(-6)} Has Been Cancelled`,
+			"customerOrderCancelled",
+			{
+				NAME: order.user.name,
+				ORDER_ID: order._id.toString(),
+				CTA_LINK: `https://kalyekart.app/`,
+			}
+		);
+
 		res.json({ message: "Order cancelled successfully", order });
 	} catch (error) {
 		console.log("Error in cancelOrder controller", error.message);
@@ -321,6 +333,18 @@ export const updateOrderStatus = async (req, res) => {
 			}
 		);
 
+		// Also notify the customer
+		await sendEmail(
+			order.user.email,
+			`We've Received Your Refund Request for Order #${order._id.toString().slice(-6)}`,
+			"customerRefundRequested",
+			{
+				NAME: order.user.name,
+				ORDER_ID: order._id.toString(),
+				CTA_LINK: `https://kalyekart.app/my-orders/${order._id}`,
+			}
+		);
+
 		res.json(order);
 	} catch (error) {
 		console.log("Error in updateOrderStatus controller", error.message);
@@ -387,10 +411,10 @@ export const getRefunds = async (req, res) => {
 
 export const updateRefundStatus = async (req, res) => {
 	try {
-		const { refundId } = req.params;
+		const { orderId } = req.params; // Correctly use orderId from the route
 		const { status, rejectionReason } = req.body;
 
-		const order = await Order.findOne({ "refundRequest._id": refundId }).populate("user", "name email");
+		const order = await Order.findById(orderId).populate("user", "name email");
 		if (!order) {
 			return res.status(404).json({ message: "Refund request not found" });
 		}

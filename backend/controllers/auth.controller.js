@@ -59,6 +59,17 @@ export const signup = async (req, res) => {
 			CTA_LINK: `https://KalyeKart.app/`,
 		});
 
+		// Also notify the admin
+		await sendEmail(
+			process.env.EMAIL_USER,
+			`New User Registration: ${user.name}`,
+			"adminNewUserNotification",
+			{
+				USER_NAME: user.name,
+				USER_EMAIL: user.email,
+			}
+		);
+
 		const userToReturn = prepareUserResponse(user);
 		res.status(201).json(userToReturn);
 	} catch (error) {

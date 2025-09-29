@@ -26,7 +26,7 @@ router.put("/:orderId/status", protectRoute, adminRoute, updateOrderStatus);
 router.put("/:orderId/payment-status", protectRoute, adminRoute, updatePaymentStatus);
 router.post("/:orderId/refund", protectRoute, upload.single("proof"), requestRefund);
 router.get("/refunds", protectRoute, adminRoute, getRefunds);
-router.put("/refunds/:refundId/status", protectRoute, adminRoute, updateRefundStatus);
+router.put("/:orderId/refund/status", protectRoute, adminRoute, updateRefundStatus);
 router.post("/cancel/:orderId", protectRoute, cancelOrder);
 
 export default router;
