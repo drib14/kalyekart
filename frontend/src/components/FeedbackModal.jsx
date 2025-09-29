@@ -17,9 +17,6 @@ const FeedbackModal = ({ isOpen, onClose }) => {
 		},
 		onSuccess: () => {
 			setSubmitted(true);
-			toast.info("Please check your spam folder for our confirmation email.", {
-				duration: 5000,
-			});
 		},
 		onError: () => {
 			toast.error("Failed to submit feedback. Please try again later.");

@@ -5,99 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to KalyeKart!</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-        body {
-            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        .email-container {
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: #ffffff;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: 1px solid #e9e9e9;
-        }
-        .header {
-            background: linear-gradient(135deg, #059669, #06c284);
-            color: #ffffff;
-            padding: 50px 30px;
-            text-align: center;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 32px;
-            font-weight: 700;
-        }
-        .content {
-            padding: 40px 30px;
-            line-height: 1.8;
-            font-size: 16px;
-        }
-        .content h2 {
-            font-size: 24px;
-            color: #059669;
-            margin-top: 0;
-            font-weight: 600;
-        }
-        .content p {
-            margin-bottom: 20px;
-        }
-        .cta-button {
-            display: inline-block;
-            padding: 15px 35px;
-            background-color: #059669;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 50px;
-            font-size: 18px;
-            font-weight: 600;
-            margin-top: 20px;
-            transition: background-color 0.3s ease;
-        }
-        .cta-button:hover {
-            background-color: #047554;
-        }
-        .button-wrapper {
-            text-align: center;
-        }
-        .footer {
-            background-color: #f8f9fa;
-            color: #888;
-            padding: 30px;
-            text-align: center;
-            font-size: 12px;
-            border-top: 1px solid #e9e9e9;
-        }
-        .footer a {
-            color: #059669;
-            text-decoration: none;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .header { background-color: #059669; /* Emerald 600 */ color: #ffffff; padding: 40px; text-align: center; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+        .content { padding: 35px; line-height: 1.7; color: #495057; }
+        .content h2 { font-size: 22px; color: #343a40; margin-top: 0; }
+        .content p { margin: 15px 0; }
+        .cta-button { display: block; width: fit-content; margin: 30px auto; padding: 14px 28px; background-color: #059669; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 500; text-align: center; }
+        .footer { background-color: #e9ecef; color: #6c757d; padding: 25px; text-align: center; font-size: 12px; }
+        .footer p { margin: 5px 0; }
     </style>
 </head>
 <body>
-    <div class="email-container">
+    <div class="container">
         <div class="header">
             <h1>Welcome to KalyeKart!</h1>
         </div>
         <div class="content">
-            <h2>Hey {{NAME}}, get ready for an amazing journey!</h2>
-            <p>We are absolutely thrilled to welcome you to the KalyeKart family. You've just unlocked a world of incredible products, exclusive deals, and a shopping experience designed just for you.</p>
-            <p>From street-style essentials to unique finds, we've got something for everyone. Dive in and start exploring what's new and trending.</p>
-            <div class="button-wrapper">
-                <a href="{{CTA_LINK}}" class="cta-button">Start Shopping Now</a>
-            </div>
-            <p style="margin-top: 30px;">If you ever have questions or need a hand, our support team is always here to help. Happy shopping!</p>
-            <p>Best, <br><strong>The KalyeKart Team</strong></p>
+            <h2>Hello {{NAME}},</h2>
+            <p>We are thrilled to have you join our community! At KalyeKart, you'll discover a world of amazing products, great deals, and a seamless shopping experience.</p>
+            <p>To get started, why not explore our latest collections?</p>
+            <a href="{{CTA_LINK}}" class="cta-button">Start Shopping</a>
+            <p>If you have any questions, feel free to contact our support team. We're always here to help.</p>
+            <p>Happy Shopping!</p>
+            <p><strong>— The KalyeKart Team</strong></p>
         </div>
         <div class="footer">
-            <p>&copy; 2024 KalyeKart. All Rights Reserved.</p>
-            <p>You received this email because you just signed up for an account on our website.</p>
-            <p><a href="https://KalyeKart.app">KalyeKart.app</a></p>
+            <p>&copy; 2024 KalyeKart. All rights reserved.</p>
+            <p>You are receiving this email because you signed up on our website.</p>
         </div>
     </div>
 </body>

@@ -55,10 +55,7 @@ const PurchaseSuccessPage = () => {
 
 		processOrder().then(() => {
 			if (!error) {
-				toast.success("Order placed successfully!", {
-					description: "Please check your spam folder for order details and updates.",
-					duration: 5000,
-				});
+				toast.success("Order placed successfully!");
 			}
 		});
 	}, [clearCart, isCod, error]);

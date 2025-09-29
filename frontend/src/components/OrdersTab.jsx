@@ -130,7 +130,7 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 										</dl>
 									</div>
 									<div className='flex justify-end gap-4 mt-4 flex-wrap'>
-										{(order.status === "Pending" || order.status === "Preparing") && (
+										{order.status === "Pending" && (
 											<button
 												onClick={(e) => handleButtonClick(e, () => openCancelModal(order))}
 												className='bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm z-10 relative'

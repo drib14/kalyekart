@@ -1,13 +1,12 @@
 import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
-import Product from "../models/product.model.js";
 import { stripe } from "../lib/stripe.js";
 import { v4 as uuidv4 } from "uuid";
 import { uploadOnCloudinary } from "../lib/cloudinary.js";
 import { sendEmail } from "../lib/email.js";
 import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
 
-const WAREHOUSE_COORDINATES = { lat: 10.2983, lon: 123.8991 }; // USC Main Campus (for Pungko-pungko sa salazar)
+const WAREHOUSE_COORDINATES = { lat: 10.2983, lon: 123.8991 };
 
 export const createCodOrder = async (req, res) => {
 	try {
@@ -89,7 +88,7 @@ export const createCodOrder = async (req, res) => {
 
 		// Also send a notification to the admin
 		await sendEmail(
-			process.env.ADMIN_EMAIL,
+			process.env.EMAIL_USER,
 			`New Order Received: #${newOrder._id.toString().slice(-6)}`,
 			"adminNewOrderNotification",
 			{
@@ -146,7 +145,7 @@ export const cancelOrder = async (req, res) => {
 
 		// Notify admin about the cancellation
 		await sendEmail(
-			process.env.ADMIN_EMAIL,
+			process.env.EMAIL_USER,
 			`Order #${order._id.toString().slice(-6)} has been Cancelled`,
 			"adminOrderCancelled",
 			{
@@ -244,8 +243,8 @@ export const createStripeCheckoutSession = async (req, res) => {
 				payment_method_types: ["card"],
 				line_items,
 				mode: "payment",
-				success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-				cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
+				success_url: `https://kalyekart.app/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+				cancel_url: `https://kalyekart.app/purchase-cancel`,
 				metadata: {
 					userId: req.user._id.toString(),
 					products: JSON.stringify(
@@ -324,7 +323,7 @@ export const updateOrderStatus = async (req, res) => {
 
 		// Also notify the admin
 		await sendEmail(
-			process.env.ADMIN_EMAIL,
+			process.env.EMAIL_USER,
 			`Order #${order._id.toString().slice(-6)} Status Updated to ${status}`,
 			"adminOrderStatusUpdate",
 			{
@@ -370,7 +369,7 @@ export const requestRefund = async (req, res) => {
 
 		// Notify admin about the refund request
 		await sendEmail(
-			process.env.ADMIN_EMAIL,
+			process.env.EMAIL_USER,
 			`Refund Requested for Order #${order._id.toString().slice(-6)}`,
 			"adminRefundRequested",
 			{

@@ -20,10 +20,7 @@ export const useUserStore = create((set, get) => ({
 		try {
 			const res = await axios.post("/auth/signup", { name, email, password });
 			set({ user: res.data, loading: false });
-			toast.success("Account created successfully!", {
-				description: "Please check your spam folder for a welcome email.",
-				duration: 5000,
-			});
+			toast.success("Account created successfully!");
 		} catch (error) {
 			set({ loading: false });
 			toast.error(error.response.data.message || "An error occurred");

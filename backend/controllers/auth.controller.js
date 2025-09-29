@@ -56,7 +56,7 @@ export const signup = async (req, res) => {
 
 		await sendEmail(user.email, "Welcome to KalyeKart!", "welcome", {
 			NAME: user.name,
-			CTA_LINK: "https://kalyekart.app",
+			CTA_LINK: `${process.env.CLIENT_URL}/`,
 		});
 
 		const userToReturn = prepareUserResponse(user);
