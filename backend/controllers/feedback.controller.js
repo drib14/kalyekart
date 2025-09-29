@@ -10,18 +10,22 @@ export const submitFeedback = async (req, res) => {
 	}
 
 	try {
+		const admin = await User.findOne({ role: "admin" });
+
 		// 1. Send the detailed feedback to the admin
-		await sendEmail(
-			process.env.EMAIL_USER,
-			`New Feedback Submission (Rating: ${rating}/5)`,
-			"adminFeedbackNotification",
-			{
-				USER_NAME: user?.name || "Anonymous",
-				USER_EMAIL: user?.email || "No email provided",
-				RATING: rating,
-				FEEDBACK_MESSAGE: feedback,
-			}
-		);
+		if (admin) {
+			await sendEmail(
+				process.env.ADMIN_EMAIL,
+				`New Feedback Submission (Rating: ${rating}/5)`,
+				"adminFeedbackNotification",
+				{
+					USER_NAME: user?.name || "Anonymous",
+					USER_EMAIL: user?.email || "No email provided",
+					RATING: rating,
+					FEEDBACK_MESSAGE: feedback,
+				}
+			);
+		}
 
 		// 2. Send a confirmation email to the user, if they are logged in
 		if (user && user.email) {
@@ -38,7 +42,6 @@ export const submitFeedback = async (req, res) => {
 		}
 
 		// Create in-app notifications
-		const admin = await User.findOne({ role: "admin" });
 		if (admin) {
 			const adminNotification = new Notification({
 				recipient: admin._id,
@@ -53,6 +56,7 @@ export const submitFeedback = async (req, res) => {
 		if (user && user._id) {
 			const customerNotification = new Notification({
 				recipient: user._id,
+				sender: admin ? admin._id : null,
 				type: "new_feedback",
 				message: "Thank you for your feedback! We appreciate you helping us improve.",
 				link: `/`,

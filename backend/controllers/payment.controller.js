@@ -99,6 +99,8 @@ export const checkoutSuccess = async (req, res) => {
 			}
 
 			const user = await User.findById(session.metadata.userId);
+			const admin = await User.findOne({ role: "admin" });
+
 			if (!user) {
 				return res.status(404).json({ message: "User not found" });
 			}
@@ -138,7 +140,6 @@ export const checkoutSuccess = async (req, res) => {
 				)
 				.join("");
 
-			// Send confirmation email to customer
 			await sendEmail(
 				user.email,
 				`Your KalyeKart Order #${newOrder._id.toString().slice(-6)} is Confirmed!`,
@@ -154,24 +155,20 @@ export const checkoutSuccess = async (req, res) => {
 				}
 			);
 
-			// Send notification email to admin
-			await sendEmail(
-				process.env.ADMIN_EMAIL,
-				`New Order Received: #${newOrder._id.toString().slice(-6)}`,
-				"adminNewOrderNotification",
-				{
-					ORDER_ID: newOrder._id.toString(),
-					CUSTOMER_NAME: user.name,
-					CUSTOMER_EMAIL: user.email,
-					ORDER_ITEMS: orderItemsHtml,
-					TOTAL: newOrder.totalAmount.toFixed(2),
-					CTA_LINK: `https://kalyekart.app/secret-dashboard`,
-				}
-			);
-
-			// Create in-app notifications
-			const admin = await User.findOne({ role: "admin" });
 			if (admin) {
+				await sendEmail(
+					process.env.ADMIN_EMAIL,
+					`New Order Received: #${newOrder._id.toString().slice(-6)}`,
+					"adminNewOrderNotification",
+					{
+						ORDER_ID: newOrder._id.toString(),
+						CUSTOMER_NAME: user.name,
+						CUSTOMER_EMAIL: user.email,
+						ORDER_ITEMS: orderItemsHtml,
+						TOTAL: newOrder.totalAmount.toFixed(2),
+						CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+					}
+				);
 				const adminNotification = new Notification({
 					recipient: admin._id,
 					sender: user._id,
@@ -184,6 +181,7 @@ export const checkoutSuccess = async (req, res) => {
 
 			const customerNotification = new Notification({
 				recipient: user._id,
+				sender: admin ? admin._id : null,
 				type: "new_order",
 				message: `Your order #${newOrder._id.toString().slice(-6)} has been placed successfully!`,
 				link: `/my-orders`,
