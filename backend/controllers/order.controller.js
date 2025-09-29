@@ -82,7 +82,7 @@ export const createCodOrder = async (req, res) => {
 				SUBTOTAL: newOrder.subtotal.toFixed(2),
 				DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
 				TOTAL: newOrder.totalAmount.toFixed(2),
-				CTA_LINK: `https://KalyeKart.app/my-orders/${newOrder._id}`,
+				CTA_LINK: `https://kalyekart.app/my-orders/${newOrder._id}`,
 			}
 		);
 
@@ -97,7 +97,7 @@ export const createCodOrder = async (req, res) => {
 				CUSTOMER_EMAIL: user.email,
 				ORDER_ITEMS: orderItemsHtml,
 				TOTAL: newOrder.totalAmount.toFixed(2),
-				CTA_LINK: `https://KalyeKart.app/secret-dashboard`, // Link to the admin dashboard
+				CTA_LINK: `https://kalyekart.app/secret-dashboard`, // Link to the admin dashboard
 			}
 		);
 
@@ -164,7 +164,7 @@ export const cancelOrder = async (req, res) => {
 			{
 				NAME: order.user.name,
 				ORDER_ID: order._id.toString(),
-				CTA_LINK: `https://kalyekart.app/`,
+				CTA_LINK: `https://kalyekart.app`,
 			}
 		);
 
@@ -243,8 +243,8 @@ export const createStripeCheckoutSession = async (req, res) => {
 				payment_method_types: ["card"],
 				line_items,
 				mode: "payment",
-				success_url: `https://KalyeKart.app/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-				cancel_url: `https://KalyeKart.app/purchase-cancel`,
+				success_url: `https://kalyekart.app/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+				cancel_url: `https://kalyekart.app/purchase-cancel`,
 				metadata: {
 					userId: req.user._id.toString(),
 					products: JSON.stringify(

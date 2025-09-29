@@ -56,7 +56,7 @@ export const signup = async (req, res) => {
 
 		await sendEmail(user.email, "Welcome to KalyeKart!", "welcome", {
 			NAME: user.name,
-			CTA_LINK: `https://KalyeKart.app/`,
+			CTA_LINK: "https://kalyekart.app",
 		});
 
 		// Also notify the admin
