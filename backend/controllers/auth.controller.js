@@ -59,18 +59,6 @@ export const signup = async (req, res) => {
 			CTA_LINK: "https://kalyekart.app",
 		});
 
-		// Also notify the admin
-		console.log(`[ADMIN EMAIL LOG] Attempting to send new user notification to: 'contact@kalyekart.app' (hardcoded for debugging)`);
-		await sendEmail(
-			'contact@kalyekart.app', // Temporarily hardcoded for debugging
-			`New User Registration: ${user.name}`,
-			"adminNewUserNotification",
-			{
-				USER_NAME: user.name,
-				USER_EMAIL: user.email,
-			}
-		);
-
 		const userToReturn = prepareUserResponse(user);
 		res.status(201).json(userToReturn);
 	} catch (error) {

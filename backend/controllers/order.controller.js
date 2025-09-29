@@ -71,6 +71,7 @@ export const createCodOrder = async (req, res) => {
 			)
 			.join("");
 
+		// Send confirmation email to customer
 		await sendEmail(
 			user.email,
 			`Your KalyeKart Order #${newOrder._id.toString().slice(-6)} is Confirmed!`,
@@ -87,7 +88,6 @@ export const createCodOrder = async (req, res) => {
 		);
 
 		// Also send a notification to the admin
-		console.log(`[ADMIN EMAIL LOG] Attempting to send new COD order notification to: ${process.env.EMAIL_USER}`);
 		await sendEmail(
 			process.env.EMAIL_USER,
 			`New Order Received: #${newOrder._id.toString().slice(-6)}`,
@@ -98,7 +98,7 @@ export const createCodOrder = async (req, res) => {
 				CUSTOMER_EMAIL: user.email,
 				ORDER_ITEMS: orderItemsHtml,
 				TOTAL: newOrder.totalAmount.toFixed(2),
-				CTA_LINK: `https://kalyekart.app/secret-dashboard`, // Link to the admin dashboard
+				CTA_LINK: `https://kalyekart.app/secret-dashboard`,
 			}
 		);
 
@@ -145,7 +145,6 @@ export const cancelOrder = async (req, res) => {
 		await order.save();
 
 		// Notify admin about the cancellation
-		console.log(`[ADMIN EMAIL LOG] Attempting to send order cancellation notification to: ${process.env.EMAIL_USER}`);
 		await sendEmail(
 			process.env.EMAIL_USER,
 			`Order #${order._id.toString().slice(-6)} has been Cancelled`,
@@ -245,8 +244,8 @@ export const createStripeCheckoutSession = async (req, res) => {
 				payment_method_types: ["card"],
 				line_items,
 				mode: "payment",
-				success_url: `https://kalyekart.app/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-				cancel_url: `https://kalyekart.app/purchase-cancel`,
+				success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+				cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
 				metadata: {
 					userId: req.user._id.toString(),
 					products: JSON.stringify(
@@ -324,7 +323,6 @@ export const updateOrderStatus = async (req, res) => {
 		}
 
 		// Also notify the admin
-		console.log(`[ADMIN EMAIL LOG] Attempting to send order status update notification to: ${process.env.EMAIL_USER}`);
 		await sendEmail(
 			process.env.EMAIL_USER,
 			`Order #${order._id.toString().slice(-6)} Status Updated to ${status}`,
@@ -371,7 +369,6 @@ export const requestRefund = async (req, res) => {
 		await order.save();
 
 		// Notify admin about the refund request
-		console.log(`[ADMIN EMAIL LOG] Attempting to send refund request notification to: ${process.env.EMAIL_USER}`);
 		await sendEmail(
 			process.env.EMAIL_USER,
 			`Refund Requested for Order #${order._id.toString().slice(-6)}`,
@@ -381,6 +378,18 @@ export const requestRefund = async (req, res) => {
 				CUSTOMER_NAME: order.user.name,
 				REFUND_REASON: reason,
 				CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+			}
+		);
+
+		// Also notify the customer
+		await sendEmail(
+			order.user.email,
+			`We've Received Your Refund Request for Order #${order._id.toString().slice(-6)}`,
+			"customerRefundRequested",
+			{
+				NAME: order.user.name,
+				ORDER_ID: order._id.toString(),
+				CTA_LINK: `https://kalyekart.app/my-orders/${order._id}`,
 			}
 		);
 
@@ -403,7 +412,7 @@ export const getRefunds = async (req, res) => {
 
 export const updateRefundStatus = async (req, res) => {
 	try {
-		const { orderId } = req.params; // Correctly use orderId from the route
+		const { orderId } = req.params;
 		const { status, rejectionReason } = req.body;
 
 		const order = await Order.findById(orderId).populate("user", "name email");
