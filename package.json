@@ -4,7 +4,9 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
-		"start": "node backend/server.js",
+		"start:server": "node backend/server.js",
+		"start:worker": "node backend/workers/email-worker.js",
+		"start": "concurrently \"npm:start:server\" \"npm:start:worker\"",
 		"build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
 		"heroku-postbuild": "npm install --prefix frontend && npm run build --prefix frontend"
 	},
@@ -26,5 +28,8 @@
 		"sib-api-v3-sdk": "^8.5.0",
 		"stripe": "^18.5.0",
 		"uuid": "^13.0.0"
+	},
+	"devDependencies": {
+		"concurrently": "^9.2.1"
 	}
 }

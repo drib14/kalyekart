@@ -5,6 +5,7 @@ import { LogIn, Mail, Lock, ArrowRight, Loader } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
+import { toast } from "sonner";
 
 const GoogleIcon = () => (
 	<svg className='h-5 w-5 mr-2' viewBox='0 0 24 24'>
@@ -45,8 +46,6 @@ const LoginPage = () => {
 				const res = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
 					headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
 				});
-				// We are not using the id_token flow anymore, but the backend expects an object with user details
-				// Let's pass the whole user profile object from google
 				await googleLogin(res.data);
 			} catch (error) {
 				console.log(error);
