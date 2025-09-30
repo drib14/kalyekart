@@ -4,6 +4,7 @@ import axios from "../lib/axios";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { useNotifications } from "../lib/useNotifications";
+import { User } from "lucide-react";
 
 const NotificationPanel = ({ onClose }) => {
 	const { notifications, unreadCount } = useNotifications();
@@ -51,14 +52,30 @@ const NotificationPanel = ({ onClose }) => {
 							key={notification._id}
 							to={notification.link}
 							onClick={() => handleNotificationClick(notification)}
-							className={`block p-4 border-b border-gray-700 hover:bg-gray-700 ${
+							className={`flex items-start gap-3 p-4 border-b border-gray-700 hover:bg-gray-700 ${
 								notification.isRead ? "opacity-60" : ""
 							}`}
 						>
-							<p className='text-sm text-white'>{notification.message}</p>
-							<p className='text-xs text-gray-400 mt-1'>
-								{formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-							</p>
+							{notification.sender?.profilePicture ? (
+								<img
+									src={notification.sender.profilePicture}
+									alt={notification.sender.name}
+									className='w-8 h-8 rounded-full object-cover'
+								/>
+							) : (
+								<User className='w-8 h-8 rounded-full bg-gray-700 text-white p-1' />
+							)}
+							<div className='flex-1'>
+								<p className='text-sm text-white'>
+									{notification.sender && (
+										<span className='font-bold'>{notification.sender.name} </span>
+									)}
+									{notification.message}
+								</p>
+								<p className='text-xs text-gray-400 mt-1'>
+									{formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+								</p>
+							</div>
 						</Link>
 					))
 				) : (

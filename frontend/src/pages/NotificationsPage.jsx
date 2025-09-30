@@ -5,6 +5,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { User } from "lucide-react";
 
 const NotificationsPage = () => {
 	const { user } = useUserStore();
@@ -60,16 +61,32 @@ const NotificationsPage = () => {
 							<Link
 								key={notification._id}
 								to={notification.link}
-								className={`block p-6 rounded-lg shadow-lg transition-colors duration-200 ${
+								className={`flex items-start gap-4 p-6 rounded-lg shadow-lg transition-colors duration-200 ${
 									notification.isRead
 										? "bg-gray-800 opacity-60"
 										: "bg-gray-700 hover:bg-gray-600"
 								}`}
 							>
-								<p className='text-white'>{notification.message}</p>
-								<p className='text-sm text-gray-400 mt-2'>
-									{format(new Date(notification.createdAt), "MMMM d, yyyy 'at' h:mm a")}
-								</p>
+								{notification.sender?.profilePicture ? (
+									<img
+										src={notification.sender.profilePicture}
+										alt={notification.sender.name}
+										className='w-10 h-10 rounded-full object-cover'
+									/>
+								) : (
+									<User className='w-10 h-10 rounded-full bg-gray-700 text-white p-2' />
+								)}
+								<div className='flex-1'>
+									<p className='text-white'>
+										{notification.sender && (
+											<span className='font-bold'>{notification.sender.name} </span>
+										)}
+										{notification.message}
+									</p>
+									<p className='text-sm text-gray-400 mt-2'>
+										{format(new Date(notification.createdAt), "MMMM d, yyyy 'at' h:mm a")}
+									</p>
+								</div>
 							</Link>
 						))
 					) : (

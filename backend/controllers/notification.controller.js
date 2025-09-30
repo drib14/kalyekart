@@ -3,7 +3,9 @@ import Notification from "../models/notification.model.js";
 export const getNotifications = async (req, res) => {
 	try {
 		const userId = req.user._id;
-		const notifications = await Notification.find({ recipient: userId }).sort({ createdAt: -1 });
+		const notifications = await Notification.find({ recipient: userId })
+			.populate("sender", "name profilePicture")
+			.sort({ createdAt: -1 });
 		res.status(200).json(notifications);
 	} catch (error) {
 		console.error("Error in getNotifications controller:", error);
