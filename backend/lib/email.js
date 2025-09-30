@@ -17,15 +17,15 @@ if (!SENDER_EMAIL) {
 }
 
 // Configure Brevo
-let brevoApi;
+const defaultClient = SibApiV3Sdk.ApiClient.instance;
+const apiKey = defaultClient.authentications["api-key"];
+
 if (BREVO_KEY) {
-	const defaultClient = SibApiV3Sdk.ApiClient.instance;
-	const apiKey = defaultClient.authentications["api-key"];
 	apiKey.apiKey = BREVO_KEY;
-	brevoApi = new SibApiV3Sdk.TransactionalEmailsApi();
 } else {
-	console.warn("BREVO_KEY is not set, so email functionality will be disabled.");
+	console.warn("BREVO_KEY is not set. Brevo will be unavailable.");
 }
+const brevoApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
 /**
  * Loads a specific email template and populates it with dynamic data.
@@ -60,8 +60,8 @@ const loadTemplate = (templateName, data) => {
  * @throws {Error} If the email fails to send.
  */
 const _sendEmail = async (to, subject, templateName, data) => {
-	if (!brevoApi) {
-		throw new Error("Cannot send email: Brevo is not configured. Please check your API key.");
+	if (!BREVO_KEY) {
+		throw new Error("Cannot send email: BREVO_KEY is not configured.");
 	}
 
 	const htmlContent = loadTemplate(templateName, data);

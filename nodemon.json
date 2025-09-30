@@ -1,5 +1,0 @@
-{
-	"watch": ["backend"],
-	"ext": "js,json",
-	"exec": "npm start"
-}

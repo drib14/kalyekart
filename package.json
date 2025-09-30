@@ -7,7 +7,6 @@
 		"start:server": "node backend/server.js",
 		"start:worker": "node backend/workers/email-worker.js",
 		"start": "concurrently \"npm:start:server\" \"npm:start:worker\"",
-		"dev": "nodemon",
 		"build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
 		"heroku-postbuild": "npm install --prefix frontend && npm run build --prefix frontend"
 	},
@@ -31,7 +30,6 @@
 		"uuid": "^13.0.0"
 	},
 	"devDependencies": {
-		"concurrently": "^9.2.1",
-		"nodemon": "^3.1.4"
+		"concurrently": "^9.2.1"
 	}
 }

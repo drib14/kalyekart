@@ -26,7 +26,6 @@ const CheckoutPage = () => {
 	const [locations, setLocations] = useState([]);
 	const [barangays, setBarangays] = useState([]);
 	const [isLocating, setIsLocating] = useState(false);
-	const [targetBarangay, setTargetBarangay] = useState(null);
 
 	// Fetch cities and municipalities on component mount
 	useEffect(() => {
@@ -62,19 +61,6 @@ const CheckoutPage = () => {
 			setPostalCode("");
 		}
 	}, [city, locations]);
-
-	// Set barangay after auto-locating
-	useEffect(() => {
-		if (targetBarangay && barangays.length > 0) {
-			const matchedBarangay = barangays.find(b => b.name.includes(targetBarangay) || targetBarangay.includes(b.name));
-			if (matchedBarangay) {
-				setBarangay(matchedBarangay.name);
-			} else {
-				toast.info(`We've set your city. Please select your barangay from the list.`);
-			}
-			setTargetBarangay(null);
-		}
-	}, [barangays, targetBarangay]);
 
 	// Fetch delivery fee when address changes
 	useEffect(() => {
@@ -112,50 +98,74 @@ const CheckoutPage = () => {
 		},
 	});
 
-	const handleUseCurrentLocation = () => {
+	const handleUseCurrentLocation = async () => {
 		if (!navigator.geolocation) {
 			toast.error("Geolocation is not supported by your browser.");
 			return;
 		}
+
 		setIsLocating(true);
-		navigator.geolocation.getCurrentPosition(
-			async (position) => {
-				const { latitude, longitude } = position.coords;
-				try {
-					const response = await axios.post("/locations/reverse-geocode", { lat: latitude, lon: longitude });
-					const address = response.data;
+		try {
+			const position = await new Promise((resolve, reject) => {
+				navigator.geolocation.getCurrentPosition(resolve, reject);
+			});
 
-					const apiCityName = address.city || address.town || address.county || "";
+			const { latitude, longitude } = position.coords;
+			const geocodeResponse = await axios.post("/locations/reverse-geocode", { lat: latitude, lon: longitude });
+			const address = geocodeResponse.data;
 
-					const normalize = (str) => str.replace(/City of|City/g, "").replace(/-/g, " ").trim().toLowerCase();
-					const normalizedApiCity = normalize(apiCityName);
+			const apiCityName = address.city || address.town || address.county || "";
+			const normalize = (str) => str.replace(/City of|City/g, "").replace(/-/g, " ").trim().toLowerCase();
+			const normalizedApiCity = normalize(apiCityName);
 
-					const matchedLocation = locations.find(loc => {
-						const normalizedLocName = normalize(loc.name);
-						return normalizedLocName.includes(normalizedApiCity) || normalizedApiCity.includes(normalizedLocName);
-					});
+			const matchedLocation = locations.find(loc => {
+				const normalizedLocName = normalize(loc.name);
+				return normalizedLocName.includes(normalizedApiCity) || normalizedApiCity.includes(normalizedLocName);
+			});
 
-					if (matchedLocation) {
-						const barangayName = address.village || address.suburb;
-						const sitioInfo = [address.road, address.house_number].filter(Boolean).join(", ");
-
-						setCity(matchedLocation.name);
-						setTargetBarangay(barangayName);
-						setSitio(sitioInfo);
-					} else {
-						toast.error(`DEBUG: Could not match location. API Response: ${JSON.stringify(address)}`);
-					}
-				} catch (error) {
-					toast.error("Could not determine your address. Please enter it manually.");
-				} finally {
-					setIsLocating(false);
-				}
-			},
-			() => {
-				toast.error("Unable to retrieve your location. Please enable location services.");
-				setIsLocating(false);
+			if (!matchedLocation) {
+				toast.error("Could not match your city. Please select it manually.");
+				return;
 			}
-		);
+
+			// Set city and fetch barangays for it
+			setCity(matchedLocation.name);
+			const barangayResponse = await axios.get(`/locations/barangays/${matchedLocation.code}`);
+			const fetchedBarangays = barangayResponse.data;
+			setBarangays(fetchedBarangays);
+
+			// Now, match the barangay
+			const apiBarangayName = address.village || address.suburb || address.hamlet || address.quarter;
+			if (apiBarangayName) {
+				const normalizeBarangay = (str) => str.trim().toLowerCase();
+				const normalizedTarget = normalizeBarangay(apiBarangayName);
+				const matchedBarangay = fetchedBarangays.find(
+					(b) => normalizeBarangay(b.name).includes(normalizedTarget) || normalizedTarget.includes(normalizeBarangay(b.name))
+				);
+
+				if (matchedBarangay) {
+					setBarangay(matchedBarangay.name);
+				} else {
+					toast.info("Your city is set. Please select your barangay from the list.");
+					setBarangay(""); // Clear previous selection if any
+				}
+			} else {
+				toast.info("Your city is set. Please select your barangay.");
+				setBarangay("");
+			}
+
+			const sitioInfo = [address.road, address.house_number].filter(Boolean).join(", ");
+			setSitio(sitioInfo);
+
+		} catch (error) {
+			if (error.code === error.PERMISSION_DENIED) {
+				toast.error("Unable to retrieve your location. Please enable location services.");
+			} else {
+				toast.error("Could not determine your address. Please enter it manually.");
+			}
+		} finally {
+			setIsLocating(false);
+		}
 	};
 
 	const handlePlaceOrder = () => {
