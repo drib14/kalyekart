@@ -79,10 +79,12 @@ const _sendEmail = async (to, subject, templateName, data) => {
 			sendSmtpEmail.replyTo = { email: SENDER_EMAIL, name: SENDER_NAME };
 		}
 
-		await brevoApi.sendTransacEmail(sendSmtpEmail);
-		console.log(`Email sent to ${to} via Brevo.`);
+		const response = await brevoApi.sendTransacEmail(sendSmtpEmail);
+		console.log(`Email sent to ${to} via Brevo. Response:`, JSON.stringify(response, null, 2));
 	} catch (error) {
-		console.error(`Brevo failed for ${to}: ${error.response ? error.response.data : error.message}`);
+		console.error(
+			`Brevo failed for ${to}: ${error.response ? JSON.stringify(error.response.data, null, 2) : error.message}`
+		);
 		throw new Error(`Failed to send email to ${to} via Brevo.`);
 	}
 };

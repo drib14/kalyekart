@@ -130,10 +130,7 @@ export const googleAuth = async (req, res) => {
 				name,
 				email,
 				password,
-				avatar: {
-					url: picture,
-					public_id: null,
-				},
+				profilePicture: picture,
 			});
 
 			await sendEmail(user.email, "Welcome to KalyeKart!", "welcome", {
