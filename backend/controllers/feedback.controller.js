@@ -14,19 +14,17 @@ export const submitFeedback = async (req, res) => {
 		const admin = await User.findOne({ role: "admin" });
 
 		// 1. Send the detailed feedback to the admin
-		if (admin) {
-			await sendEmail(
-				process.env.EMAIL_USER,
-				`New Feedback Submission (Rating: ${rating}/5)`,
-				"adminFeedbackNotification",
-				{
-					USER_NAME: user?.name || "Anonymous",
-					USER_EMAIL: user?.email || "No email provided",
-					RATING: rating,
-					FEEDBACK_MESSAGE: feedback,
-				}
-			);
-		}
+		await sendEmail(
+			process.env.EMAIL_USER,
+			`New Feedback Submission (Rating: ${rating}/5)`,
+			"adminFeedbackNotification",
+			{
+				USER_NAME: user?.name || "Anonymous",
+				USER_EMAIL: user?.email || "No email provided",
+				RATING: rating,
+				FEEDBACK_MESSAGE: feedback,
+			}
+		);
 
 		// 2. Send a confirmation email to the user, if they are logged in
 		if (user && user.email) {

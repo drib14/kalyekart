@@ -88,22 +88,23 @@ export const createCodOrder = async (req, res) => {
 			}
 		);
 
+		await sendEmail(
+			process.env.EMAIL_USER,
+			`New Order Received: #${newOrder._id.toString().slice(-6)}`,
+			"adminNewOrderNotification",
+			{
+				ORDER_ID: newOrder._id.toString(),
+				CUSTOMER_NAME: user.name,
+				CUSTOMER_EMAIL: user.email,
+				ORDER_ITEMS: orderItemsHtml,
+				SUBTOTAL: newOrder.subtotal.toFixed(2),
+				DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
+				TOTAL: newOrder.totalAmount.toFixed(2),
+				CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+			}
+		);
+
 		if (admin) {
-			await sendEmail(
-				process.env.EMAIL_USER,
-				`New Order Received: #${newOrder._id.toString().slice(-6)}`,
-				"adminNewOrderNotification",
-				{
-					ORDER_ID: newOrder._id.toString(),
-					CUSTOMER_NAME: user.name,
-					CUSTOMER_EMAIL: user.email,
-					ORDER_ITEMS: orderItemsHtml,
-					SUBTOTAL: newOrder.subtotal.toFixed(2),
-					DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
-					TOTAL: newOrder.totalAmount.toFixed(2),
-					CTA_LINK: `https://kalyekart.app/secret-dashboard`,
-				}
-			);
 			const adminNotification = new Notification({
 				recipient: admin._id,
 				sender: user._id,
@@ -171,18 +172,19 @@ export const cancelOrder = async (req, res) => {
 		order.cancellationReason = reason;
 		await order.save();
 
+		await sendEmail(
+			process.env.EMAIL_USER,
+			`Order #${order._id.toString().slice(-6)} has been Cancelled`,
+			"adminOrderCancelled",
+			{
+				ORDER_ID: order._id.toString(),
+				CUSTOMER_NAME: order.user.name,
+				CANCELLATION_REASON: reason,
+				CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+			}
+		);
+
 		if (admin) {
-			await sendEmail(
-				process.env.EMAIL_USER,
-				`Order #${order._id.toString().slice(-6)} has been Cancelled`,
-				"adminOrderCancelled",
-				{
-					ORDER_ID: order._id.toString(),
-					CUSTOMER_NAME: order.user.name,
-					CANCELLATION_REASON: reason,
-					CTA_LINK: `https://kalyekart.app/secret-dashboard`,
-				}
-			);
 			const adminNotification = new Notification({
 				recipient: admin._id,
 				sender: order.user._id,
@@ -372,17 +374,18 @@ export const updateOrderStatus = async (req, res) => {
 			);
 		}
 
+		await sendEmail(
+			process.env.EMAIL_USER,
+			`Order #${order._id.toString().slice(-6)} Status Updated to ${status}`,
+			"adminOrderStatusUpdate",
+			{
+				ORDER_ID: order._id.toString(),
+				NEW_STATUS: status,
+				CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+			}
+		);
+
 		if (admin) {
-			await sendEmail(
-				process.env.EMAIL_USER,
-				`Order #${order._id.toString().slice(-6)} Status Updated to ${status}`,
-				"adminOrderStatusUpdate",
-				{
-					ORDER_ID: order._id.toString(),
-					NEW_STATUS: status,
-					CTA_LINK: `https://kalyekart.app/secret-dashboard`,
-				}
-			);
 		}
 
 		const customerNotification = new Notification({
@@ -431,18 +434,19 @@ export const requestRefund = async (req, res) => {
 		};
 		await order.save();
 
+		await sendEmail(
+			process.env.EMAIL_USER,
+			`Refund Requested for Order #${order._id.toString().slice(-6)}`,
+			"adminRefundRequested",
+			{
+				ORDER_ID: order._id.toString(),
+				CUSTOMER_NAME: order.user.name,
+				REFUND_REASON: reason,
+				CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+			}
+		);
+
 		if (admin) {
-			await sendEmail(
-				process.env.EMAIL_USER,
-				`Refund Requested for Order #${order._id.toString().slice(-6)}`,
-				"adminRefundRequested",
-				{
-					ORDER_ID: order._id.toString(),
-					CUSTOMER_NAME: order.user.name,
-					REFUND_REASON: reason,
-					CTA_LINK: `https://kalyekart.app/secret-dashboard`,
-				}
-			);
 			const adminNotification = new Notification({
 				recipient: admin._id,
 				sender: order.user._id,
