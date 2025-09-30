@@ -28,6 +28,7 @@ import OrderDetailPage from "./pages/OrderDetailPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import BottomNav from "./components/BottomNav";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -44,7 +45,7 @@ function App() {
 		getCartItems();
 	}, [getCartItems, user]);
 
-	if (checkingAuth) return <LoadingSpinner />;
+	if (checkingAuth) return <LoadingSpinner fullScreen={true} />;
 
 	return (
 		<div className='min-h-screen bg-gray-900 text-white relative overflow-hidden'>
@@ -91,6 +92,7 @@ function App() {
 					/>
 					<Route path='/order/:orderId' element={user ? <OrderDetailPage /> : <Navigate to='/login' />} />
 					<Route path='/product/:productId' element={<ProductDetailPage />} />
+					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
 			</div>
 			<Toaster theme='dark' />
