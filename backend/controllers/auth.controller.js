@@ -1,4 +1,3 @@
-import { OAuth2Client } from "google-auth-library";
 import { redis } from "../lib/redis.js";
 import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
@@ -6,8 +5,6 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { sendEmail } from "../lib/email.js";
 import { prepareUserResponse } from "../lib/prepareUserResponse.js";
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateTokens = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -120,18 +117,12 @@ export const logout = async (req, res) => {
 
 export const googleAuth = async (req, res) => {
 	try {
-		const { idToken } = req.body;
-
-		const ticket = await client.verifyIdToken({
-			idToken,
-			audience: process.env.GOOGLE_CLIENT_ID,
-		});
-
-		const { name, email, picture } = ticket.getPayload();
+		const { name, email, picture } = req.body;
 
 		let user = await User.findOne({ email });
+		const isNew = !user;
 
-		if (!user) {
+		if (isNew) {
 			const password = crypto.randomBytes(16).toString("hex");
 			user = await User.create({
 				name,
@@ -162,7 +153,7 @@ export const googleAuth = async (req, res) => {
 		setCookies(res, accessToken, refreshToken);
 
 		const userToReturn = prepareUserResponse(user);
-		res.status(user.isNew ? 201 : 200).json(userToReturn);
+		res.status(isNew ? 201 : 200).json(userToReturn);
 	} catch (error) {
 		console.log("Error in googleAuth controller", error.message);
 		res.status(500).json({ message: "Google authentication failed", error: error.message });

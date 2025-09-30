@@ -39,10 +39,10 @@ export const useUserStore = create((set, get) => ({
 		}
 	},
 
-	googleLogin: async (idToken) => {
+	googleLogin: async (userProfile) => {
 		set({ loading: true });
 		try {
-			const res = await axios.post("/auth/google", { idToken });
+			const res = await axios.post("/auth/google", userProfile);
 			set({ user: res.data, loading: false });
 			toast.success("Logged in successfully with Google!");
 		} catch (error) {
