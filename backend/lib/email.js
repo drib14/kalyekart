@@ -101,13 +101,6 @@ export const sendEmail = async (to, subject, templateName, data) => {
 		console.error("Cannot queue email: EMAIL_USER is not configured.");
 		return;
 	}
-
-	// Safeguard: Do not send welcome emails to the platform's own email address
-	if (templateName === "welcome" && to === SENDER_EMAIL) {
-		console.log(`[EMAIL_QUEUE] Blocked welcome email to platform: ${to}`);
-		return;
-	}
-
 	console.log(`[EMAIL_QUEUE] Adding email job for ${to} with subject: ${subject}`);
 	await emailQueue.add("send-email", { to, subject, templateName, data });
 };
