@@ -10,14 +10,14 @@ const NotificationPanel = ({ onClose }) => {
 	const queryClient = useQueryClient();
 
 	const markAsReadMutation = useMutation({
-		mutationFn: (notificationId) => axios.put(`/api/notifications/${notificationId}/read`),
+		mutationFn: (notificationId) => axios.put(`/notifications/${notificationId}/read`),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["notifications"] });
 		},
 	});
 
 	const markAllAsReadMutation = useMutation({
-		mutationFn: () => axios.put("/api/notifications/read-all"),
+		mutationFn: () => axios.put("/notifications/read-all"),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["notifications"] });
 		},
