@@ -1,9 +1,10 @@
 import express from "express";
 import { adminRoute, protectRoute } from "../middleware/auth.middleware.js";
-import { getRevenueAnalytics } from "../controllers/analytics.controller.js";
+import { streamAnalyticsData } from "../controllers/analytics.controller.js";
 
 const router = express.Router();
 
-router.get("/", protectRoute, adminRoute, getRevenueAnalytics);
+// This single route will handle streaming all analytics data
+router.get("/stream", protectRoute, adminRoute, streamAnalyticsData);
 
 export default router;

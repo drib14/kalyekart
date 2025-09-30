@@ -79,7 +79,7 @@ const getAnalyticsData = async (filter) => {
 	]);
 
 	// General stats (can be cached for performance)
-	const totalUsersPromise = User.countDocuments({ role: "customer" });
+	const totalUsersPromise = User.countDocuments(); // Count all users including admins
 	const totalProductsPromise = Product.countDocuments();
 
 	// Execute all promises concurrently
