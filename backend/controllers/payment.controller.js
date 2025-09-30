@@ -4,6 +4,7 @@ import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
 import { stripe } from "../lib/stripe.js";
 import { sendEmail } from "../lib/email.js";
+import NotificationService from "../services/notification.service.js";
 
 export const createCheckoutSession = async (req, res) => {
 	try {
@@ -165,8 +166,8 @@ export const checkoutSuccess = async (req, res) => {
 						CUSTOMER_NAME: user.name,
 						CUSTOMER_EMAIL: user.email,
 						ORDER_ITEMS: orderItemsHtml,
-					SUBTOTAL: (newOrder.totalAmount - newOrder.deliveryFee).toFixed(2),
-					DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
+						SUBTOTAL: (newOrder.totalAmount - newOrder.deliveryFee).toFixed(2),
+						DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
 						TOTAL: newOrder.totalAmount.toFixed(2),
 						CTA_LINK: `https://kalyekart.app/secret-dashboard`,
 					}
@@ -179,6 +180,8 @@ export const checkoutSuccess = async (req, res) => {
 					link: `/order/${newOrder._id}`,
 				});
 				await adminNotification.save();
+				await adminNotification.populate("sender", "name profilePicture");
+				NotificationService.sendNotification(admin._id.toString(), adminNotification);
 			}
 
 			const customerNotification = new Notification({
@@ -189,6 +192,9 @@ export const checkoutSuccess = async (req, res) => {
 				link: `/my-orders`,
 			});
 			await customerNotification.save();
+			await customerNotification.populate("sender", "name profilePicture");
+			NotificationService.sendNotification(user._id.toString(), customerNotification);
+
 
 			res.status(200).json({
 				success: true,

@@ -1,6 +1,7 @@
 import { sendEmail } from "../lib/email.js";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
+import NotificationService from "../services/notification.service.js";
 
 export const submitFeedback = async (req, res) => {
 	const { rating, feedback, user } = req.body;
@@ -51,6 +52,8 @@ export const submitFeedback = async (req, res) => {
 				link: `/secret-dashboard`,
 			});
 			await adminNotification.save();
+			await adminNotification.populate("sender", "name profilePicture");
+			NotificationService.sendNotification(admin._id.toString(), adminNotification);
 		}
 
 		if (user && user._id) {
@@ -62,6 +65,8 @@ export const submitFeedback = async (req, res) => {
 				link: `/`,
 			});
 			await customerNotification.save();
+			await customerNotification.populate("sender", "name profilePicture");
+			NotificationService.sendNotification(user._id.toString(), customerNotification);
 		}
 
 		res.status(200).json({ message: "Feedback submitted successfully" });

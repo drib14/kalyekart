@@ -1,4 +1,5 @@
 import Notification from "../models/notification.model.js";
+import NotificationService from "../services/notification.service.js";
 
 export const getNotifications = async (req, res) => {
 	try {
@@ -11,6 +12,22 @@ export const getNotifications = async (req, res) => {
 		console.error("Error in getNotifications controller:", error);
 		res.status(500).json({ message: "Server error" });
 	}
+};
+
+export const streamNotifications = (req, res) => {
+	const userId = req.user._id;
+
+	res.setHeader("Content-Type", "text/event-stream");
+	res.setHeader("Cache-Control", "no-cache");
+	res.setHeader("Connection", "keep-alive");
+	res.flushHeaders();
+
+	NotificationService.addClient(userId, res);
+
+	req.on("close", () => {
+		NotificationService.removeClient(userId);
+		res.end();
+	});
 };
 
 export const markAsRead = async (req, res) => {

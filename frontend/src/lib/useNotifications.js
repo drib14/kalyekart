@@ -1,27 +1,48 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import axios from "./axios";
 import { useUserStore } from "../stores/useUserStore";
 
 export const useNotifications = () => {
 	const { user } = useUserStore();
+	const queryClient = useQueryClient();
+	const [notifications, setNotifications] = useState([]);
 
-	const { data: notifications, ...queryInfo } = useQuery({
-		queryKey: ["notifications", user?._id],
-		queryFn: async () => {
-			const res = await axios.get("/notifications");
-			return res.data;
-		},
-		enabled: !!user,
-		refetchInterval: 60000,
-	});
+	// Fetch initial notifications on mount
+	useEffect(() => {
+		if (user) {
+			axios.get("/notifications").then((res) => {
+				setNotifications(res.data);
+			});
+		}
+	}, [user]);
 
-	// Safely calculate unread count, ensuring notifications is an array
-	const unreadCount = Array.isArray(notifications)
-		? notifications.filter((n) => !n.isRead).length
-		: 0;
+	// Set up real-time connection for new notifications
+	useEffect(() => {
+		if (user) {
+			const eventSource = new EventSource("/api/notifications/stream", { withCredentials: true });
 
-	// Ensure the returned notifications is always an array
-	const safeNotifications = Array.isArray(notifications) ? notifications : [];
+			eventSource.onmessage = (event) => {
+				const newNotification = JSON.parse(event.data);
+				// Add the new notification to the top of the list
+				setNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
+				// Optional: Invalidate queries if you want other parts of the app to be aware of the change globally
+				queryClient.invalidateQueries({ queryKey: ["notifications"] });
+			};
 
-	return { notifications: safeNotifications, unreadCount, ...queryInfo };
+			eventSource.onerror = (error) => {
+				console.error("EventSource failed:", error);
+				eventSource.close();
+			};
+
+			// Clean up the connection when the component unmounts
+			return () => {
+				eventSource.close();
+			};
+		}
+	}, [user, queryClient]);
+
+	const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+	return { notifications, unreadCount };
 };
