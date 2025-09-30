@@ -73,6 +73,12 @@ const _sendEmail = async (to, subject, templateName, data) => {
 			subject: subject,
 			htmlContent: htmlContent,
 		};
+
+		// If sending to the platform's own email, set replyTo to prevent spam filters
+		if (to === SENDER_EMAIL) {
+			sendSmtpEmail.replyTo = { email: SENDER_EMAIL, name: SENDER_NAME };
+		}
+
 		await brevoApi.sendTransacEmail(sendSmtpEmail);
 		console.log(`Email sent to ${to} via Brevo.`);
 	} catch (error) {

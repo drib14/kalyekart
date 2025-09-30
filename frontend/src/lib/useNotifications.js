@@ -8,7 +8,7 @@ export const useNotifications = () => {
 	const { data: notifications, ...queryInfo } = useQuery({
 		queryKey: ["notifications", user?._id],
 		queryFn: async () => {
-			const res = await axios.get("/api/notifications");
+			const res = await axios.get("/notifications");
 			return res.data;
 		},
 		enabled: !!user,
