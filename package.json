@@ -27,9 +27,8 @@
 		"node-fetch": "^3.3.2",
 		"sib-api-v3-sdk": "^8.5.0",
 		"stripe": "^18.5.0",
-		"uuid": "^13.0.0"
-	},
-	"devDependencies": {
+		"uuid": "^13.0.0",
 		"concurrently": "^9.2.1"
-	}
+	},
+	"devDependencies": {}
 }
