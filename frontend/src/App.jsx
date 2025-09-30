@@ -8,7 +8,7 @@ import CategoryPage from "./pages/CategoryPage";
 import SearchPage from "./pages/SearchPage";
 
 import Navbar from "./components/Navbar";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { useUserStore } from "./stores/useUserStore";
 import { useEffect, useState } from "react";
 import FloatingFeedbackButton from "./components/FloatingFeedbackButton";
@@ -29,11 +29,14 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import BottomNav from "./components/BottomNav";
 import NotFoundPage from "./pages/NotFoundPage";
+import useOfflineStatus from "./hooks/useOfflineStatus";
+import OfflinePage from "./pages/OfflinePage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
 	const { getCartItems } = useCartStore();
 	const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+	const isOffline = useOfflineStatus();
 
 	useEffect(() => {
 		checkAuth();
@@ -45,7 +48,24 @@ function App() {
 		getCartItems();
 	}, [getCartItems, user]);
 
+	useEffect(() => {
+		if (isOffline) {
+			toast.error("You are currently offline. Some features may be unavailable.", {
+				duration: Infinity,
+				id: "offline-toast",
+			});
+		} else {
+			toast.success("You are back online!", {
+				id: "offline-toast",
+			});
+		}
+	}, [isOffline]);
+
 	if (checkingAuth) return <LoadingSpinner fullScreen={true} />;
+
+	if (isOffline) {
+		return <OfflinePage />;
+	}
 
 	return (
 		<div className='min-h-screen bg-gray-900 text-white relative overflow-hidden'>
