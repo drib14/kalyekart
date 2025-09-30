@@ -26,6 +26,7 @@ const AnalyticsTab = () => {
 	const [analyticsData, setAnalyticsData] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [filter, setFilter] = useState("weekly");
+	const [chartKey, setChartKey] = useState(0); // Add a key to force re-rendering
 
 	useEffect(() => {
 		setIsLoading(true);
@@ -35,6 +36,7 @@ const AnalyticsTab = () => {
 		eventSource.onmessage = (event) => {
 			const data = JSON.parse(event.data);
 			setAnalyticsData(data);
+			setChartKey(prevKey => prevKey + 1); // Force re-render
 			setIsLoading(false);
 		};
 
@@ -112,7 +114,7 @@ const AnalyticsTab = () => {
 					Sales & Revenue Breakdown
 				</h3>
 				<ResponsiveContainer width='100%' height={400}>
-					<LineChart data={analyticsData?.graphData}>
+					<LineChart key={chartKey} data={analyticsData?.graphData}>
 						<CartesianGrid strokeDasharray='3 3' stroke='#4A5568' />
 						<XAxis dataKey='name' stroke='#A0AEC0' tick={{ fontSize: 12 }} />
 						<YAxis yAxisId='left' stroke='#82ca9d' tick={{ fontSize: 12 }} />
