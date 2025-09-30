@@ -46,12 +46,17 @@
             margin-bottom: 20px;
         }
         .order-details th, .order-details td {
-            border: 1px solid #333;
+            border-bottom: 1px solid #333;
             padding: 12px;
             text-align: left;
         }
         .order-details th {
             background-color: #282828;
+        }
+        .order-details .total-row td {
+             font-weight: 700;
+             font-size: 18px;
+             border-top: 2px solid #555;
         }
         .footer {
             text-align: center;
@@ -80,11 +85,7 @@
             <p>A new order has been placed on KalyeKart.</p>
 
             <h2>Order Details (ID: {{ORDER_ID}})</h2>
-            <ul>
-                <li><strong>Customer:</strong> {{CUSTOMER_NAME}}</li>
-                <li><strong>Email:</strong> {{CUSTOMER_EMAIL}}</li>
-                <li><strong>Total Amount:</strong> ₱{{TOTAL}}</li>
-            </ul>
+            <p><strong>Customer:</strong> {{CUSTOMER_NAME}} ({{CUSTOMER_EMAIL}})</p>
 
             <h2>Items:</h2>
             <table class="order-details">
@@ -98,6 +99,20 @@
                 <tbody>
                     {{{ORDER_ITEMS}}}
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2">Subtotal</td>
+                        <td>₱{{SUBTOTAL}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Delivery Fee</td>
+                        <td>₱{{DELIVERY_FEE}}</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="2">Total</td>
+                        <td>₱{{TOTAL}}</td>
+                    </tr>
+                </tfoot>
             </table>
 
             <p>Please review the order in the admin dashboard.</p>

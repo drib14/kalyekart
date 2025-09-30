@@ -190,9 +190,19 @@ const AdminOrdersTab = () => {
 									))}
 								</div>
 								<div className='border-t border-gray-700 my-4' />
-								<div className='flex justify-between items-center font-bold text-white'>
-									<p>Total</p>
-									<p>₱{order.totalAmount.toFixed(2)}</p>
+								<div className='space-y-2 text-right'>
+									<div className='flex justify-between items-center text-sm text-gray-300'>
+										<p>Subtotal</p>
+										<p>₱{order.subtotal.toFixed(2)}</p>
+									</div>
+									<div className='flex justify-between items-center text-sm text-gray-300'>
+										<p>Delivery Fee</p>
+										<p>₱{order.deliveryFee.toFixed(2)}</p>
+									</div>
+									<div className='flex justify-between items-center font-bold text-white text-lg'>
+										<p>Total</p>
+										<p>₱{order.totalAmount.toFixed(2)}</p>
+									</div>
 								</div>
 
 								{expandedOrderId === order._id && (
