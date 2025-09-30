@@ -1,29 +1,49 @@
-import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "../lib/axios";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { useNotifications } from "../lib/useNotifications";
 import { User } from "lucide-react";
+import { useUserStore } from "../stores/useUserStore";
 
 const NotificationPanel = ({ onClose }) => {
-	const { notifications, unreadCount } = useNotifications();
+	const { notifications } = useNotifications();
+	const { user } = useUserStore();
 	const queryClient = useQueryClient();
+	const queryKey = ["notifications", user?._id];
 
 	const markAsReadMutation = useMutation({
 		mutationFn: (notificationId) => axios.put(`/notifications/${notificationId}/read`),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["notifications"] });
+		onMutate: async (notificationId) => {
+			// Cancel any outgoing refetches so they don't overwrite our optimistic update
+			await queryClient.cancelQueries({ queryKey });
+
+			// Snapshot the previous value
+			const previousNotifications = queryClient.getQueryData(queryKey);
+
+			// Optimistically update to the new value
+			queryClient.setQueryData(queryKey, (oldData = []) =>
+				oldData.map((notification) =>
+					notification._id === notificationId
+						? { ...notification, isRead: true }
+						: notification
+				)
+			);
+
+			// Return a context object with the snapshotted value
+			return { previousNotifications };
+		},
+		onError: (err, notificationId, context) => {
+			// If the mutation fails, use the context we returned from onMutate to roll back
+			if (context?.previousNotifications) {
+				queryClient.setQueryData(queryKey, context.previousNotifications);
+			}
+		},
+		onSettled: () => {
+			// Always refetch after error or success to ensure server state
+			queryClient.invalidateQueries({ queryKey });
 		},
 	});
-
-	const markAllAsReadMutation = useMutation({
-		mutationFn: () => axios.put("/notifications/read-all"),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["notifications"] });
-		},
-	});
-
 
 	const handleNotificationClick = (notification) => {
 		if (!notification.isRead) {
