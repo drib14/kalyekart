@@ -1,100 +1,146 @@
 import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
 import Product from "../models/product.model.js";
-import { endOfDay, startOfDay, startOfWeek, endOfWeek, startOfYear, endOfYear } from "date-fns";
+import { endOfDay, startOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 
-const getDatesAndGroupByFormat = (filter) => {
-	let startDate, endDate, groupByFormat, unit;
-
+// Helper to determine date ranges and grouping formats based on the filter
+const getAnalyticsTimeframe = (filter) => {
 	const now = new Date();
+	let startDate, endDate, groupByFormat;
 
 	switch (filter) {
 		case "daily":
 			startDate = startOfDay(now);
 			endDate = endOfDay(now);
-			groupByFormat = "%Y-%m-%d"; // Group by day for daily view
-			unit = "day";
+			groupByFormat = "%Y-%m-%d";
 			break;
 		case "weekly":
-			startDate = startOfWeek(now, { weekStartsOn: 1 }); // Assuming week starts on Monday
+			startDate = startOfWeek(now, { weekStartsOn: 1 });
 			endDate = endOfWeek(now, { weekStartsOn: 1 });
-			groupByFormat = "%Y-%m-%d"; // Group by day for weekly view
-			unit = "day";
+			groupByFormat = "%Y-%m-%d";
+			break;
+		case "monthly":
+			startDate = startOfMonth(now);
+			endDate = endOfMonth(now);
+			groupByFormat = "%Y-%m-%d";
 			break;
 		case "yearly":
 			startDate = startOfYear(now);
 			endDate = endOfYear(now);
-			groupByFormat = "%Y-%m"; // Group by month for yearly view
-			unit = "month";
+			groupByFormat = "%Y-%m";
 			break;
 		case "overall":
 		default:
-			startDate = new Date(0); // A very long time ago
+			startDate = new Date(0); // Epoch start
 			endDate = now;
-			groupByFormat = "%Y"; // Group by year for overall view
-			unit = "year";
+			groupByFormat = "%Y";
 			break;
 	}
-
-	return { startDate, endDate, groupByFormat, unit };
+	return { startDate, endDate, groupByFormat };
 };
 
-export const getRevenueAnalytics = async (req, res) => {
-	try {
-		const { filter = "weekly" } = req.query; // Default to weekly
-		const { startDate, endDate, groupByFormat, unit } = getDatesAndGroupByFormat(filter);
+// Main function to fetch all analytics data
+const getAnalyticsData = async (filter) => {
+	const { startDate, endDate, groupByFormat } = getAnalyticsTimeframe(filter);
 
-		// 1. Calculate total revenue for the period
-		const revenueAggregation = await Order.aggregate([
-			{
-				$match: {
-					status: "Delivered",
-					createdAt: { $gte: startDate, $lte: endDate },
-				},
+	// Aggregation for period-specific stats (sales and revenue)
+	const periodStatsPromise = Order.aggregate([
+		{
+			$match: {
+				status: "Delivered",
+				createdAt: { $gte: startDate, $lte: endDate },
 			},
-			{
-				$group: {
-					_id: null,
-					totalRevenue: { $sum: "$totalAmount" },
-				},
+		},
+		{
+			$group: {
+				_id: null,
+				totalSales: { $sum: 1 },
+				totalRevenue: { $sum: "$totalAmount" },
 			},
-		]);
+		},
+	]);
 
-		const totalRevenue = revenueAggregation.length > 0 ? revenueAggregation[0].totalRevenue : 0;
-
-		// 2. Get data for the graph
-		const graphDataAggregation = await Order.aggregate([
-			{
-				$match: {
-					status: "Delivered",
-					createdAt: { $gte: startDate, $lte: endDate },
-				},
+	// Aggregation for the graph data
+	const graphDataPromise = Order.aggregate([
+		{
+			$match: {
+				status: "Delivered",
+				createdAt: { $gte: startDate, $lte: endDate },
 			},
-			{
-				$group: {
-					_id: { $dateToString: { format: groupByFormat, date: "$createdAt" } },
-					revenue: { $sum: "$totalAmount" },
-				},
+		},
+		{
+			$group: {
+				_id: { $dateToString: { format: groupByFormat, date: "$createdAt" } },
+				sales: { $sum: 1 },
+				revenue: { $sum: "$totalAmount" },
 			},
-			{ $sort: { _id: 1 } },
-		]);
+		},
+		{ $sort: { _id: 1 } },
+	]);
 
-		// 3. Get other general stats (can be cached in a real app for performance)
-		const totalUsers = await User.countDocuments({ role: "customer" });
-		const totalProducts = await Product.countDocuments();
-		const totalOrders = await Order.countDocuments({ status: "Delivered" });
+	// General stats (can be cached for performance)
+	const totalUsersPromise = User.countDocuments({ role: "customer" });
+	const totalProductsPromise = Product.countDocuments();
 
-		res.status(200).json({
-			totalRevenue,
-			graphData: graphDataAggregation.map((item) => ({ name: item._id, revenue: item.revenue })),
-			stats: {
-				totalUsers,
-				totalProducts,
-				totalOrders,
-			},
-		});
-	} catch (error) {
-		console.error("Error in getRevenueAnalytics:", error.message);
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
+	// Execute all promises concurrently
+	const [periodStatsResult, graphDataResult, totalUsers, totalProducts] = await Promise.all([
+		periodStatsPromise,
+		graphDataPromise,
+		totalUsersPromise,
+		totalProductsPromise,
+	]);
+
+	const { totalSales = 0, totalRevenue = 0 } = periodStatsResult[0] || {};
+
+	return {
+		totalRevenue,
+		totalSales,
+		graphData: graphDataResult.map((item) => ({
+			name: item._id,
+			sales: item.sales,
+			revenue: item.revenue,
+		})),
+		stats: {
+			totalUsers,
+			totalProducts,
+		},
+	};
+};
+
+// SSE endpoint to stream analytics data
+export const streamAnalyticsData = async (req, res) => {
+	res.setHeader("Content-Type", "text/event-stream");
+	res.setHeader("Cache-Control", "no-cache");
+	res.setHeader("Connection", "keep-alive");
+	res.flushHeaders();
+
+	let lastSentData = null;
+	const filter = req.query.filter || "weekly";
+
+	const sendData = async () => {
+		try {
+			const data = await getAnalyticsData(filter);
+			const dataToSend = JSON.stringify(data);
+
+			if (dataToSend !== lastSentData) {
+				res.write(`data: ${dataToSend}\n\n`);
+				lastSentData = dataToSend;
+			}
+		} catch (error) {
+			console.error("Error fetching analytics data for SSE:", error);
+			// Don't close the connection on error, just log it
+		}
+	};
+
+	// Send data immediately on connection
+	sendData();
+
+	// Send data every 5 seconds
+	const intervalId = setInterval(sendData, 5000);
+
+	// Close the connection when the client disconnects
+	req.on("close", () => {
+		clearInterval(intervalId);
+		res.end();
+	});
 };
