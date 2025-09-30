@@ -123,6 +123,8 @@ export const googleAuth = async (req, res) => {
 		const isNew = !user;
 
 		if (isNew) {
+			// Generate a random password for the new user.
+			// The user model's pre-save hook will automatically hash this password.
 			const password = crypto.randomBytes(16).toString("hex");
 			user = await User.create({
 				name,
