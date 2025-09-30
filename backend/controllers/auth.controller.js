@@ -1,3 +1,4 @@
+import { OAuth2Client } from "google-auth-library";
 import { redis } from "../lib/redis.js";
 import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
@@ -5,6 +6,8 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { sendEmail } from "../lib/email.js";
 import { prepareUserResponse } from "../lib/prepareUserResponse.js";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateTokens = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -112,6 +115,57 @@ export const logout = async (req, res) => {
 	} catch (error) {
 		console.log("Error in logout controller", error.message);
 		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const googleAuth = async (req, res) => {
+	try {
+		const { idToken } = req.body;
+
+		const ticket = await client.verifyIdToken({
+			idToken,
+			audience: process.env.GOOGLE_CLIENT_ID,
+		});
+
+		const { name, email, picture } = ticket.getPayload();
+
+		let user = await User.findOne({ email });
+
+		if (!user) {
+			const password = crypto.randomBytes(16).toString("hex");
+			user = await User.create({
+				name,
+				email,
+				password,
+				avatar: {
+					url: picture,
+					public_id: null,
+				},
+			});
+
+			await sendEmail(user.email, "Welcome to KalyeKart!", "welcome", {
+				NAME: user.name,
+				CTA_LINK: "https://kalyekart.app",
+			});
+
+			const customerNotification = new Notification({
+				recipient: user._id,
+				type: "welcome",
+				message: "Welcome to KalyeKart! We're thrilled to have you.",
+				link: "/",
+			});
+			await customerNotification.save();
+		}
+
+		const { accessToken, refreshToken } = generateTokens(user._id);
+		await storeRefreshToken(user._id, refreshToken);
+		setCookies(res, accessToken, refreshToken);
+
+		const userToReturn = prepareUserResponse(user);
+		res.status(user.isNew ? 201 : 200).json(userToReturn);
+	} catch (error) {
+		console.log("Error in googleAuth controller", error.message);
+		res.status(500).json({ message: "Google authentication failed", error: error.message });
 	}
 };
 

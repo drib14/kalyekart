@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { UserPlus, Mail, Lock, User, ArrowRight, Loader } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserStore } from "../stores/useUserStore";
+import { GoogleLogin } from "@react-oauth/google";
 
 const SignUpPage = () => {
 	const [formData, setFormData] = useState({
@@ -12,11 +13,15 @@ const SignUpPage = () => {
 		confirmPassword: "",
 	});
 
-	const { signup, loading } = useUserStore();
+	const { signup, loading, googleLogin } = useUserStore();
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
 		signup(formData);
+	};
+
+	const handleGoogleSuccess = (credentialResponse) => {
+		googleLogin(credentialResponse.credential);
 	};
 
 	return (
@@ -145,6 +150,25 @@ const SignUpPage = () => {
 							)}
 						</button>
 					</form>
+					<div className='mt-6'>
+						<div className='relative'>
+							<div className='absolute inset-0 flex items-center'>
+								<div className='w-full border-t border-gray-700' />
+							</div>
+							<div className='relative flex justify-center text-sm'>
+								<span className='px-2 bg-gray-800 text-gray-400'>Or continue with</span>
+							</div>
+						</div>
+
+						<div className='mt-6 flex justify-center'>
+							<GoogleLogin
+								onSuccess={handleGoogleSuccess}
+								onError={() => {
+									console.log("Login Failed");
+								}}
+							/>
+						</div>
+					</div>
 
 					<p className='mt-8 text-center text-sm text-gray-400'>
 						Already have an account?{" "}

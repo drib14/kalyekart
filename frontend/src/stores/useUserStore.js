@@ -39,6 +39,18 @@ export const useUserStore = create((set, get) => ({
 		}
 	},
 
+	googleLogin: async (idToken) => {
+		set({ loading: true });
+		try {
+			const res = await axios.post("/auth/google", { idToken });
+			set({ user: res.data, loading: false });
+			toast.success("Logged in successfully with Google!");
+		} catch (error) {
+			set({ loading: false });
+			toast.error(error.response.data.message || "Google login failed");
+		}
+	},
+
 	logout: async () => {
 		try {
 			await axios.post("/auth/logout");
