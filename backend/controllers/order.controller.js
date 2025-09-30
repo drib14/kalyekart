@@ -372,6 +372,19 @@ export const updateOrderStatus = async (req, res) => {
 			);
 		}
 
+		if (admin) {
+			await sendEmail(
+				process.env.EMAIL_USER,
+				`Order #${order._id.toString().slice(-6)} Status Updated to ${status}`,
+				"adminOrderStatusUpdate",
+				{
+					ORDER_ID: order._id.toString(),
+					NEW_STATUS: status,
+					CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+				}
+			);
+		}
+
 		const customerNotification = new Notification({
 			recipient: order.user._id,
 			sender: admin ? admin._id : null,
