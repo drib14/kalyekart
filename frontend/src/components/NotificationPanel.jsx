@@ -24,14 +24,6 @@ const NotificationPanel = ({ onClose }) => {
 		},
 	});
 
-	useEffect(() => {
-		// This cleanup function runs when the component unmounts (i.e., the panel closes)
-		return () => {
-			if (unreadCount > 0) {
-				markAllAsReadMutation.mutate();
-			}
-		};
-	}, [unreadCount, markAllAsReadMutation]);
 
 	const handleNotificationClick = (notification) => {
 		if (!notification.isRead) {

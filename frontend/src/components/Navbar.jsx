@@ -7,8 +7,9 @@ import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import NotificationBell from "./NotificationBell";
 import NotificationPanel from "./NotificationPanel";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "../lib/axios";
+import { useNotifications } from "../lib/useNotifications";
 
 const Navbar = () => {
 	const { user, logout } = useUserStore();
@@ -18,7 +19,17 @@ const Navbar = () => {
 	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 	const dropdownRef = useRef(null);
 	const notificationRef = useRef(null);
+	const prevIsNotificationsOpenRef = useRef(isNotificationsOpen);
 
+	const { unreadCount } = useNotifications();
+	const queryClient = useQueryClient();
+
+	const markAllAsReadMutation = useMutation({
+		mutationFn: () => axios.put("/notifications/read-all"),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["notifications"] });
+		},
+	});
 
 	useEffect(() => {
 		const handleClickOutside = (event) => {
@@ -34,6 +45,16 @@ const Navbar = () => {
 			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, []);
+
+	// Effect to mark notifications as read when the panel is closed
+	useEffect(() => {
+		if (prevIsNotificationsOpenRef.current && !isNotificationsOpen) {
+			if (unreadCount > 0) {
+				markAllAsReadMutation.mutate();
+			}
+		}
+		prevIsNotificationsOpenRef.current = isNotificationsOpen;
+	}, [isNotificationsOpen, unreadCount, markAllAsReadMutation]);
 
 	const handleNotImplemented = () => {
 		toast.info("This feature is not yet implemented.");
