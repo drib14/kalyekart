@@ -1,171 +1,100 @@
 import Order from "../models/order.model.js";
-import Product from "../models/product.model.js";
 import User from "../models/user.model.js";
+import Product from "../models/product.model.js";
+import { endOfDay, startOfDay, startOfWeek, endOfWeek, startOfYear, endOfYear } from "date-fns";
 
-export const getAnalyticsData = async () => {
+const getDatesAndGroupByFormat = (filter) => {
+	let startDate, endDate, groupByFormat, unit;
+
+	const now = new Date();
+
+	switch (filter) {
+		case "daily":
+			startDate = startOfDay(now);
+			endDate = endOfDay(now);
+			groupByFormat = "%Y-%m-%d"; // Group by day for daily view
+			unit = "day";
+			break;
+		case "weekly":
+			startDate = startOfWeek(now, { weekStartsOn: 1 }); // Assuming week starts on Monday
+			endDate = endOfWeek(now, { weekStartsOn: 1 });
+			groupByFormat = "%Y-%m-%d"; // Group by day for weekly view
+			unit = "day";
+			break;
+		case "yearly":
+			startDate = startOfYear(now);
+			endDate = endOfYear(now);
+			groupByFormat = "%Y-%m"; // Group by month for yearly view
+			unit = "month";
+			break;
+		case "overall":
+		default:
+			startDate = new Date(0); // A very long time ago
+			endDate = now;
+			groupByFormat = "%Y"; // Group by year for overall view
+			unit = "year";
+			break;
+	}
+
+	return { startDate, endDate, groupByFormat, unit };
+};
+
+export const getRevenueAnalytics = async (req, res) => {
 	try {
-		const totalUsers = await User.countDocuments({ role: "customer" });
-		const totalProducts = await Product.countDocuments();
+		const { filter = "weekly" } = req.query; // Default to weekly
+		const { startDate, endDate, groupByFormat, unit } = getDatesAndGroupByFormat(filter);
 
-		const salesData = await Order.aggregate([
+		// 1. Calculate total revenue for the period
+		const revenueAggregation = await Order.aggregate([
 			{
-				$match: { status: "delivered" },
+				$match: {
+					status: "Delivered",
+					createdAt: { $gte: startDate, $lte: endDate },
+				},
 			},
 			{
 				$group: {
 					_id: null,
-					totalSales: { $sum: 1 },
 					totalRevenue: { $sum: "$totalAmount" },
 				},
 			},
 		]);
 
-		const cancelledOrders = await Order.countDocuments({ status: "cancelled" });
-		const refundedOrders = await Order.countDocuments({ "refundRequest.status": "approved" });
+		const totalRevenue = revenueAggregation.length > 0 ? revenueAggregation[0].totalRevenue : 0;
 
-		const { totalSales, totalRevenue } = salesData[0] || { totalSales: 0, totalRevenue: 0 };
-
-		return {
-			users: totalUsers,
-			products: totalProducts,
-			totalSales,
-			totalRevenue,
-			cancelledOrders,
-			refundedOrders,
-		};
-	} catch (error) {
-		console.error("Error in getAnalyticsData:", error);
-		return {
-			users: 0,
-			products: 0,
-			totalSales: 0,
-			totalRevenue: 0,
-			cancelledOrders: 0,
-			refundedOrders: 0,
-		};
-	}
-};
-
-export const getDailySalesData = async (startDate, endDate) => {
-	try {
-		const dailySalesData = await Order.aggregate([
+		// 2. Get data for the graph
+		const graphDataAggregation = await Order.aggregate([
 			{
 				$match: {
-					status: "delivered",
-					createdAt: {
-						$gte: startDate,
-						$lte: endDate,
-					},
+					status: "Delivered",
+					createdAt: { $gte: startDate, $lte: endDate },
 				},
 			},
 			{
 				$group: {
-					_id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-					sales: { $sum: 1 },
+					_id: { $dateToString: { format: groupByFormat, date: "$createdAt" } },
 					revenue: { $sum: "$totalAmount" },
 				},
 			},
 			{ $sort: { _id: 1 } },
 		]);
 
-		// example of dailySalesData
-		// [
-		// 	{
-		// 		_id: "2024-08-18",
-		// 		sales: 12,
-		// 		revenue: 1450.75
-		// 	},
-		// ]
+		// 3. Get other general stats (can be cached in a real app for performance)
+		const totalUsers = await User.countDocuments({ role: "customer" });
+		const totalProducts = await Product.countDocuments();
+		const totalOrders = await Order.countDocuments({ status: "Delivered" });
 
-		const dateArray = getDatesInRange(startDate, endDate);
-		// console.log(dateArray) // ['2024-08-18', '2024-08-19', ... ]
-
-		return dateArray.map((date) => {
-			const foundData = dailySalesData.find((item) => item._id === date);
-
-			return {
-				date,
-				sales: foundData?.sales || 0,
-				revenue: foundData?.revenue || 0,
-			};
+		res.status(200).json({
+			totalRevenue,
+			graphData: graphDataAggregation.map((item) => ({ name: item._id, revenue: item.revenue })),
+			stats: {
+				totalUsers,
+				totalProducts,
+				totalOrders,
+			},
 		});
 	} catch (error) {
-		throw error;
+		console.error("Error in getRevenueAnalytics:", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
 	}
-};
-
-function getDatesInRange(startDate, endDate) {
-	const dates = [];
-	let currentDate = new Date(startDate);
-
-	while (currentDate <= endDate) {
-		dates.push(currentDate.toISOString().split("T")[0]);
-		currentDate.setDate(currentDate.getDate() + 1);
-	}
-
-	return dates;
-}
-
-export const streamAnalyticsData = async (req, res) => {
-	res.setHeader("Content-Type", "text/event-stream");
-	res.setHeader("Cache-Control", "no-cache");
-	res.setHeader("Connection", "keep-alive");
-	res.flushHeaders();
-
-	let lastSentData = null;
-
-	const sendData = async () => {
-		try {
-			const { filter } = req.query;
-			const analyticsData = await getAnalyticsData();
-
-			let startDate,
-				endDate = new Date();
-
-			switch (filter) {
-				case "overall":
-					const firstOrder = await Order.findOne().sort({ createdAt: 1 });
-					startDate = firstOrder ? firstOrder.createdAt : new Date();
-					break;
-				case "daily":
-					startDate = new Date();
-					startDate.setHours(0, 0, 0, 0);
-					break;
-				case "weekly":
-					startDate = new Date();
-					startDate.setDate(startDate.getDate() - 7);
-					break;
-				case "yearly":
-					startDate = new Date(new Date().getFullYear(), 0, 1);
-					break;
-				default:
-					// Default to weekly
-					startDate = new Date();
-					startDate.setDate(startDate.getDate() - 7);
-			}
-
-			const dailySalesData = await getDailySalesData(startDate, endDate);
-
-			const dataToSend = JSON.stringify({ analyticsData, dailySalesData });
-
-			if (dataToSend !== lastSentData) {
-				res.write(`data: ${dataToSend}\n\n`);
-				lastSentData = dataToSend;
-			}
-		} catch (error) {
-			console.error("Error fetching analytics data for SSE:", error);
-		}
-	};
-
-	// Send data immediately on connection
-	sendData();
-
-	// Send data every 5 seconds
-	const intervalId = setInterval(sendData, 5000);
-
-	// Close the connection when the client disconnects
-	req.on("close", () => {
-		clearInterval(intervalId);
-		res.end();
-	});
 };
