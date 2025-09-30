@@ -3,8 +3,7 @@ import { useCartStore } from "../stores/useCartStore";
 import { motion } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
 import CartItem from "../components/CartItem";
-import PeopleAlsoBought from "../components/PeopleAlsoBought";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import OrderSummary from "../components/OrderSummary";
 import GiftCouponCard from "../components/GiftCouponCard";
 import AddonsModal from "../components/AddonsModal";
@@ -12,6 +11,15 @@ import AddonsModal from "../components/AddonsModal";
 const CartPage = () => {
 	const { cart } = useCartStore();
 	const [isAddonsModalOpen, setIsAddonsModalOpen] = useState(false);
+	const hasOpenedModal = useRef(false);
+
+	useEffect(() => {
+		// Automatically open the addons modal once if the cart is not empty.
+		if (cart.length > 0 && !hasOpenedModal.current) {
+			setIsAddonsModalOpen(true);
+			hasOpenedModal.current = true;
+		}
+	}, [cart.length]);
 
 	return (
 		<>
@@ -34,7 +42,6 @@ const CartPage = () => {
 									))}
 								</div>
 							)}
-							{cart.length > 0 && <PeopleAlsoBought />}
 						</motion.div>
 
 						{cart.length > 0 && (
@@ -46,12 +53,6 @@ const CartPage = () => {
 							>
 								<OrderSummary />
 								<GiftCouponCard />
-								<button
-									onClick={() => setIsAddonsModalOpen(true)}
-									className='w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300'
-								>
-									Find more items to add
-								</button>
 							</motion.div>
 						)}
 					</div>
