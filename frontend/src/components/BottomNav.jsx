@@ -1,18 +1,36 @@
-import { Home, ShoppingCart, ShoppingBag, Bell } from "lucide-react";
+import { Home, ShoppingCart, ShoppingBag, LayoutDashboard } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useCartStore } from "../stores/useCartStore";
-import { useNotifications } from "../lib/useNotifications";
+import { useUserStore } from "../stores/useUserStore";
 
 const BottomNav = () => {
 	const { cart } = useCartStore();
-	const { unreadCount } = useNotifications();
+	const { user } = useUserStore();
+	const isAdmin = user?.role === "admin";
 
-	const navItems = [
+	const baseNavItems = [
 		{ to: "/", icon: Home, label: "Home" },
 		{ to: "/cart", icon: ShoppingCart, label: "Cart", badge: cart.length },
 		{ to: "/my-orders", icon: ShoppingBag, label: "Orders" },
-		{ to: "/notifications", icon: Bell, label: "Alerts", badge: unreadCount },
 	];
+
+	const adminNavItems = [
+		...baseNavItems.slice(0, 1), // Home
+		{ to: "/secret-dashboard", icon: LayoutDashboard, label: "Dashboard" },
+		...baseNavItems.slice(1), // Cart, Orders
+	];
+
+	const navItems = isAdmin ? adminNavItems : baseNavItems;
+
+	// The dashboard icon for admin should not have a badge, so we can filter it out
+	if (isAdmin) {
+		// A bit of a hacky way to place the dashboard icon second
+		const home = { to: "/", icon: Home, label: "Home" };
+		const dashboard = { to: "/secret-dashboard", icon: LayoutDashboard, label: "Dashboard" };
+		const cartItem = { to: "/cart", icon: ShoppingCart, label: "Cart", badge: cart.length };
+		const orders = { to: "/my-orders", icon: ShoppingBag, label: "Orders" };
+		navItems.splice(0, navItems.length, home, dashboard, cartItem, orders);
+	}
 
 	return (
 		<nav className='fixed bottom-0 left-0 w-full bg-gray-900 bg-opacity-90 backdrop-blur-md border-t border-emerald-800 sm:hidden z-40'>

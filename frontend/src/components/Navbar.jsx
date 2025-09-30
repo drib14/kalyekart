@@ -172,7 +172,7 @@ const Navbar = () => {
 								</div>
 							</>
 						) : (
-							<div className='hidden sm:flex items-center gap-4'>
+							<div className='flex items-center gap-4'>
 								<Link
 									to={"/signup"}
 									className='bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-lg flex items-center transition duration-300 ease-in-out'

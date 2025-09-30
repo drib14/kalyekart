@@ -95,7 +95,7 @@ function App() {
 			</div>
 			<Toaster theme='dark' />
 			{user && <BottomNav />}
-			<FloatingFeedbackButton onClick={() => setIsFeedbackModalOpen(true)} />
+			{user && <FloatingFeedbackButton onClick={() => setIsFeedbackModalOpen(true)} />}
 			<FeedbackModal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} />
 		</div>
 	);
