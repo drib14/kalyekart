@@ -5,6 +5,9 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { ShoppingCart, Star, ArrowLeft } from "lucide-react";
 import { useCartStore } from "../stores/useCartStore";
 import { toast } from "sonner";
+import ReviewsList from "../components/ReviewsList";
+import AddReviewForm from "../components/AddReviewForm";
+import MostReviewedProducts from "../components/MostReviewedProducts";
 
 const ProductDetailPage = () => {
 	const { productId } = useParams();
@@ -76,7 +79,7 @@ const ProductDetailPage = () => {
 								))}
 							</div>
 							<span className='ml-3 text-gray-300'>
-								{product.averageRating?.toFixed(1) || "No ratings"} ({product.reviewCount} reviews)
+								{product.averageRating?.toFixed(1) || "No ratings"} ({product.numReviews} reviews)
 							</span>
 						</div>
 						<div className='text-4xl font-bold text-emerald-400 mb-8'>
@@ -90,6 +93,25 @@ const ProductDetailPage = () => {
 							Add to Cart
 						</button>
 					</div>
+				</div>
+
+				<div className='mt-12'>
+					<h2 className='text-3xl font-bold text-white mb-6'>Reviews</h2>
+					<div className='grid md:grid-cols-2 gap-8'>
+						<div className='space-y-4'>
+							<h3 className='text-2xl font-bold text-white'>Add Your Review</h3>
+							<AddReviewForm productId={productId} />
+						</div>
+						<div className='space-y-4'>
+							<h3 className='text-2xl font-bold text-white'>Customer Reviews</h3>
+							<ReviewsList productId={productId} />
+						</div>
+					</div>
+				</div>
+
+				<div className='mt-12'>
+					<h2 className='text-3xl font-bold text-white mb-6'>You Might Also Like</h2>
+					<MostReviewedProducts />
 				</div>
 			</div>
 		</div>

@@ -21,6 +21,7 @@ import userRoutes from "./routes/user.route.js";
 import feedbackRoutes from "./routes/feedback.route.js";
 import locationRoutes from "./routes/location.route.js";
 import notificationRoutes from "./routes/notification.route.js";
+import reviewRoutes from "./routes/review.route.js";
 import Order from "./models/order.model.js";
 import { calculateETA } from "./lib/eta.js";
 import { connectDB } from "./lib/db.js";
@@ -55,6 +56,7 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(projectRoot, "frontend/dist")));

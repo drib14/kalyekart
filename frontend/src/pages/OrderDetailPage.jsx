@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { CheckCircle, Clock, Package, ShoppingCart, User, Home, Phone, CreditCard } from "lucide-react";
+import { CheckCircle, Clock, Package, ShoppingCart, User, Home, CreditCard } from "lucide-react";
 import CountdownTimer from "../components/CountdownTimer";
 import ProgressBar from "../components/ProgressBar";
 import RefundModal from "../components/RefundModal";

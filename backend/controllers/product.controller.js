@@ -12,6 +12,57 @@ export const getAllProducts = async (req, res) => {
 	}
 };
 
+export const getMostReviewedProducts = async (req, res) => {
+	try {
+		const products = await Product.find({ isDeleted: { $ne: true } })
+			.sort({ numReviews: -1 })
+			.limit(5); // Get top 5 most reviewed products
+		res.json(products);
+	} catch (error) {
+		console.log("Error in getMostReviewedProducts controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const updateProduct = async (req, res) => {
+	try {
+		const { id } = req.params;
+		const { name, description, price, image, category } = req.body;
+
+		const product = await Product.findById(id);
+
+		if (!product) {
+			return res.status(404).json({ message: "Product not found" });
+		}
+
+		let imageUrl = product.image;
+		// Check if a new image is provided and it's different from the current one
+		if (image && image !== product.image) {
+			const cloudinaryResponse = await cloudinary.uploader.upload(image, {
+				folder: "products",
+			});
+			imageUrl = cloudinaryResponse.secure_url;
+		}
+
+		product.name = name;
+		product.description = description;
+		product.price = price;
+		product.category = category;
+		product.image = imageUrl;
+
+		const updatedProduct = await product.save();
+
+		if (updatedProduct.isFeatured) {
+			await updateFeaturedProductsCache();
+		}
+
+		res.json(updatedProduct);
+	} catch (error) {
+		console.log("Error in updateProduct controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const getProductById = async (req, res) => {
 	try {
 		const product = await Product.findById(req.params.id);

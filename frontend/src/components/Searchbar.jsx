@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, X, History } from "lucide-react";
+import { Search, History } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useSearchStore from "../stores/useSearchStore";
 
@@ -113,7 +113,7 @@ const Searchbar = () => {
 
 					{query.length > 2 && results.length === 0 && (
 						<div className='p-4 text-center text-gray-500'>
-							<p>No products found for "{query}"</p>
+							<p>No products found for &quot;{query}&quot;</p>
 						</div>
 					)}
 				</div>

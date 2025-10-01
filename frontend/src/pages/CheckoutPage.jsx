@@ -33,7 +33,7 @@ const CheckoutPage = () => {
 			try {
 				const response = await axios.get("/locations/cities-municipalities");
 				setLocations(response.data);
-			} catch (error) {
+			} catch {
 				toast.error("Failed to fetch locations.");
 			}
 		};
@@ -50,7 +50,7 @@ const CheckoutPage = () => {
 						const response = await axios.get(`/locations/barangays/${selectedLocation.code}`);
 						setBarangays(response.data);
 						setPostalCode(selectedLocation.zip_code || "");
-					} catch (error) {
+					} catch {
 						toast.error("Failed to fetch barangays.");
 					}
 				};
@@ -71,7 +71,7 @@ const CheckoutPage = () => {
 						shippingAddress: { city, barangay },
 					});
 					setDeliveryFee(response.data.deliveryFee);
-				} catch (error) {
+				} catch {
 					toast.error("Could not calculate delivery fee.");
 					setDeliveryFee(0);
 				}
