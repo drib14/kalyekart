@@ -1,11 +1,20 @@
 import admin from "firebase-admin";
 
+import path from "path";
+import { fileURLToPath } from "url";
 import { createRequire } from "module";
+
 const require = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 try {
   console.log("🔑 Initializing Firebase Admin SDK from service account file...");
-  const serviceAccount = require("../firebase-service-account.json");
+  const serviceAccountPath = path.resolve(
+    __dirname,
+    "../firebase-service-account.json"
+  );
+  const serviceAccount = require(serviceAccountPath);
 
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
