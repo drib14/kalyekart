@@ -4,6 +4,7 @@ import {
 	deleteProduct,
 	getAllProducts,
 	getFeaturedProducts,
+	getMostReviewedProducts,
 	getProductsByCategory,
 	getRecommendedProducts,
 	getProductById,
@@ -18,6 +19,7 @@ const router = express.Router();
 router.get("/", getAllProducts);
 router.get("/search", searchProducts);
 router.get("/featured", getFeaturedProducts);
+router.get("/most-reviewed", getMostReviewedProducts);
 router.get("/category/:category", getProductsByCategory);
 router.get("/recommendations", getRecommendedProducts);
 router.get("/:id", getProductById); // Must be after other specific GET routes

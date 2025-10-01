@@ -12,6 +12,18 @@ export const getAllProducts = async (req, res) => {
 	}
 };
 
+export const getMostReviewedProducts = async (req, res) => {
+	try {
+		const products = await Product.find({ isDeleted: { $ne: true } })
+			.sort({ numReviews: -1 })
+			.limit(5); // Get top 5 most reviewed products
+		res.json(products);
+	} catch (error) {
+		console.log("Error in getMostReviewedProducts controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const updateProduct = async (req, res) => {
 	try {
 		const { id } = req.params;
