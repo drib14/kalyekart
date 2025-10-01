@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 try {
-  const serviceAccountPath = path.join(__dirname, "firebase-service-account.json");
+  const serviceAccountPath = path.join(__dirname, "..", "firebase-service-account.json");
   const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, "utf8"));
 
   admin.initializeApp({
