@@ -72,13 +72,19 @@ export const useProductStore = create((set) => ({
 	updateProduct: async (productId, productData) => {
 		set({ loading: true });
 		try {
-			// Perform the API call but don't rely on its response for the UI update
-			await axios.put(`/products/${productId}`, productData);
+			// Ensure the price is a number before updating state and sending to backend
+			const numericProductData = {
+				...productData,
+				price: parseFloat(productData.price),
+			};
 
-			// Optimistically update the UI with the new data
+			// Perform the API call with the corrected data
+			await axios.put(`/products/${productId}`, numericProductData);
+
+			// Optimistically update the UI with the new, correctly-typed data
 			set((prevState) => ({
 				products: prevState.products.map((product) =>
-					product._id === productId ? { ...product, ...productData } : product
+					product._id === productId ? { ...product, ...numericProductData } : product
 				),
 				loading: false,
 			}));
@@ -87,7 +93,6 @@ export const useProductStore = create((set) => ({
 		} catch (error) {
 			set({ loading: false });
 			toast.error(error.response?.data?.error || "Failed to update product");
-			// Optional: Revert the change on error if needed
 		}
 	},
 	fetchFeaturedProducts: async () => {
