@@ -178,9 +178,22 @@ export const streamAnalyticsData = async (req, res) => {
 
 export const getQuickStats = async (req, res) => {
 	try {
+		const refundCondition = {
+			$or: [{ $eq: ["$paymentStatus", "refunded"] }, { $eq: ["$refundRequest.status", "approved"] }],
+		};
+
 		const totalRevenuePromise = Order.aggregate([
 			{ $match: { status: "Delivered" } },
-			{ $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } },
+			{
+				$group: {
+					_id: null,
+					totalRevenue: {
+						$sum: {
+							$cond: { if: refundCondition, then: 0, else: "$totalAmount" },
+						},
+					},
+				},
+			},
 		]);
 
 		const totalSalesPromise = Order.countDocuments({ status: "Delivered" });
