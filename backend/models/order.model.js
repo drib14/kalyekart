@@ -97,9 +97,14 @@ const orderSchema = new mongoose.Schema(
 			},
 			rejectionReason: String,
 		},
+		stripeSessionId: {
+			type: String,
+		},
 	},
 	{ timestamps: true }
 );
+
+orderSchema.index({ stripeSessionId: 1 }, { unique: true, sparse: true });
 
 const Order = mongoose.model("Order", orderSchema);
 
