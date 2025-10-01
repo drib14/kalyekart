@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { User, MapPin, CreditCard, ShoppingBag, Heart, Camera, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useUserStore } from "../stores/useUserStore";
@@ -135,21 +136,31 @@ const CustomerProfilePage = () => {
 							</div>
 						</div>
 
-						{/* Delivery & Payment */}
-						<div className='bg-gray-800 p-6 rounded-lg'>
-							<h2 className='text-xl font-semibold mb-4 flex items-center'><MapPin className="mr-2"/> Delivery & Payment</h2>
-							<div className='space-y-3'>
-								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><MapPin className="mr-2"/> Manage Delivery Addresses</button>
-								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><CreditCard className="mr-2"/> Manage Payment Methods</button>
-							</div>
-						</div>
-
-						{/* Order Activity */}
-						<div className='bg-gray-800 p-6 rounded-lg md:col-span-2'>
-							<h2 className='text-xl font-semibold mb-4 flex items-center'><ShoppingBag className="mr-2"/> Order Activity</h2>
-							<div className='space-y-3'>
-								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><ShoppingBag className="mr-2"/> View Recent Orders</button>
-								<button onClick={handleNotImplemented} type="button" className='flex items-center w-full text-left hover:text-emerald-400'><Heart className="mr-2"/> Favorite Items</button>
+						<div className='md:col-span-2'>
+							<div className='bg-gray-800 p-6 rounded-lg'>
+								<h2 className='text-xl font-semibold mb-4 flex items-center'>
+									<User className='mr-2' /> Account Management
+								</h2>
+								<div className='space-y-3'>
+									<Link
+										to='/my-orders'
+										className='flex items-center w-full text-left hover:text-emerald-400'
+									>
+										<ShoppingBag className='mr-2' /> View All Orders
+									</Link>
+									<Link
+										to='/my-reviews'
+										className='flex items-center w-full text-left hover:text-emerald-400'
+									>
+										<MessageSquare className='mr-2' /> My Reviews
+									</Link>
+									<Link
+										to='/my-favorites'
+										className='flex items-center w-full text-left hover:text-emerald-400'
+									>
+										<Heart className='mr-2' /> My Favorites
+									</Link>
+								</div>
 							</div>
 						</div>
 					</div>

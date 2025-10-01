@@ -47,6 +47,12 @@ const productSchema = new mongoose.Schema(
 			required: true,
 			default: 0,
 		},
+		favoritedBy: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: "User",
+			},
+		],
 	},
 	{ timestamps: true }
 );

@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, Link } from "react-router-dom";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { ShoppingCart, Star, ArrowLeft } from "lucide-react";
+import { ShoppingCart, Star, ArrowLeft, Heart } from "lucide-react";
 import { useCartStore } from "../stores/useCartStore";
 import { useUserStore } from "../stores/useUserStore";
 import { toast } from "sonner";
@@ -13,7 +13,8 @@ import MostReviewedProducts from "../components/MostReviewedProducts";
 const ProductDetailPage = () => {
 	const { productId } = useParams();
 	const { addToCart } = useCartStore();
-	const { user } = useUserStore();
+	const { user, checkAuth } = useUserStore();
+	const queryClient = useQueryClient();
 
 	const {
 		data: product,
@@ -41,7 +42,19 @@ const ProductDetailPage = () => {
 		enabled: !!productId,
 	});
 
+	const toggleFavoriteMutation = useMutation({
+		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
+		onSuccess: () => {
+			toast.success("Favorites updated!");
+			checkAuth();
+		},
+		onError: (error) => {
+			toast.error(error.response?.data?.message || "Failed to update favorites.");
+		},
+	});
+
 	const userHasReviewed = reviews?.some((review) => review.user._id === user?._id);
+	const isFavorited = user?.favorites?.includes(product?._id);
 
 	if (isLoadingProduct) {
 		return <LoadingSpinner fullScreen={true} />;
@@ -62,6 +75,14 @@ const ProductDetailPage = () => {
 	const handleAddToCart = () => {
 		addToCart(product);
 		toast.success(`${product.name} added to cart!`);
+	};
+
+	const handleFavoriteClick = () => {
+		if (!user) {
+			toast.error("Please login to favorite items.", { id: "login-favorite" });
+			return;
+		}
+		toggleFavoriteMutation.mutate();
 	};
 
 	return (
@@ -102,13 +123,23 @@ const ProductDetailPage = () => {
 						<div className='text-4xl font-bold text-emerald-400 mb-8'>
 							₱{product.price.toFixed(2)}
 						</div>
-						<button
-							onClick={handleAddToCart}
-							className='w-full max-w-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center text-lg transition-transform transform hover:scale-105'
-						>
-							<ShoppingCart size={24} className='mr-3' />
-							Add to Cart
-						</button>
+						<div className="flex items-center gap-4">
+							<button
+								onClick={handleAddToCart}
+								className='w-full max-w-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center text-lg transition-transform transform hover:scale-105'
+							>
+								<ShoppingCart size={24} className='mr-3' />
+								Add to Cart
+							</button>
+							<button
+								onClick={handleFavoriteClick}
+								disabled={toggleFavoriteMutation.isPending}
+								className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50"
+								title="Add to Favorites"
+							>
+								<Heart size={24} className={isFavorited ? "fill-red-500 text-red-500" : ""} />
+							</button>
+						</div>
 					</div>
 				</div>
 

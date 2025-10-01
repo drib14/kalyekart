@@ -3,11 +3,26 @@ import { ShoppingCart, Heart, ShoppingBag, Star } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
 import { useCartStore } from "../stores/useCartStore";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "../lib/axios";
 
 const ProductCard = ({ product, onCardClick }) => {
-	const { user } = useUserStore();
+	const { user, checkAuth } = useUserStore();
 	const { addToCart } = useCartStore();
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
+
+	const toggleFavoriteMutation = useMutation({
+		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
+		onSuccess: () => {
+			toast.success("Favorites updated!");
+			// checkAuth will refetch user data and update the zustand store
+			checkAuth();
+		},
+		onError: (error) => {
+			toast.error(error.response?.data?.message || "Failed to update favorites.");
+		},
+	});
 
 	const handleAddToCart = (e) => {
 		e.stopPropagation();
@@ -28,10 +43,16 @@ const ProductCard = ({ product, onCardClick }) => {
 		navigate("/checkout");
 	};
 
-	const handleFeatureComingSoon = (e) => {
+	const handleFavoriteClick = (e) => {
 		e.stopPropagation();
-		toast.success("This feature is coming soon!");
+		if (!user) {
+			toast.error("Please login to favorite items.", { id: "login-favorite" });
+			return;
+		}
+		toggleFavoriteMutation.mutate();
 	};
+
+	const isFavorited = user?.favorites?.includes(product._id);
 
 	return (
 		<div
@@ -42,10 +63,11 @@ const ProductCard = ({ product, onCardClick }) => {
 				<img className='object-cover w-full' src={product.image} alt={product.name} />
 				<div className='absolute inset-0 bg-black bg-opacity-20' />
 				<button
-					className='absolute top-2 right-2 flex items-center justify-center rounded-full bg-white/20 p-2 text-white backdrop-blur-sm hover:bg-white/30'
-					onClick={handleFeatureComingSoon}
+					className='absolute top-2 right-2 flex items-center justify-center rounded-full bg-white/20 p-2 text-white backdrop-blur-sm hover:bg-white/30 disabled:opacity-50'
+					onClick={handleFavoriteClick}
+					disabled={toggleFavoriteMutation.isPending}
 				>
-					<Heart size={20} />
+					<Heart size={20} className={isFavorited ? "fill-red-500 text-red-500" : ""} />
 				</button>
 			</div>
 
