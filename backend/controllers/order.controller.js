@@ -51,6 +51,7 @@ export const createCodOrder = async (req, res) => {
 			deliveryFee,
 			distance,
 			totalAmount,
+			stripeSessionId: undefined,
 		});
 
 		await newOrder.save();
