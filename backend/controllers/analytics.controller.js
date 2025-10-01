@@ -43,19 +43,29 @@ const getAnalyticsTimeframe = (filter) => {
 
 // Main function to fetch all analytics data
 const getAnalyticsData = async (filter) => {
-	const { startDate, endDate, groupByFormat } = getAnalyticsTimeframe(filter);
+	// --- Timeframe for Filtered Stats ---
+	const { startDate: filteredStartDate, endDate: filteredEndDate } = getAnalyticsTimeframe(filter);
+
+	// --- Timeframe for Overall Graph ---
+	const {
+		startDate: overallStartDate,
+		endDate: overallEndDate,
+		groupByFormat: overallGroupByFormat,
+	} = getAnalyticsTimeframe("overall");
 
 	// Defines the condition for an order to be considered refunded
 	const refundCondition = {
 		$or: [{ $eq: ["$paymentStatus", "refunded"] }, { $eq: ["$refundRequest.status", "approved"] }],
 	};
 
-	// Aggregation for period-specific stats (sales and revenue)
-	const periodStatsPromise = Order.aggregate([
+	// --- Promises ---
+
+	// 1. Promise for FILTERED stats (sales and revenue)
+	const filteredStatsPromise = Order.aggregate([
 		{
 			$match: {
 				status: "Delivered",
-				createdAt: { $gte: startDate, $lte: endDate },
+				createdAt: { $gte: filteredStartDate, $lte: filteredEndDate },
 			},
 		},
 		{
@@ -64,38 +74,28 @@ const getAnalyticsData = async (filter) => {
 				totalSales: { $sum: 1 },
 				totalRevenue: {
 					$sum: {
-						// If the order is refunded, its revenue is not included in the sum
-						$cond: {
-							if: refundCondition,
-							then: 0,
-							else: "$totalAmount",
-						},
+						$cond: { if: refundCondition, then: 0, else: "$totalAmount" },
 					},
 				},
 			},
 		},
 	]);
 
-	// Aggregation for the graph data
-	const graphDataPromise = Order.aggregate([
+	// 2. Promise for OVERALL graph data
+	const overallGraphDataPromise = Order.aggregate([
 		{
 			$match: {
 				status: "Delivered",
-				createdAt: { $gte: startDate, $lte: endDate },
+				createdAt: { $gte: overallStartDate, $lte: overallEndDate },
 			},
 		},
 		{
 			$group: {
-				_id: { $dateToString: { format: groupByFormat, date: "$createdAt" } },
+				_id: { $dateToString: { format: overallGroupByFormat, date: "$createdAt" } },
 				sales: { $sum: 1 },
 				revenue: {
 					$sum: {
-						// Same refund logic applied to each data point in the graph
-						$cond: {
-							if: refundCondition,
-							then: 0,
-							else: "$totalAmount",
-						},
+						$cond: { if: refundCondition, then: 0, else: "$totalAmount" },
 					},
 				},
 			},
@@ -103,32 +103,37 @@ const getAnalyticsData = async (filter) => {
 		{ $sort: { _id: 1 } },
 	]);
 
-	// General stats (can be cached for performance)
-	const totalUsersPromise = User.countDocuments(); // Count all users including admins
+	// 3. Promises for OVERALL stats (users and products)
+	const totalUsersPromise = User.countDocuments();
 	const totalProductsPromise = Product.countDocuments();
 
-	// Execute all promises concurrently
-	const [periodStatsResult, graphDataResult, totalUsers, totalProducts] = await Promise.all([
-		periodStatsPromise,
-		graphDataPromise,
-		totalUsersPromise,
-		totalProductsPromise,
-	]);
+	// --- Execution ---
+	const [filteredStatsResult, overallGraphDataResult, totalUsers, totalProducts] =
+		await Promise.all([
+			filteredStatsPromise,
+			overallGraphDataPromise,
+			totalUsersPromise,
+			totalProductsPromise,
+		]);
 
-	const { totalSales = 0, totalRevenue = 0 } = periodStatsResult[0] || {};
+	// --- Formatting ---
+	const { totalSales: filteredSales = 0, totalRevenue: filteredRevenue = 0 } =
+		filteredStatsResult[0] || {};
 
 	return {
-		totalRevenue,
-		totalSales,
-		graphData: graphDataResult.map((item) => ({
+		filteredStats: {
+			totalSales: filteredSales,
+			totalRevenue: filteredRevenue,
+		},
+		overallStats: {
+			totalUsers,
+			totalProducts,
+		},
+		overallGraphData: overallGraphDataResult.map((item) => ({
 			name: item._id,
 			sales: item.sales,
 			revenue: item.revenue,
 		})),
-		stats: {
-			totalUsers,
-			totalProducts,
-		},
 	};
 };
 

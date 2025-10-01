@@ -61,23 +61,24 @@ const AnalyticsTab = () => {
 	const [analyticsData, setAnalyticsData] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [filter, setFilter] = useState("weekly");
-	const [chartKey, setChartKey] = useState(0);
 
 	useEffect(() => {
-		setIsLoading(true);
 		const eventSource = new EventSource(`/api/analytics/stream?filter=${filter}`, { withCredentials: true });
 
 		eventSource.onmessage = (event) => {
 			const data = JSON.parse(event.data);
 			setAnalyticsData(data);
-			setChartKey((prevKey) => prevKey + 1); // Force re-render of charts
-			setIsLoading(false);
+			if (isLoading) {
+				setIsLoading(false);
+			}
 		};
 
 		eventSource.onerror = (error) => {
 			console.error("EventSource failed:", error);
 			eventSource.close();
-			setIsLoading(false);
+			if (isLoading) {
+				setIsLoading(false);
+			}
 		};
 
 		return () => {
@@ -85,13 +86,19 @@ const AnalyticsTab = () => {
 		};
 	}, [filter]);
 
-	if (isLoading && !analyticsData) {
+	if (isLoading) {
 		return <LoadingSpinner fullScreen={true} />;
 	}
 
 	const filters = ["daily", "weekly", "monthly", "yearly", "overall"];
-	const revenue = analyticsData?.totalRevenue ?? 0;
-	const sales = analyticsData?.totalSales ?? 0;
+	// Filtered stats for the top cards
+	const filteredRevenue = analyticsData?.filteredStats?.totalRevenue ?? 0;
+	const filteredSales = analyticsData?.filteredStats?.totalSales ?? 0;
+
+	// Overall stats for the other cards and graphs
+	const totalUsers = analyticsData?.overallStats?.totalUsers ?? 0;
+	const totalProducts = analyticsData?.overallStats?.totalProducts ?? 0;
+	const graphData = analyticsData?.overallGraphData ?? [];
 
 	return (
 		<div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
@@ -113,20 +120,16 @@ const AnalyticsTab = () => {
 
 			<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
 				<AnalyticsCard
-					title={`Total Revenue (${filter})`}
-					value={`₱${revenue.toLocaleString("en-US", {
+					title={`Revenue (${filter})`}
+					value={`₱${filteredRevenue.toLocaleString("en-US", {
 						minimumFractionDigits: 2,
 						maximumFractionDigits: 2,
 					})}`}
 					icon={DollarSign}
 				/>
-				<AnalyticsCard title={`Total Sales (${filter})`} value={sales.toLocaleString()} icon={ShoppingCart} />
-				<AnalyticsCard title='Total Users' value={analyticsData?.stats?.totalUsers.toLocaleString() ?? "0"} icon={Users} />
-				<AnalyticsCard
-					title='Total Products'
-					value={analyticsData?.stats?.totalProducts.toLocaleString() ?? "0"}
-					icon={Package}
-				/>
+				<AnalyticsCard title={`Sales (${filter})`} value={filteredSales.toLocaleString()} icon={ShoppingCart} />
+				<AnalyticsCard title='Total Users (Overall)' value={totalUsers.toLocaleString()} icon={Users} />
+				<AnalyticsCard title='Total Products (Overall)' value={totalProducts.toLocaleString()} icon={Package} />
 			</div>
 
 			<div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
@@ -139,10 +142,10 @@ const AnalyticsTab = () => {
 				>
 					<h3 className='text-xl font-bold text-white mb-4 flex items-center gap-2'>
 						<LineChartIcon className='h-6 w-6 text-emerald-400' />
-						Revenue Trend
+						Revenue Trend (Overall)
 					</h3>
 					<ResponsiveContainer width='100%' height={400}>
-						<LineChart key={chartKey} data={analyticsData?.graphData}>
+						<LineChart data={graphData}>
 							<CartesianGrid strokeDasharray='3 3' stroke='#4A5568' />
 							<XAxis dataKey='name' stroke='#A0AEC0' tick={{ fontSize: 12 }} />
 							<YAxis stroke='#82ca9d' tick={{ fontSize: 12 }} />
@@ -169,10 +172,10 @@ const AnalyticsTab = () => {
 				>
 					<h3 className='text-xl font-bold text-white mb-4 flex items-center gap-2'>
 						<BarChartIcon className='h-6 w-6 text-indigo-400' />
-						Sales Volume
+						Sales Volume (Overall)
 					</h3>
 					<ResponsiveContainer width='100%' height={400}>
-						<BarChart key={chartKey} data={analyticsData?.graphData}>
+						<BarChart data={graphData}>
 							<CartesianGrid strokeDasharray='3 3' stroke='#4A5568' />
 							<XAxis dataKey='name' stroke='#A0AEC0' tick={{ fontSize: 12 }} />
 							<YAxis stroke='#8884d8' tick={{ fontSize: 12 }} />
