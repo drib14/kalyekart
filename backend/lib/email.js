@@ -42,6 +42,9 @@ const loadTemplate = (templateName, data) => {
 
 	let htmlContent = fs.readFileSync(templatePath, "utf8");
 
+	// Add the current year automatically to all templates
+	htmlContent = htmlContent.replace(/{{YEAR}}/g, new Date().getFullYear());
+
 	for (const key in data) {
 		const regex = new RegExp(`{{${key}}}`, "g");
 		htmlContent = htmlContent.replace(regex, data[key]);
