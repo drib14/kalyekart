@@ -60,7 +60,7 @@ const getPopulatedReviewById = async (reviewId) => {
 export const createReview = async (req, res) => {
 	const { productId } = req.params;
 	const { rating, comment } = req.body;
-	const userId = req.user._id;
+	const actor = req.user;
 
 	try {
 		const product = await Product.findById(productId);
@@ -69,7 +69,7 @@ export const createReview = async (req, res) => {
 			return res.status(404).json({ message: "Product not found" });
 		}
 
-		const alreadyReviewed = await Review.findOne({ product: productId, user: userId });
+		const alreadyReviewed = await Review.findOne({ product: productId, user: actor._id });
 
 		if (alreadyReviewed) {
 			return res.status(400).json({ message: "You have already reviewed this product." });
@@ -77,7 +77,7 @@ export const createReview = async (req, res) => {
 
 		const review = new Review({
 			product: productId,
-			user: userId,
+			user: actor._id,
 			rating,
 			comment,
 		});
@@ -89,8 +89,14 @@ export const createReview = async (req, res) => {
 		product.numReviews = reviews.length;
 		product.averageRating = reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length;
 		product.reviews.push(review._id);
-
 		await product.save();
+
+		// Send notifications
+		await NotificationService.createNotification("new_review", {
+			actor,
+			product,
+			review,
+		});
 
 		res.status(201).json({ message: "Review added successfully" });
 	} catch (error) {
@@ -141,21 +147,29 @@ export const deleteReview = async (req, res) => {
 
 export const likeReview = async (req, res) => {
 	const { reviewId } = req.params;
-	const userId = req.user._id;
+	const actor = req.user;
 
 	try {
-		const review = await Review.findById(reviewId);
+		const review = await Review.findById(reviewId).populate("user").populate("product");
 
 		if (!review) {
 			return res.status(404).json({ message: "Review not found" });
 		}
 
-		const isLiked = review.likes.includes(userId);
+		const isLiked = review.likes.includes(actor._id);
 
 		if (isLiked) {
-			review.likes.pull(userId);
+			review.likes.pull(actor._id);
 		} else {
-			review.likes.push(userId);
+			review.likes.push(actor._id);
+			// Send notification only when liking, not unliking
+			await NotificationService.createNotification("new_like", {
+				actor,
+				recipient: review.user,
+				review,
+				product: review.product,
+				likedEntityType: "review",
+			});
 		}
 
 		await review.save();
@@ -305,10 +319,10 @@ export const replyToReply = async (req, res) => {
 
 export const likeReply = async (req, res) => {
 	const { reviewId, replyId } = req.params;
-	const userId = req.user._id;
+	const actor = req.user;
 
 	try {
-		const review = await Review.findById(reviewId);
+		const review = await Review.findById(reviewId).populate("product");
 		if (!review) {
 			return res.status(404).json({ message: "Review not found" });
 		}
@@ -318,11 +332,22 @@ export const likeReply = async (req, res) => {
 			return res.status(404).json({ message: "Reply not found" });
 		}
 
-		const isLiked = reply.likes.includes(userId);
+		const isLiked = reply.likes.includes(actor._id);
 		if (isLiked) {
-			reply.likes.pull(userId);
+			reply.likes.pull(actor._id);
 		} else {
-			reply.likes.push(userId);
+			reply.likes.push(actor._id);
+
+			const recipient = await User.findById(reply.user);
+			if (recipient) {
+				await NotificationService.createNotification("new_like", {
+					actor,
+					recipient,
+					review,
+					product: review.product,
+					likedEntityType: "reply",
+				});
+			}
 		}
 
 		await review.save();

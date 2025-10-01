@@ -185,6 +185,48 @@ const NotificationService = {
 				}
 				break;
 
+			case "new_review":
+				// Notify Admin
+				if (admin) {
+					const adminNotification = new Notification({
+						recipient: admin._id,
+						sender: actor._id,
+						type: "new_review",
+						message: `${actor.name} left a new review on ${product.name}.`,
+						link: `/product/${product._id}?review=${review._id}`,
+					});
+					await adminNotification.save();
+					await adminNotification.populate("sender", "name profilePicture");
+					this.sendSseNotification(admin._id.toString(), adminNotification);
+				}
+				// Notify Customer (Confirmation)
+				const reviewConfirmation = new Notification({
+					recipient: actor._id,
+					sender: admin ? admin._id : null,
+					type: "review_confirmation",
+					message: `Your review for ${product.name} has been submitted. Thank you!`,
+					link: `/product/${product._id}?review=${review._id}`,
+				});
+				await reviewConfirmation.save();
+				this.sendSseNotification(actor._id.toString(), reviewConfirmation);
+				break;
+
+			case "new_like":
+                // Notify the author of the content being liked
+				if (recipient && actor._id.toString() !== recipient._id.toString()) {
+					notification = new Notification({
+						recipient: recipient._id,
+						sender: actor._id,
+						type: "new_like",
+						message: `${actor.name} liked your ${data.likedEntityType || 'comment'}.`,
+						link: `/product/${product._id}?review=${review._id}`,
+					});
+					await notification.save();
+					await notification.populate("sender", "name profilePicture");
+					this.sendSseNotification(recipient._id.toString(), notification);
+				}
+				break;
+
 			case "new_reply":
 				// Notify the author of the comment being replied to
 				if (recipient && actor._id.toString() !== recipient._id.toString()) {
