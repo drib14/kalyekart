@@ -4,6 +4,7 @@ import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { ShoppingCart, Star, ArrowLeft } from "lucide-react";
 import { useCartStore } from "../stores/useCartStore";
+import { useUserStore } from "../stores/useUserStore";
 import { toast } from "sonner";
 import ReviewsList from "../components/ReviewsList";
 import AddReviewForm from "../components/AddReviewForm";
@@ -12,12 +13,13 @@ import MostReviewedProducts from "../components/MostReviewedProducts";
 const ProductDetailPage = () => {
 	const { productId } = useParams();
 	const { addToCart } = useCartStore();
+	const { user } = useUserStore();
 
 	const {
 		data: product,
-		isLoading,
-		isError,
-		error,
+		isLoading: isLoadingProduct,
+		isError: isErrorProduct,
+		error: productError,
 	} = useQuery({
 		queryKey: ["product", productId],
 		queryFn: async () => {
@@ -26,14 +28,29 @@ const ProductDetailPage = () => {
 		},
 	});
 
-	if (isLoading) {
+	const {
+		data: reviews,
+		isLoading: isLoadingReviews,
+		isError: isErrorReviews,
+	} = useQuery({
+		queryKey: ["reviews", productId],
+		queryFn: async () => {
+			const res = await axios.get(`/reviews/${productId}`);
+			return res.data;
+		},
+		enabled: !!productId,
+	});
+
+	const userHasReviewed = reviews?.some((review) => review.user._id === user?._id);
+
+	if (isLoadingProduct) {
 		return <LoadingSpinner fullScreen={true} />;
 	}
 
-	if (isError) {
+	if (isErrorProduct) {
 		return (
 			<div className='text-center py-10 text-red-500'>
-				Error: {error.response?.data?.message || "Failed to fetch product."}
+				Error: {productError.response?.data?.message || "Failed to fetch product."}
 			</div>
 		);
 	}
@@ -100,11 +117,16 @@ const ProductDetailPage = () => {
 					<div className='grid md:grid-cols-2 gap-8'>
 						<div className='space-y-4'>
 							<h3 className='text-2xl font-bold text-white'>Add Your Review</h3>
-							<AddReviewForm productId={productId} />
+							<AddReviewForm productId={productId} userHasReviewed={userHasReviewed} />
 						</div>
 						<div className='space-y-4'>
 							<h3 className='text-2xl font-bold text-white'>Customer Reviews</h3>
-							<ReviewsList productId={productId} />
+							<ReviewsList
+								reviews={reviews}
+								isLoading={isLoadingReviews}
+								isError={isErrorReviews}
+								productId={productId}
+							/>
 						</div>
 					</div>
 				</div>

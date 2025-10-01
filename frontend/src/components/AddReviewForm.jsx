@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "../lib/axios";
 import { toast } from "sonner";
-import { Star } from "lucide-react";
+import { Star, CheckCircle } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
 
-const AddReviewForm = ({ productId }) => {
+const AddReviewForm = ({ productId, userHasReviewed }) => {
 	const [rating, setRating] = useState(0);
 	const [comment, setComment] = useState("");
 	const [hoverRating, setHoverRating] = useState(0);
@@ -39,6 +39,16 @@ const AddReviewForm = ({ productId }) => {
 
 	if (!user) {
 		return <p className='text-gray-400'>Please log in to leave a review.</p>;
+	}
+
+	if (userHasReviewed) {
+		return (
+			<div className='bg-gray-800 p-6 rounded-lg text-center'>
+				<CheckCircle className='text-emerald-500 mx-auto mb-2 h-12 w-12' />
+				<h3 className='text-xl font-bold text-white'>You've already reviewed this product.</h3>
+				<p className='text-gray-400'>Thank you for your feedback!</p>
+			</div>
+		);
 	}
 
 	return (

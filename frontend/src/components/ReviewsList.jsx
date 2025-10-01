@@ -1,22 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import axios from "../lib/axios";
 import Comment from "./Comment";
 import LoadingSpinner from "./LoadingSpinner";
 
-const ReviewsList = ({ productId }) => {
-	const {
-		data: reviews,
-		isLoading,
-		isError,
-	} = useQuery({
-		queryKey: ["reviews", productId],
-		queryFn: async () => {
-			const res = await axios.get(`/reviews/${productId}`);
-			return res.data;
-		},
-		enabled: !!productId,
-	});
-
+const ReviewsList = ({ reviews, isLoading, isError, productId }) => {
 	if (isLoading) {
 		return (
 			<div className='flex justify-center items-center h-40'>
