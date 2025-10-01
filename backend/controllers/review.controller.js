@@ -1,6 +1,31 @@
 import Product from "../models/product.model.js";
 import Review from "../models/review.model.js";
 
+// Helper function to recursively populate replies
+async function populateReplies(replies) {
+	if (!replies || replies.length === 0) return;
+
+	for (const reply of replies) {
+		// Mongoose sub-docs need to be populated this way
+		await reply.populate({ path: "user", select: "name profilePicture" });
+		await populateReplies(reply.replies);
+	}
+}
+
+// Helper function to find a reply by its ID within a review document
+const findReplyById = (replies, replyId) => {
+	for (const reply of replies) {
+		if (reply._id.toString() === replyId) {
+			return reply;
+		}
+		if (reply.replies && reply.replies.length > 0) {
+			const found = findReplyById(reply.replies, replyId);
+			if (found) return found;
+		}
+	}
+	return null;
+};
+
 export const createReview = async (req, res) => {
 	const { productId } = req.params;
 	const { rating, comment } = req.body;
@@ -139,7 +164,8 @@ export const addReply = async (req, res) => {
 		review.replies.push(reply);
 		await review.save();
 
-		const populatedReview = await Review.findById(reviewId).populate("replies.user", "name profilePicture");
+		const populatedReview = await Review.findById(reviewId).populate("user", "name profilePicture");
+		await populateReplies(populatedReview.replies);
 
 		res.status(201).json(populatedReview);
 	} catch (error) {
@@ -162,8 +188,80 @@ export const getProductReviews = async (req, res) => {
 	const { productId } = req.params;
 
 	try {
-		const reviews = await Review.find({ product: productId }).populate("user", "name profilePicture");
+		const reviews = await Review.find({ product: productId }).populate(
+			"user",
+			"name profilePicture"
+		);
+
+		for (const review of reviews) {
+			await populateReplies(review.replies);
+		}
+
 		res.json(reviews);
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const replyToReply = async (req, res) => {
+	const { reviewId, parentReplyId } = req.params;
+	const { comment } = req.body;
+	const userId = req.user._id;
+
+	try {
+		const review = await Review.findById(reviewId);
+		if (!review) {
+			return res.status(404).json({ message: "Review not found" });
+		}
+
+		const parentReply = findReplyById(review.replies, parentReplyId);
+		if (!parentReply) {
+			return res.status(404).json({ message: "Parent reply not found" });
+		}
+
+		const newReply = {
+			user: userId,
+			comment,
+			likes: [],
+			replies: [],
+		};
+
+		parentReply.replies.push(newReply);
+		await review.save();
+
+		const populatedReview = await Review.findById(reviewId).populate("user", "name profilePicture");
+		await populateReplies(populatedReview.replies);
+
+		res.status(201).json(populatedReview);
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const likeReply = async (req, res) => {
+	const { reviewId, replyId } = req.params;
+	const userId = req.user._id;
+
+	try {
+		const review = await Review.findById(reviewId);
+		if (!review) {
+			return res.status(404).json({ message: "Review not found" });
+		}
+
+		const reply = findReplyById(review.replies, replyId);
+		if (!reply) {
+			return res.status(404).json({ message: "Reply not found" });
+		}
+
+		const isLiked = reply.likes.includes(userId);
+		if (isLiked) {
+			reply.likes.pull(userId);
+		} else {
+			reply.likes.push(userId);
+		}
+
+		await review.save();
+		res.json({ message: "Reply like status updated", likes: reply.likes.length });
 	} catch (error) {
 		res.status(500).json({ message: "Server error", error: error.message });
 	}

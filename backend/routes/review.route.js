@@ -8,6 +8,8 @@ import {
 	getMyReviews,
 	getAllReviews,
 	deleteReview,
+	replyToReply,
+	likeReply,
 } from "../controllers/review.controller.js";
 
 const router = express.Router();
@@ -46,5 +48,15 @@ router.post("/:reviewId/reply", protectRoute, addReply);
 // @route   DELETE /api/reviews/:reviewId
 // @access  Private/Admin
 router.delete("/:reviewId", protectRoute, adminRoute, deleteReview);
+
+// @desc    Reply to a nested reply
+// @route   POST /api/reviews/:reviewId/replies/:parentReplyId
+// @access  Private
+router.post("/:reviewId/replies/:parentReplyId", protectRoute, replyToReply);
+
+// @desc    Like/unlike a nested reply
+// @route   POST /api/reviews/:reviewId/replies/:replyId/like
+// @access  Private
+router.post("/:reviewId/replies/:replyId/like", protectRoute, likeReply);
 
 export default router;

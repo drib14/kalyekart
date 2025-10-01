@@ -12,9 +12,18 @@ const replySchema = new mongoose.Schema(
 			required: true,
 			trim: true,
 		},
+		likes: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: "User",
+			},
+		],
+		replies: [], // Initially empty for recursion
 	},
 	{ timestamps: true }
 );
+
+replySchema.add({ replies: [replySchema] });
 
 const reviewSchema = new mongoose.Schema(
 	{

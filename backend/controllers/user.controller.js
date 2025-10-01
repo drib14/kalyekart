@@ -52,3 +52,118 @@ export const updateUserProfile = async (req, res) => {
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
+
+export const getDeliveryAddresses = async (req, res) => {
+	try {
+		const user = await User.findById(req.user._id);
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+		res.status(200).json(user.deliveryAddresses);
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const addDeliveryAddress = async (req, res) => {
+	try {
+		const user = await User.findById(req.user._id);
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		const newAddress = req.body;
+
+		// If this is the first address, make it the default
+		if (user.deliveryAddresses.length === 0) {
+			newAddress.isDefault = true;
+		} else if (newAddress.isDefault) {
+			// If the new address is set as default, unset the current default
+			user.deliveryAddresses.forEach((addr) => (addr.isDefault = false));
+		}
+
+		user.deliveryAddresses.push(newAddress);
+		await user.save();
+		res.status(201).json(user.deliveryAddresses);
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const updateDeliveryAddress = async (req, res) => {
+	const { addressId } = req.params;
+	try {
+		const user = await User.findById(req.user._id);
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		const address = user.deliveryAddresses.id(addressId);
+		if (!address) {
+			return res.status(404).json({ message: "Address not found" });
+		}
+
+		// If updating to be the default, unset other defaults
+		if (req.body.isDefault) {
+			user.deliveryAddresses.forEach((addr) => {
+				if (addr._id.toString() !== addressId) {
+					addr.isDefault = false;
+				}
+			});
+		}
+
+		Object.assign(address, req.body);
+		await user.save();
+		res.status(200).json(user.deliveryAddresses);
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const deleteDeliveryAddress = async (req, res) => {
+	const { addressId } = req.params;
+	try {
+		const user = await User.findById(req.user._id);
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		const address = user.deliveryAddresses.id(addressId);
+		if (!address) {
+			return res.status(404).json({ message: "Address not found" });
+		}
+
+		const wasDefault = address.isDefault;
+		address.remove();
+
+		// If the deleted address was the default, set a new default if possible
+		if (wasDefault && user.deliveryAddresses.length > 0) {
+			user.deliveryAddresses[0].isDefault = true;
+		}
+
+		await user.save();
+		res.status(200).json(user.deliveryAddresses);
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const setDefaultDeliveryAddress = async (req, res) => {
+	const { addressId } = req.params;
+	try {
+		const user = await User.findById(req.user._id);
+		if (!user) return res.status(404).json({ message: "User not found" });
+
+		const address = user.deliveryAddresses.id(addressId);
+		if (!address) return res.status(404).json({ message: "Address not found" });
+
+		user.deliveryAddresses.forEach((addr) => {
+			addr.isDefault = addr._id.toString() === addressId;
+		});
+
+		await user.save();
+		res.status(200).json(user.deliveryAddresses);
+	} catch (error) {
+		res.status(500).json({ message: "Server Error", error: error.message });
+	}
+};

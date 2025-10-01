@@ -144,3 +144,35 @@ export const streamAnalyticsData = async (req, res) => {
 		res.end();
 	});
 };
+
+
+export const getQuickStats = async (req, res) => {
+	try {
+		const totalRevenuePromise = Order.aggregate([
+			{ $match: { status: "Delivered" } },
+			{ $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } },
+		]);
+
+		const totalSalesPromise = Order.countDocuments({ status: "Delivered" });
+		const totalUsersPromise = User.countDocuments();
+		const totalProductsPromise = Product.countDocuments();
+
+		const [revenueResult, totalSales, totalUsers, totalProducts] = await Promise.all([
+			totalRevenuePromise,
+			totalSalesPromise,
+			totalUsersPromise,
+			totalProductsPromise,
+		]);
+
+		const totalRevenue = revenueResult[0]?.totalRevenue || 0;
+
+		res.json({
+			totalRevenue,
+			totalSales,
+			totalUsers,
+			totalProducts,
+		});
+	} catch (error) {
+		res.status(500).json({ message: "Server Error", error: error.message });
+	}
+};
