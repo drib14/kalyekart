@@ -46,12 +46,27 @@ const getAnalyticsData = async (filter) => {
 	// --- Timeframe for Filtered Stats ---
 	const { startDate: filteredStartDate, endDate: filteredEndDate } = getAnalyticsTimeframe(filter);
 
-	// --- Timeframe for Overall Graph ---
-	const {
-		startDate: overallStartDate,
-		endDate: overallEndDate,
-		groupByFormat: overallGroupByFormat,
-	} = getAnalyticsTimeframe("overall");
+	// --- Dynamic Grouping for Overall Graph ---
+	const firstOrder = await Order.findOne().sort({ createdAt: 1 }).lean();
+	let overallGroupByFormat;
+
+	if (firstOrder) {
+		const now = new Date();
+		const firstOrderDate = new Date(firstOrder.createdAt);
+		const diffTime = Math.abs(now - firstOrderDate);
+		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+		if (diffDays <= 90) {
+			overallGroupByFormat = "%Y-%m-%d"; // Daily
+		} else if (diffDays <= 1095) { // Up to 3 years
+			overallGroupByFormat = "%Y-%m"; // Monthly
+		} else {
+			overallGroupByFormat = "%Y"; // Yearly
+		}
+	} else {
+		overallGroupByFormat = "%Y"; // Default if no orders
+	}
+
 
 	// Defines the condition for an order to be considered refunded
 	const refundCondition = {
@@ -81,12 +96,11 @@ const getAnalyticsData = async (filter) => {
 		},
 	]);
 
-	// 2. Promise for OVERALL graph data
+	// 2. Promise for OVERALL graph data with dynamic grouping
 	const overallGraphDataPromise = Order.aggregate([
 		{
 			$match: {
 				status: "Delivered",
-				createdAt: { $gte: overallStartDate, $lte: overallEndDate },
 			},
 		},
 		{
