@@ -21,7 +21,12 @@ const notificationSchema = new mongoose.Schema(
 				"refund_request",
 				"refund_status_update",
 				"new_feedback",
+				"feedback_confirmation",
 				"welcome",
+				"new_review",
+				"review_confirmation",
+				"new_like",
+				"new_reply",
 			],
 		},
 		message: {
