@@ -193,6 +193,7 @@ export const addReply = async (req, res) => {
 			recipient: review.user,
 			review,
 			product: review.product,
+			reply: reply,
 		});
 
 		const populatedReview = await getPopulatedReviewById(reviewId);
@@ -293,6 +294,7 @@ export const replyToReply = async (req, res) => {
 				recipient,
 				review,
 				product: review.product,
+				reply: newReply,
 			});
 		}
 
