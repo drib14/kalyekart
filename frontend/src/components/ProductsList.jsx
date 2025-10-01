@@ -1,13 +1,16 @@
 import { motion } from "framer-motion";
-import { Trash, Star } from "lucide-react";
+import { Trash, Star, Edit } from "lucide-react";
 import { useProductStore } from "../stores/useProductStore";
 import { useState } from "react";
 import ConfirmationModal from "./ConfirmationModal";
+import EditProductModal from "./EditProductModal";
 
 const ProductsList = () => {
 	const { deleteProduct, toggleFeaturedProduct, products } = useProductStore();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [productToDelete, setProductToDelete] = useState(null);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [productToEdit, setProductToEdit] = useState(null);
 
 	const handleDeleteClick = (productId) => {
 		setProductToDelete(productId);
@@ -26,6 +29,16 @@ const ProductsList = () => {
 		handleCloseModal();
 	};
 
+	const handleEditClick = (product) => {
+		setProductToEdit(product);
+		setIsEditModalOpen(true);
+	};
+
+	const handleCloseEditModal = () => {
+		setIsEditModalOpen(false);
+		setProductToEdit(null);
+	};
+
 	return (
 		<>
 			<ConfirmationModal
@@ -35,6 +48,7 @@ const ProductsList = () => {
 				title='Delete Product'
 				message='Are you sure you want to delete this product? This will hide it from all customers and it will no longer be available for purchase. Existing orders will not be affected.'
 			/>
+			<EditProductModal isOpen={isEditModalOpen} onClose={handleCloseEditModal} product={productToEdit} />
 			<motion.div
 				className='bg-gray-800 shadow-lg rounded-lg overflow-hidden max-w-4xl mx-auto'
 				initial={{ opacity: 0, y: 20 }}
@@ -112,12 +126,20 @@ const ProductsList = () => {
 									</button>
 								</td>
 								<td className='px-6 py-4 whitespace-nowrap text-sm font-medium'>
-									<button
-										onClick={() => handleDeleteClick(product._id)}
-										className='text-red-400 hover:text-red-300'
-									>
-										<Trash className='h-5 w-5' />
-									</button>
+									<div className='flex items-center gap-4'>
+										<button
+											onClick={() => handleEditClick(product)}
+											className='text-blue-400 hover:text-blue-300'
+										>
+											<Edit className='h-5 w-5' />
+										</button>
+										<button
+											onClick={() => handleDeleteClick(product._id)}
+											className='text-red-400 hover:text-red-300'
+										>
+											<Trash className='h-5 w-5' />
+										</button>
+									</div>
 								</td>
 							</tr>
 						))}
