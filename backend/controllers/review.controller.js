@@ -1,6 +1,5 @@
 import Product from "../models/product.model.js";
 import Review from "../models/review.model.js";
-import Order from "../models/order.model.js";
 
 export const createReview = async (req, res) => {
 	const { productId } = req.params;
@@ -12,17 +11,6 @@ export const createReview = async (req, res) => {
 
 		if (!product) {
 			return res.status(404).json({ message: "Product not found" });
-		}
-
-		// Check if the user has purchased the product
-		const hasPurchased = await Order.findOne({
-			user: userId,
-			"products.product": productId,
-			status: "Delivered",
-		});
-
-		if (!hasPurchased) {
-			return res.status(403).json({ message: "You can only review products you have purchased." });
 		}
 
 		const alreadyReviewed = await Review.findOne({ product: productId, user: userId });

@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { ShoppingCart, Heart, ShoppingBag } from "lucide-react";
+import { ShoppingCart, Heart, ShoppingBag, Star } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
 import { useCartStore } from "../stores/useCartStore";
 import { useNavigate } from "react-router-dom";
@@ -50,7 +50,24 @@ const ProductCard = ({ product, onCardClick }) => {
 			</div>
 
 			<div className='mt-4 px-5 pb-5'>
-				<h5 className='text-xl font-semibold tracking-tight text-white'>{product.name}</h5>
+				<h5 className='text-xl font-semibold tracking-tight text-white truncate' title={product.name}>
+					{product.name}
+				</h5>
+				<div className='flex items-center mt-2.5 mb-5'>
+					<div className='flex items-center text-yellow-400'>
+						{[...Array(5)].map((_, i) => (
+							<Star
+								key={i}
+								size={16}
+								className={i < Math.round(product.averageRating) ? "fill-current" : ""}
+							/>
+						))}
+					</div>
+					<span className='bg-gray-700 text-gray-200 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded ml-3'>
+						{product.averageRating.toFixed(1)}
+					</span>
+					<span className='text-sm text-gray-400'>({product.numReviews} reviews)</span>
+				</div>
 				<div className='mt-2 mb-5 flex items-center justify-between'>
 					<p>
 						<span className='text-3xl font-bold text-emerald-400'>₱{product.price}</span>

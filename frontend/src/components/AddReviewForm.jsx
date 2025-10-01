@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "../lib/axios";
 import { toast } from "sonner";
 import { Star } from "lucide-react";
@@ -11,15 +11,6 @@ const AddReviewForm = ({ productId }) => {
 	const [hoverRating, setHoverRating] = useState(0);
 	const { user } = useUserStore();
 	const queryClient = useQueryClient();
-
-	const { data: hasPurchased } = useQuery({
-		queryKey: ["orderStatus", productId, user?._id],
-		queryFn: async () => {
-			const res = await axios.get(`/orders/has-purchased/${productId}`);
-			return res.data.hasPurchased;
-		},
-		enabled: !!user && !!productId,
-	});
 
 	const mutation = useMutation({
 		mutationFn: (newReview) => {
@@ -48,10 +39,6 @@ const AddReviewForm = ({ productId }) => {
 
 	if (!user) {
 		return <p className='text-gray-400'>Please log in to leave a review.</p>;
-	}
-
-	if (!hasPurchased) {
-		return <p className='text-gray-400'>You can only review products you have purchased.</p>;
 	}
 
 	return (
