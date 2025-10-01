@@ -99,12 +99,12 @@ const orderSchema = new mongoose.Schema(
 		},
 		stripeSessionId: {
 			type: String,
+			unique: true,
+			sparse: true, // This ensures that the unique index only applies to documents where this field exists
 		},
 	},
 	{ timestamps: true }
 );
-
-orderSchema.index({ stripeSessionId: 1 }, { unique: true, sparse: true });
 
 const Order = mongoose.model("Order", orderSchema);
 
