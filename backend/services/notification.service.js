@@ -27,11 +27,22 @@ const NotificationService = {
 	async createNotification(type, data) {
 		let notification;
 		const admin = await User.findOne({ role: "admin" }).lean();
-		const { actor, recipient, order, review, feedback, product, cancellationReason } = data;
+		const { actor, recipient, order, review, reply, feedback, product, cancellationReason, products } = data;
 
 		try {
 			switch (type) {
 				case "new_order":
+					const orderItemsHtml = products
+						.map(
+							(item) => `
+							<tr>
+								<td>${item.name}</td>
+								<td>${item.quantity}</td>
+								<td>₱${item.price.toFixed(2)}</td>
+							</tr>`
+						)
+						.join("");
+
 					if (admin) {
 						const adminNotification = new Notification({
 							recipient: admin._id,
@@ -48,7 +59,16 @@ const NotificationService = {
 								process.env.EMAIL_USER,
 								`New Order Received: #${order._id.toString().slice(-6)}`,
 								"adminNewOrderNotification",
-								{ ORDER_ID: order._id.toString(), CUSTOMER_NAME: actor.name, CUSTOMER_EMAIL: actor.email, CTA_LINK: `https://kalyekart.app/secret-dashboard` }
+								{
+									ORDER_ID: order._id.toString(),
+									CUSTOMER_NAME: actor.name,
+									CUSTOMER_EMAIL: actor.email,
+									ORDER_ITEMS: orderItemsHtml,
+									SUBTOTAL: order.subtotal.toFixed(2),
+									DELIVERY_FEE: order.deliveryFee.toFixed(2),
+									TOTAL: order.totalAmount.toFixed(2),
+									CTA_LINK: `https://kalyekart.app/secret-dashboard`
+								}
 							);
 						} catch (emailError) {
 							console.error(`Failed to send 'new_order' admin email:`, emailError);
@@ -69,7 +89,15 @@ const NotificationService = {
 							actor.email,
 							`Your KalyeKart Order #${order._id.toString().slice(-6)} is Confirmed!`,
 							"orderConfirmation",
-							{ NAME: actor.name, ORDER_ID: order._id.toString(), CTA_LINK: `https://kalyekart.app/my-orders/${order._id}` }
+							{
+								NAME: actor.name,
+								ORDER_ID: order._id.toString(),
+								ORDER_ITEMS: orderItemsHtml,
+								SUBTOTAL: order.subtotal.toFixed(2),
+								DELIVERY_FEE: order.deliveryFee.toFixed(2),
+								TOTAL: order.totalAmount.toFixed(2),
+								CTA_LINK: `https://kalyekart.app/my-orders/${order._id}`
+							}
 						);
 					} catch (emailError) {
 						console.error(`Failed to send 'order_confirmation' customer email:`, emailError);

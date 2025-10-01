@@ -61,6 +61,7 @@ export const createCodOrder = async (req, res) => {
 		await NotificationService.createNotification("new_order", {
 			actor: user,
 			order: newOrder,
+			products: products, // Pass the detailed product list
 		});
 
 		res.status(201).json({ message: "Order created successfully", orderId: newOrder._id });
