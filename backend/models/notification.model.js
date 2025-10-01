@@ -16,6 +16,7 @@ const notificationSchema = new mongoose.Schema(
 			required: true,
 			enum: [
 				"new_order",
+				"order_confirmation",
 				"order_status_update",
 				"order_cancelled",
 				"refund_request",

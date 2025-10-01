@@ -236,26 +236,26 @@ const NotificationService = {
 						await adminNotification.populate("sender", "name profilePicture");
 						this.sendSseNotification(admin._id.toString(), adminNotification);
 					}
-					try {
-						await sendEmail(process.env.EMAIL_USER, `New Review on ${product.name}`, "adminNewReview", {
-							PRODUCT_NAME: product.name,
-							REVIEWER_NAME: actor.name,
-							RATING: review.rating,
-							COMMENT: review.comment,
-							CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
-						});
-					} catch (emailError) {
-						console.error(`Failed to send 'new_review' admin email:`, emailError);
-					}
-					try {
-						await sendEmail(actor.email, "Your Review Has Been Submitted!", "userReviewConfirmation", {
-							NAME: actor.name,
-							PRODUCT_NAME: product.name,
-							CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
-						});
-					} catch (emailError) {
-						console.error(`Failed to send 'review_confirmation' customer email:`, emailError);
-					}
+					// try {
+					// 	await sendEmail(process.env.EMAIL_USER, `New Review on ${product.name}`, "adminNewReview", {
+					// 		PRODUCT_NAME: product.name,
+					// 		REVIEWER_NAME: actor.name,
+					// 		RATING: review.rating,
+					// 		COMMENT: review.comment,
+					// 		CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
+					// 	});
+					// } catch (emailError) {
+					// 	console.error(`Failed to send 'new_review' admin email:`, emailError);
+					// }
+					// try {
+					// 	await sendEmail(actor.email, "Your Review Has Been Submitted!", "userReviewConfirmation", {
+					// 		NAME: actor.name,
+					// 		PRODUCT_NAME: product.name,
+					// 		CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
+					// 	});
+					// } catch (emailError) {
+					// 	console.error(`Failed to send 'review_confirmation' customer email:`, emailError);
+					// }
 					break;
 
 				case "new_like":
@@ -303,24 +303,24 @@ const NotificationService = {
 						await notification.save();
 						await notification.populate("sender", "name profilePicture");
 						this.sendSseNotification(recipient._id.toString(), notification);
-						if (recipient.email) {
-							try {
-								await sendEmail(
-									recipient.email,
-									`You have a new reply from ${actor.name}`,
-									"userNewReply",
-									{
-										NAME: recipient.name,
-										REPLIER_NAME: actor.name,
-										PRODUCT_NAME: product.name,
-										REPLY_COMMENT: data.reply.comment,
-										CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
-									}
-								);
-							} catch (emailError) {
-								console.error(`Failed to send 'new_reply' customer email:`, emailError);
-							}
-						}
+						// if (recipient.email) {
+						// 	try {
+						// 		await sendEmail(
+						// 			recipient.email,
+						// 			`You have a new reply from ${actor.name}`,
+						// 			"userNewReply",
+						// 			{
+						// 				NAME: recipient.name,
+						// 				REPLIER_NAME: actor.name,
+						// 				PRODUCT_NAME: product.name,
+						// 				REPLY_COMMENT: data.reply.comment,
+						// 				CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
+						// 			}
+						// 		);
+						// 	} catch (emailError) {
+						// 		console.error(`Failed to send 'new_reply' customer email:`, emailError);
+						// 	}
+						// }
 					}
 					break;
 
