@@ -25,260 +25,282 @@ const NotificationService = {
 	},
 
 	async createNotification(type, data) {
-		let notification, emailDetails;
+		let notification;
 		const admin = await User.findOne({ role: "admin" }).lean();
-		const { actor, recipient, order, review, reply, feedback, product, cancellationReason } = data;
+		const { actor, recipient, order, review, feedback, product, cancellationReason } = data;
 
-		switch (type) {
-			case "new_order":
-				// Notify Admin
-				if (admin) {
-					const adminNotification = new Notification({
-						recipient: admin._id,
-						sender: actor._id,
-						type: "new_order",
-						message: `${actor.name} has placed a new order (#${order._id.toString().slice(-6)}).`,
-						link: `/order/${order._id}`,
-					});
-					await adminNotification.save();
-					await adminNotification.populate("sender", "name profilePicture");
-					this.sendSseNotification(admin._id.toString(), adminNotification);
-
-					await sendEmail(
-						process.env.EMAIL_USER,
-						`New Order Received: #${order._id.toString().slice(-6)}`,
-						"adminNewOrderNotification",
-						{ ORDER_ID: order._id.toString(), CUSTOMER_NAME: actor.name, CUSTOMER_EMAIL: actor.email, CTA_LINK: `https://kalyekart.app/secret-dashboard` }
-					);
-				}
-				// Notify Customer
-				const customerNotification = new Notification({
-					recipient: actor._id,
-					sender: admin ? admin._id : null,
-					type: "order_confirmation",
-					message: `Your order #${order._id.toString().slice(-6)} has been placed successfully!`,
-					link: `/my-orders/${order._id}`,
-				});
-				await customerNotification.save();
-				await customerNotification.populate("sender", "name profilePicture");
-				this.sendSseNotification(actor._id.toString(), customerNotification);
-				await sendEmail(
-					actor.email,
-					`Your KalyeKart Order #${order._id.toString().slice(-6)} is Confirmed!`,
-					"orderConfirmation",
-					{ NAME: actor.name, ORDER_ID: order._id.toString(), CTA_LINK: `https://kalyekart.app/my-orders/${order._id}` }
-				);
-				break;
-
-			case "order_status_update":
-				// Notify Customer
-				notification = new Notification({
-					recipient: recipient._id,
-					sender: admin ? admin._id : null,
-					type: "order_status_update",
-					message: `The status of your order #${order._id.toString().slice(-6)} has been updated to ${order.status}.`,
-					link: `/my-orders/${order._id}`,
-				});
-				await notification.save();
-				await notification.populate("sender", "name profilePicture");
-				this.sendSseNotification(recipient._id.toString(), notification);
-
-				await sendEmail(
-					recipient.email,
-					`Your KalyeKart Order #${order._id.toString().slice(-6)} has been updated!`,
-					"orderUpdate",
-					{ NAME: recipient.name, ORDER_ID: order._id.toString(), NEW_STATUS: order.status, CTA_LINK: `https://kalyekart.app/my-orders/${order._id}` }
-				);
-				break;
-
-			case "order_cancelled":
-				// Notify Admin
-				if (admin) {
-					const adminNotification = new Notification({
-						recipient: admin._id,
-						sender: actor._id,
-						type: "order_cancelled",
-						message: `Order #${order._id.toString().slice(-6)} has been cancelled by ${actor.name}. Reason: ${cancellationReason}`,
-						link: `/order/${order._id}`,
-					});
-					await adminNotification.save();
-					await adminNotification.populate("sender", "name profilePicture");
-					this.sendSseNotification(admin._id.toString(), adminNotification);
-				}
-
-				// Notify Customer
-				const customerCancelNotification = new Notification({
-					recipient: actor._id,
-					sender: admin ? admin._id : null,
-					type: "order_cancelled",
-					message: `Your order #${order._id.toString().slice(-6)} has been successfully cancelled.`,
-					link: `/my-orders`,
-				});
-				await customerCancelNotification.save();
-				await customerCancelNotification.populate("sender", "name profilePicture");
-				this.sendSseNotification(actor._id.toString(), customerCancelNotification);
-				break;
-
-			case "welcome":
-				// Notify Customer
-				const welcomeNotification = new Notification({
-					recipient: actor._id,
-					type: "welcome",
-					message: "Welcome to KalyeKart! We're thrilled to have you.",
-					link: "/",
-				});
-				await welcomeNotification.save();
-				// No sender for welcome messages, so no need to populate
-				this.sendSseNotification(actor._id.toString(), welcomeNotification);
-
-				await sendEmail(actor.email, "Welcome to KalyeKart!", "welcome", {
-					NAME: actor.name,
-					CTA_LINK: "https://kalyekart.app",
-				});
-				break;
-
-			case "new_feedback":
-				// Notify Admin
-				if (admin) {
-					const adminNotification = new Notification({
-						recipient: admin._id,
-						sender: actor?._id,
-						type: "new_feedback",
-						message: `${actor?.name || "An anonymous user"} has submitted new feedback.`,
-						link: `/secret-dashboard`, // Or a dedicated feedback page
-					});
-					await adminNotification.save();
-					if (actor) await adminNotification.populate("sender", "name profilePicture");
-					this.sendSseNotification(admin._id.toString(), adminNotification);
-
-					await sendEmail(
-						process.env.EMAIL_USER,
-						`New Feedback Submission (Rating: ${feedback.rating}/5)`,
-						"adminFeedbackNotification",
-						{
-							USER_NAME: actor?.name || "Anonymous",
-							USER_EMAIL: actor?.email || "No email provided",
-							RATING: feedback.rating,
-							FEEDBACK_MESSAGE: feedback.feedback,
+		try {
+			switch (type) {
+				case "new_order":
+					if (admin) {
+						const adminNotification = new Notification({
+							recipient: admin._id,
+							sender: actor._id,
+							type: "new_order",
+							message: `${actor.name} has placed a new order (#${order._id.toString().slice(-6)}).`,
+							link: `/order/${order._id}`,
+						});
+						await adminNotification.save();
+						await adminNotification.populate("sender", "name profilePicture");
+						this.sendSseNotification(admin._id.toString(), adminNotification);
+						try {
+							await sendEmail(
+								process.env.EMAIL_USER,
+								`New Order Received: #${order._id.toString().slice(-6)}`,
+								"adminNewOrderNotification",
+								{ ORDER_ID: order._id.toString(), CUSTOMER_NAME: actor.name, CUSTOMER_EMAIL: actor.email, CTA_LINK: `https://kalyekart.app/secret-dashboard` }
+							);
+						} catch (emailError) {
+							console.error(`Failed to send 'new_order' admin email:`, emailError);
 						}
-					);
-				}
-				// Notify Customer
-				if (actor) {
+					}
 					const customerNotification = new Notification({
 						recipient: actor._id,
 						sender: admin ? admin._id : null,
-						type: "feedback_confirmation",
-						message: "Thank you for your feedback! We appreciate you helping us improve.",
-						link: `/`,
+						type: "order_confirmation",
+						message: `Your order #${order._id.toString().slice(-6)} has been placed successfully!`,
+						link: `/my-orders/${order._id}`,
 					});
 					await customerNotification.save();
-					if (admin) await customerNotification.populate("sender", "name profilePicture");
+					await customerNotification.populate("sender", "name profilePicture");
 					this.sendSseNotification(actor._id.toString(), customerNotification);
+					try {
+						await sendEmail(
+							actor.email,
+							`Your KalyeKart Order #${order._id.toString().slice(-6)} is Confirmed!`,
+							"orderConfirmation",
+							{ NAME: actor.name, ORDER_ID: order._id.toString(), CTA_LINK: `https://kalyekart.app/my-orders/${order._id}` }
+						);
+					} catch (emailError) {
+						console.error(`Failed to send 'order_confirmation' customer email:`, emailError);
+					}
+					break;
 
-					await sendEmail(
-						actor.email,
-						"We've Received Your Feedback!",
-						"userFeedbackConfirmation",
-						{ NAME: actor.name, FEEDBACK_MESSAGE: feedback.feedback, CTA_LINK: "https://kalyekart.app" }
-					);
-				}
-				break;
-
-			case "new_review":
-				// In-app notification for admin
-				if (admin) {
-					const adminNotification = new Notification({
-						recipient: admin._id,
-						sender: actor._id,
-						type: "new_review",
-						message: `${actor.name} left a new review on ${product.name}.`,
-						link: `/product/${product._id}?review=${review._id}`,
-					});
-					await adminNotification.save();
-					await adminNotification.populate("sender", "name profilePicture");
-					this.sendSseNotification(admin._id.toString(), adminNotification);
-				}
-				// Email notification for admin
-				await sendEmail(process.env.EMAIL_USER, `New Review on ${product.name}`, "adminNewReview", {
-					PRODUCT_NAME: product.name,
-					REVIEWER_NAME: actor.name,
-					RATING: review.rating,
-					COMMENT: review.comment,
-					CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
-				});
-				// Email confirmation for customer
-				await sendEmail(actor.email, "Your Review Has Been Submitted!", "userReviewConfirmation", {
-					NAME: actor.name,
-					PRODUCT_NAME: product.name,
-					CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
-				});
-				break;
-
-			case "new_like":
-				if (recipient && actor._id.toString() !== recipient._id.toString()) {
-					// In-app notification
+				case "order_status_update":
 					notification = new Notification({
 						recipient: recipient._id,
-						sender: actor._id,
-						type: "new_like",
-						message: `${actor.name} liked your ${data.likedEntityType || 'comment'}.`,
-						link: `/product/${product._id}?review=${review._id}`,
+						sender: admin ? admin._id : null,
+						type: "order_status_update",
+						message: `The status of your order #${order._id.toString().slice(-6)} has been updated to ${order.status}.`,
+						link: `/my-orders/${order._id}`,
 					});
 					await notification.save();
 					await notification.populate("sender", "name profilePicture");
 					this.sendSseNotification(recipient._id.toString(), notification);
-					// Email notification
-					if (recipient.email) {
+					try {
 						await sendEmail(
 							recipient.email,
-							`${actor.name} liked your ${data.likedEntityType || 'comment'}!`,
-							"userNewLike",
-							{
-								NAME: recipient.name,
-								ACTOR_NAME: actor.name,
-								LIKED_ENTITY: data.likedEntityType || "comment",
-								PRODUCT_NAME: product.name,
-								CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
-							}
+							`Your KalyeKart Order #${order._id.toString().slice(-6)} has been updated!`,
+							"orderUpdate",
+							{ NAME: recipient.name, ORDER_ID: order._id.toString(), NEW_STATUS: order.status, CTA_LINK: `https://kalyekart.app/my-orders/${order._id}` }
 						);
+					} catch (emailError) {
+						console.error(`Failed to send 'order_status_update' customer email:`, emailError);
 					}
-				}
-				break;
+					break;
 
-			case "new_reply":
-				if (recipient && actor._id.toString() !== recipient._id.toString()) {
-					// In-app notification
-					notification = new Notification({
-						recipient: recipient._id,
-						sender: actor._id,
-						type: "new_reply",
-						message: `${actor.name} replied to your comment.`,
-						link: `/product/${product._id}?review=${review._id}`,
+				case "order_cancelled":
+					if (admin) {
+						const adminNotification = new Notification({
+							recipient: admin._id,
+							sender: actor._id,
+							type: "order_cancelled",
+							message: `Order #${order._id.toString().slice(-6)} has been cancelled by ${actor.name}. Reason: ${cancellationReason}`,
+							link: `/order/${order._id}`,
+						});
+						await adminNotification.save();
+						await adminNotification.populate("sender", "name profilePicture");
+						this.sendSseNotification(admin._id.toString(), adminNotification);
+					}
+					const customerCancelNotification = new Notification({
+						recipient: actor._id,
+						sender: admin ? admin._id : null,
+						type: "order_cancelled",
+						message: `Your order #${order._id.toString().slice(-6)} has been successfully cancelled.`,
+						link: `/my-orders`,
 					});
-					await notification.save();
-					await notification.populate("sender", "name profilePicture");
-					this.sendSseNotification(recipient._id.toString(), notification);
-					// Email notification
-					if (recipient.email) {
-						await sendEmail(
-							recipient.email,
-							`You have a new reply from ${actor.name}`,
-							"userNewReply",
-							{
-								NAME: recipient.name,
-								REPLIER_NAME: actor.name,
-								PRODUCT_NAME: product.name,
-								REPLY_COMMENT: data.reply.comment,
-								CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
-							}
-						);
-					}
-				}
-				break;
+					await customerCancelNotification.save();
+					await customerCancelNotification.populate("sender", "name profilePicture");
+					this.sendSseNotification(actor._id.toString(), customerCancelNotification);
+					break;
 
-			default:
-				console.warn(`Unknown notification type: ${type}`);
+				case "welcome":
+					const welcomeNotification = new Notification({
+						recipient: actor._id,
+						type: "welcome",
+						message: "Welcome to KalyeKart! We're thrilled to have you.",
+						link: "/",
+					});
+					await welcomeNotification.save();
+					this.sendSseNotification(actor._id.toString(), welcomeNotification);
+					try {
+						await sendEmail(actor.email, "Welcome to KalyeKart!", "welcome", {
+							NAME: actor.name,
+							CTA_LINK: "https://kalyekart.app",
+						});
+					} catch (emailError) {
+						console.error(`Failed to send 'welcome' customer email:`, emailError);
+					}
+					break;
+
+				case "new_feedback":
+					if (admin) {
+						const adminNotification = new Notification({
+							recipient: admin._id,
+							sender: actor?._id,
+							type: "new_feedback",
+							message: `${actor?.name || "An anonymous user"} has submitted new feedback.`,
+							link: `/secret-dashboard`,
+						});
+						await adminNotification.save();
+						if (actor) await adminNotification.populate("sender", "name profilePicture");
+						this.sendSseNotification(admin._id.toString(), adminNotification);
+						try {
+							await sendEmail(
+								process.env.EMAIL_USER,
+								`New Feedback Submission (Rating: ${feedback.rating}/5)`,
+								"adminFeedbackNotification",
+								{
+									USER_NAME: actor?.name || "Anonymous",
+									USER_EMAIL: actor?.email || "No email provided",
+									RATING: feedback.rating,
+									FEEDBACK_MESSAGE: feedback.feedback,
+								}
+							);
+						} catch (emailError) {
+							console.error(`Failed to send 'new_feedback' admin email:`, emailError);
+						}
+					}
+					if (actor) {
+						const customerNotification = new Notification({
+							recipient: actor._id,
+							sender: admin ? admin._id : null,
+							type: "feedback_confirmation",
+							message: "Thank you for your feedback! We appreciate you helping us improve.",
+							link: `/`,
+						});
+						await customerNotification.save();
+						if (admin) await customerNotification.populate("sender", "name profilePicture");
+						this.sendSseNotification(actor._id.toString(), customerNotification);
+						try {
+							await sendEmail(
+								actor.email,
+								"We've Received Your Feedback!",
+								"userFeedbackConfirmation",
+								{ NAME: actor.name, FEEDBACK_MESSAGE: feedback.feedback, CTA_LINK: "https://kalyekart.app" }
+							);
+						} catch (emailError) {
+							console.error(`Failed to send 'feedback_confirmation' customer email:`, emailError);
+						}
+					}
+					break;
+
+				case "new_review":
+					if (admin) {
+						const adminNotification = new Notification({
+							recipient: admin._id,
+							sender: actor._id,
+							type: "new_review",
+							message: `${actor.name} left a new review on ${product.name}.`,
+							link: `/product/${product._id}?review=${review._id}`,
+						});
+						await adminNotification.save();
+						await adminNotification.populate("sender", "name profilePicture");
+						this.sendSseNotification(admin._id.toString(), adminNotification);
+					}
+					try {
+						await sendEmail(process.env.EMAIL_USER, `New Review on ${product.name}`, "adminNewReview", {
+							PRODUCT_NAME: product.name,
+							REVIEWER_NAME: actor.name,
+							RATING: review.rating,
+							COMMENT: review.comment,
+							CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
+						});
+					} catch (emailError) {
+						console.error(`Failed to send 'new_review' admin email:`, emailError);
+					}
+					try {
+						await sendEmail(actor.email, "Your Review Has Been Submitted!", "userReviewConfirmation", {
+							NAME: actor.name,
+							PRODUCT_NAME: product.name,
+							CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
+						});
+					} catch (emailError) {
+						console.error(`Failed to send 'review_confirmation' customer email:`, emailError);
+					}
+					break;
+
+				case "new_like":
+					if (recipient && actor._id.toString() !== recipient._id.toString()) {
+						notification = new Notification({
+							recipient: recipient._id,
+							sender: actor._id,
+							type: "new_like",
+							message: `${actor.name} liked your ${data.likedEntityType || 'comment'}.`,
+							link: `/product/${product._id}?review=${review._id}`,
+						});
+						await notification.save();
+						await notification.populate("sender", "name profilePicture");
+						this.sendSseNotification(recipient._id.toString(), notification);
+						if (recipient.email) {
+							try {
+								await sendEmail(
+									recipient.email,
+									`${actor.name} liked your ${data.likedEntityType || 'comment'}!`,
+									"userNewLike",
+									{
+										NAME: recipient.name,
+										ACTOR_NAME: actor.name,
+										LIKED_ENTITY: data.likedEntityType || "comment",
+										PRODUCT_NAME: product.name,
+										CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
+									}
+								);
+							} catch (emailError) {
+								console.error(`Failed to send 'new_like' customer email:`, emailError);
+							}
+						}
+					}
+					break;
+
+				case "new_reply":
+					if (recipient && actor._id.toString() !== recipient._id.toString()) {
+						notification = new Notification({
+							recipient: recipient._id,
+							sender: actor._id,
+							type: "new_reply",
+							message: `${actor.name} replied to your comment.`,
+							link: `/product/${product._id}?review=${review._id}`,
+						});
+						await notification.save();
+						await notification.populate("sender", "name profilePicture");
+						this.sendSseNotification(recipient._id.toString(), notification);
+						if (recipient.email) {
+							try {
+								await sendEmail(
+									recipient.email,
+									`You have a new reply from ${actor.name}`,
+									"userNewReply",
+									{
+										NAME: recipient.name,
+										REPLIER_NAME: actor.name,
+										PRODUCT_NAME: product.name,
+										REPLY_COMMENT: data.reply.comment,
+										CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
+									}
+								);
+							} catch (emailError) {
+								console.error(`Failed to send 'new_reply' customer email:`, emailError);
+							}
+						}
+					}
+					break;
+
+				default:
+					console.warn(`Unknown notification type: ${type}`);
+			}
+		} catch (error) {
+			console.error(`Error creating notification of type ${type}:`, error);
 		}
 	},
 };
