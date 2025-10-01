@@ -1,6 +1,7 @@
 import Product from "../models/product.model.js";
 import Review from "../models/review.model.js";
 import User from "../models/user.model.js";
+import NotificationService from "../services/notification.service.js";
 
 // Helper function to find a reply by its ID within a review document
 const findReplyById = (replies, replyId) => {
@@ -178,8 +179,6 @@ export const likeReview = async (req, res) => {
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
-
-import NotificationService from "../services/notification.service.js";
 
 export const addReply = async (req, res) => {
 	const { reviewId } = req.params;
