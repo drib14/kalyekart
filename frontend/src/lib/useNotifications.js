@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "./axios";
 import { useUserStore } from "../stores/useUserStore";
@@ -6,7 +6,7 @@ import { useUserStore } from "../stores/useUserStore";
 export const useNotifications = () => {
 	const { user } = useUserStore();
 	const queryClient = useQueryClient();
-	const queryKey = ["notifications", user?._id];
+	const queryKey = useMemo(() => ["notifications", user?._id], [user?._id]);
 
 	const { data: notifications = [] } = useQuery({
 		queryKey,

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { User, Building, Mail, Phone, Clock, BarChart, Camera, Save, Edit } from "lucide-react";
+import { User, Building, Clock, BarChart, Camera, Save, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { useUserStore } from "../stores/useUserStore";
 import { useMutation } from "@tanstack/react-query";
@@ -56,10 +56,6 @@ const AdminProfilePage = () => {
 			formData.append("profilePicture", profilePicture);
 		}
 		updateProfile(formData);
-	};
-
-	const handleNotImplemented = () => {
-		toast.info("This feature is not yet implemented.");
 	};
 
 	return (

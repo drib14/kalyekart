@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, X, History } from "lucide-react";
+import { Search, History } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useSearchStore from "../stores/useSearchStore";
 

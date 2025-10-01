@@ -38,8 +38,8 @@ const EditProductModal = ({ isOpen, onClose, product }) => {
 	if (!isOpen) return null;
 
 	return (
-		<div className='fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50'>
-			<div className='bg-gray-800 rounded-lg p-8 w-full max-w-md'>
+		<div className='fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50 p-4'>
+			<div className='bg-gray-800 rounded-lg p-6 sm:p-8 w-full max-w-md max-h-[90vh] overflow-y-auto'>
 				<h2 className='text-2xl font-bold text-white mb-4'>Edit Product</h2>
 				<form onSubmit={handleSubmit}>
 					<div className='mb-4'>

@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useUserStore } from "../stores/useUserStore";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { toast } from "sonner";
 import { useState } from "react";
 import CancelOrderModal from "../components/CancelOrderModal";
 import RefundModal from "../components/RefundModal";

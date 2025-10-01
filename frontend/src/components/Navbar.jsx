@@ -1,4 +1,4 @@
-import { ShoppingCart, UserPlus, LogIn, LogOut, Lock, User, Settings, ShoppingBag } from "lucide-react";
+import { ShoppingCart, UserPlus, LogIn, LogOut, Lock, User, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserStore } from "../stores/useUserStore";
 import Searchbar from "./Searchbar";

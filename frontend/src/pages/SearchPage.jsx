@@ -27,7 +27,7 @@ const SearchPage = () => {
 	return (
 		<div className='container mx-auto px-4 py-8'>
 			<h1 className='text-3xl font-bold text-white mb-6'>
-				Search Results for: <span className='text-emerald-400'>"{query}"</span>
+				Search Results for: <span className='text-emerald-400'>&quot;{query}&quot;</span>
 			</h1>
 
 			{isLoading && <LoadingSpinner />}
