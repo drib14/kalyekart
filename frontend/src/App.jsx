@@ -22,6 +22,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
+import MyReviewsPage from "./pages/MyReviewsPage";
 import AdminProfilePage from "./pages/AdminProfilePage";
 import CustomerProfilePage from "./pages/CustomerProfilePage";
 import OrderDetailPage from "./pages/OrderDetailPage";
@@ -98,6 +99,7 @@ function App() {
 					<Route path='/reset-password' element={!user ? <ResetPasswordPage /> : <Navigate to='/' />} />
 					<Route path='/checkout' element={user ? <CheckoutPage /> : <Navigate to='/login' />} />
 					<Route path='/my-orders' element={user ? <MyOrdersPage /> : <Navigate to='/login' />} />
+					<Route path='/my-reviews' element={user ? <MyReviewsPage /> : <Navigate to='/login' />} />
 					<Route
 						path='/notifications'
 						element={user ? <NotificationsPage /> : <Navigate to='/login' />}
