@@ -1,10 +1,9 @@
 import { redis } from "../lib/redis.js";
 import User from "../models/user.model.js";
-import Notification from "../models/notification.model.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { sendEmail } from "../lib/email.js";
 import { prepareUserResponse } from "../lib/prepareUserResponse.js";
+import NotificationService from "../services/notification.service.js";
 
 const generateTokens = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -55,19 +54,7 @@ export const signup = async (req, res) => {
 		await storeRefreshToken(user._id, refreshToken);
 		setCookies(res, accessToken, refreshToken);
 
-		await sendEmail(user.email, "Welcome to KalyeKart!", "welcome", {
-			NAME: user.name,
-			CTA_LINK: "https://kalyekart.app",
-		});
-
-		// Create a welcome notification for the new user
-		const customerNotification = new Notification({
-			recipient: user._id,
-			type: "welcome",
-			message: "Welcome to KalyeKart! We're thrilled to have you.",
-			link: "/",
-		});
-		await customerNotification.save();
+		await NotificationService.createNotification("welcome", { actor: user });
 
 		const userToReturn = prepareUserResponse(user);
 		res.status(201).json(userToReturn);
@@ -123,8 +110,6 @@ export const googleAuth = async (req, res) => {
 		const isNew = !user;
 
 		if (isNew) {
-			// Generate a random password for the new user.
-			// The user model's pre-save hook will automatically hash this password.
 			const password = crypto.randomBytes(16).toString("hex");
 			user = await User.create({
 				name,
@@ -133,18 +118,7 @@ export const googleAuth = async (req, res) => {
 				profilePicture: picture,
 			});
 
-			await sendEmail(user.email, "Welcome to KalyeKart!", "welcome", {
-				NAME: user.name,
-				CTA_LINK: "https://kalyekart.app",
-			});
-
-			const customerNotification = new Notification({
-				recipient: user._id,
-				type: "welcome",
-				message: "Welcome to KalyeKart! We're thrilled to have you.",
-				link: "/",
-			});
-			await customerNotification.save();
+			await NotificationService.createNotification("welcome", { actor: user });
 		}
 
 		const { accessToken, refreshToken } = generateTokens(user._id);
@@ -165,7 +139,9 @@ export const forgotPassword = async (req, res) => {
 		const user = await User.findOne({ email });
 
 		if (!user) {
-			return res.status(200).json({ message: "If a user with that email exists, a password reset code has been sent." });
+			return res.status(200).json({
+				message: "If a user with that email exists, a password reset code has been sent.",
+			});
 		}
 
 		const resetCode = crypto.randomInt(100000, 999999).toString();
@@ -173,6 +149,7 @@ export const forgotPassword = async (req, res) => {
 		user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 		await user.save();
 
+		// This could also be moved to NotificationService, but leaving for now.
 		await sendEmail(user.email, "Your Password Reset Code", "passwordReset", {
 			NAME: user.name,
 			CODE: resetCode,
@@ -224,7 +201,9 @@ export const refreshToken = async (req, res) => {
 			return res.status(401).json({ message: "Invalid refresh token" });
 		}
 
-		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
+		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, {
+			expiresIn: "15m",
+		});
 
 		const isProduction = process.env.NODE_ENV === "production";
 		res.cookie("accessToken", accessToken, {

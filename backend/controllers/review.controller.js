@@ -16,17 +16,46 @@ const findReplyById = (replies, replyId) => {
 	return null;
 };
 
-// Helper function to recursively populate user details in replies
-async function populateReplies(replies) {
-	for (const reply of replies) {
-		// Populate the user for the current reply
-		await reply.populate({ path: "user", select: "name profilePicture" });
-		// If there are nested replies, recurse
-		if (reply.replies && reply.replies.length > 0) {
-			await populateReplies(reply.replies);
+// Helper function to get a fully populated review using an efficient, non-recursive method
+const getPopulatedReviewById = async (reviewId) => {
+	const review = await Review.findById(reviewId)
+		.populate("user", "name profilePicture")
+		.lean();
+
+	if (!review) return null;
+
+	const userIds = new Set();
+	const collectUserIds = (replies) => {
+		for (const reply of replies) {
+			if (reply.user) userIds.add(reply.user.toString());
+			if (reply.replies && reply.replies.length > 0) {
+				collectUserIds(reply.replies);
+			}
 		}
+	};
+	if (review.replies) collectUserIds(review.replies);
+
+	if (userIds.size > 0) {
+		const users = await User.find({ _id: { $in: [...userIds] } })
+			.select("name profilePicture")
+			.lean();
+		const userMap = new Map(users.map((user) => [user._id.toString(), user]));
+
+		const populateUsers = (replies) => {
+			for (const reply of replies) {
+				if (reply.user) {
+					reply.user = userMap.get(reply.user.toString());
+				}
+				if (reply.replies && reply.replies.length > 0) {
+					populateUsers(reply.replies);
+				}
+			}
+		};
+		if (review.replies) populateUsers(review.replies);
 	}
-}
+
+	return review;
+};
 
 export const createReview = async (req, res) => {
 	const { productId } = req.params;
@@ -69,9 +98,6 @@ export const createReview = async (req, res) => {
 	}
 };
 
-// @desc    Get all reviews for admin
-// @route   GET /api/reviews
-// @access  Private/Admin
 export const getAllReviews = async (req, res) => {
 	try {
 		const reviews = await Review.find({}).populate("user", "name").populate("product", "name");
@@ -81,9 +107,6 @@ export const getAllReviews = async (req, res) => {
 	}
 };
 
-// @desc    Delete a review
-// @route   DELETE /api/reviews/:id
-// @access  Private/Admin
 export const deleteReview = async (req, res) => {
 	const { reviewId } = req.params;
 
@@ -130,10 +153,8 @@ export const likeReview = async (req, res) => {
 		const isLiked = review.likes.includes(userId);
 
 		if (isLiked) {
-			// Unlike the review
 			review.likes.pull(userId);
 		} else {
-			// Like the review
 			review.likes.push(userId);
 		}
 
@@ -144,32 +165,36 @@ export const likeReview = async (req, res) => {
 	}
 };
 
+import NotificationService from "../services/notification.service.js";
+
 export const addReply = async (req, res) => {
 	const { reviewId } = req.params;
 	const { comment } = req.body;
-	const userId = req.user._id;
+	const actor = req.user;
 
 	try {
-		const review = await Review.findById(reviewId);
+		const review = await Review.findById(reviewId).populate("user").populate("product");
 
 		if (!review) {
 			return res.status(404).json({ message: "Review not found" });
 		}
 
-		const reply = {
-			user: userId,
-			comment,
-		};
-
+		const reply = { user: actor._id, comment, likes: [], replies: [] };
 		review.replies.push(reply);
 		await review.save();
 
-		const populatedReview = await Review.findById(reviewId);
-		await populatedReview.populate("user", "name profilePicture");
-		await populateReplies(populatedReview.replies);
+		// Notify the original reviewer
+		await NotificationService.createNotification("new_reply", {
+			actor,
+			recipient: review.user,
+			review,
+			product: review.product,
+		});
 
+		const populatedReview = await getPopulatedReviewById(reviewId);
 		res.status(201).json(populatedReview);
 	} catch (error) {
+		console.error("Error in addReply:", error);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
@@ -242,10 +267,10 @@ export const getProductReviews = async (req, res) => {
 export const replyToReply = async (req, res) => {
 	const { reviewId, parentReplyId } = req.params;
 	const { comment } = req.body;
-	const userId = req.user._id;
+	const actor = req.user;
 
 	try {
-		const review = await Review.findById(reviewId);
+		const review = await Review.findById(reviewId).populate("product");
 		if (!review) {
 			return res.status(404).json({ message: "Review not found" });
 		}
@@ -255,22 +280,25 @@ export const replyToReply = async (req, res) => {
 			return res.status(404).json({ message: "Parent reply not found" });
 		}
 
-		const newReply = {
-			user: userId,
-			comment,
-			likes: [],
-			replies: [],
-		};
-
+		const newReply = { user: actor._id, comment, likes: [], replies: [] };
 		parentReply.replies.push(newReply);
 		await review.save();
 
-		const populatedReview = await Review.findById(reviewId);
-		await populatedReview.populate("user", "name profilePicture");
-		await populateReplies(populatedReview.replies);
+		// Notify the author of the parent reply
+		const recipient = await User.findById(parentReply.user);
+		if (recipient) {
+			await NotificationService.createNotification("new_reply", {
+				actor,
+				recipient,
+				review,
+				product: review.product,
+			});
+		}
 
+		const populatedReview = await getPopulatedReviewById(reviewId);
 		res.status(201).json(populatedReview);
 	} catch (error) {
+		console.error("Error in replyToReply:", error);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
