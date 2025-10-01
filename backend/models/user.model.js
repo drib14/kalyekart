@@ -72,6 +72,9 @@ const userSchema = new mongoose.Schema(
 		},
 		deliveryAddresses: [addressSchema],
 		favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
+		fcmToken: {
+			type: String,
+		},
 	},
 	{
 		timestamps: true,

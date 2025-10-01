@@ -29,6 +29,7 @@ import { connectDB } from "./lib/db.js";
 
 // Import the worker to start it
 import "./workers/email-worker.js";
+import "./lib/firebase.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;

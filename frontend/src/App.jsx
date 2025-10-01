@@ -11,6 +11,9 @@ import Navbar from "./components/Navbar";
 import { Toaster, toast } from "sonner";
 import { useUserStore } from "./stores/useUserStore";
 import { useEffect, useState } from "react";
+import { messaging } from "./firebase";
+import { getToken } from "firebase/messaging";
+import axiosInstance from "./lib/axios";
 import FloatingFeedbackButton from "./components/FloatingFeedbackButton";
 import FeedbackModal from "./components/FeedbackModal";
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -62,6 +65,29 @@ function App() {
 			});
 		}
 	}, [isOffline]);
+
+	useEffect(() => {
+		const requestPermission = async () => {
+			if (!user) return;
+			try {
+				const permission = await Notification.requestPermission();
+				if (permission === "granted") {
+					const token = await getToken(messaging, {
+						vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+					});
+
+					if (token) {
+						await axiosInstance.post("/users/save-fcm-token", { token });
+						console.log("FCM token sent to server successfully.");
+					}
+				}
+			} catch (error) {
+				console.error("An error occurred while retrieving token. ", error);
+			}
+		};
+
+		requestPermission();
+	}, [user]);
 
 	if (checkingAuth) return <LoadingSpinner fullScreen={true} />;
 

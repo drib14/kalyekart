@@ -1,3 +1,4 @@
+import admin from "firebase-admin";
 import Notification from "../models/notification.model.js";
 import { sendEmail } from "../lib/email.js";
 import User from "../models/user.model.js";
@@ -21,6 +22,37 @@ const NotificationService = {
 		if (client) {
 			client.write(`data: ${JSON.stringify(notification)}\n\n`);
 			console.log(`[SSE] Sent notification to user: ${userId}`);
+		}
+	},
+
+	async sendPushNotification(userId, title, body, link) {
+		try {
+			const user = await User.findById(userId);
+			if (!user || !user.fcmToken) {
+				return;
+			}
+
+			const message = {
+				notification: {
+					title,
+					body,
+				},
+				webpush: {
+					fcm_options: {
+						link: link,
+					},
+				},
+				token: user.fcmToken,
+			};
+
+			await admin.messaging().send(message);
+			console.log("Successfully sent push notification to user:", userId);
+		} catch (error) {
+			console.error("Error sending push notification:", error);
+			if (error.code === "messaging/registration-token-not-registered") {
+				await User.findByIdAndUpdate(userId, { $unset: { fcmToken: 1 } });
+				console.log(`Removed invalid FCM token for user ${userId}`);
+			}
 		}
 	},
 
@@ -54,6 +86,12 @@ const NotificationService = {
 						await adminNotification.save();
 						await adminNotification.populate("sender", "name profilePicture");
 						this.sendSseNotification(admin._id.toString(), adminNotification);
+						this.sendPushNotification(
+							admin._id.toString(),
+							"New Order Received!",
+							adminNotification.message,
+							adminNotification.link
+						);
 						try {
 							await sendEmail(
 								process.env.EMAIL_USER,
@@ -84,6 +122,12 @@ const NotificationService = {
 					await customerNotification.save();
 					await customerNotification.populate("sender", "name profilePicture");
 					this.sendSseNotification(actor._id.toString(), customerNotification);
+					this.sendPushNotification(
+						actor._id.toString(),
+						"Order Confirmed!",
+						customerNotification.message,
+						customerNotification.link
+					);
 					try {
 						await sendEmail(
 							actor.email,
@@ -115,6 +159,12 @@ const NotificationService = {
 					await notification.save();
 					await notification.populate("sender", "name profilePicture");
 					this.sendSseNotification(recipient._id.toString(), notification);
+					this.sendPushNotification(
+						recipient._id.toString(),
+						"Order Status Updated",
+						notification.message,
+						notification.link
+					);
 					try {
 						await sendEmail(
 							recipient.email,
@@ -139,6 +189,12 @@ const NotificationService = {
 						await adminNotification.save();
 						await adminNotification.populate("sender", "name profilePicture");
 						this.sendSseNotification(admin._id.toString(), adminNotification);
+						this.sendPushNotification(
+							admin._id.toString(),
+							"Order Cancelled",
+							adminNotification.message,
+							adminNotification.link
+						);
 					}
 					const customerCancelNotification = new Notification({
 						recipient: actor._id,
@@ -150,6 +206,12 @@ const NotificationService = {
 					await customerCancelNotification.save();
 					await customerCancelNotification.populate("sender", "name profilePicture");
 					this.sendSseNotification(actor._id.toString(), customerCancelNotification);
+					this.sendPushNotification(
+						actor._id.toString(),
+						"Order Cancelled",
+						customerCancelNotification.message,
+						customerCancelNotification.link
+					);
 					break;
 
 				case "welcome":
@@ -161,6 +223,12 @@ const NotificationService = {
 					});
 					await welcomeNotification.save();
 					this.sendSseNotification(actor._id.toString(), welcomeNotification);
+					this.sendPushNotification(
+						actor._id.toString(),
+						"Welcome to KalyeKart!",
+						welcomeNotification.message,
+						welcomeNotification.link
+					);
 					try {
 						await sendEmail(actor.email, "Welcome to KalyeKart!", "welcome", {
 							NAME: actor.name,
@@ -183,6 +251,12 @@ const NotificationService = {
 						await adminNotification.save();
 						if (actor) await adminNotification.populate("sender", "name profilePicture");
 						this.sendSseNotification(admin._id.toString(), adminNotification);
+						this.sendPushNotification(
+							admin._id.toString(),
+							"New Feedback Received",
+							adminNotification.message,
+							adminNotification.link
+						);
 						try {
 							await sendEmail(
 								process.env.EMAIL_USER,
@@ -210,6 +284,12 @@ const NotificationService = {
 						await customerNotification.save();
 						if (admin) await customerNotification.populate("sender", "name profilePicture");
 						this.sendSseNotification(actor._id.toString(), customerNotification);
+						this.sendPushNotification(
+							actor._id.toString(),
+							"Feedback Received",
+							customerNotification.message,
+							customerNotification.link
+						);
 						try {
 							await sendEmail(
 								actor.email,
@@ -235,6 +315,12 @@ const NotificationService = {
 						await adminNotification.save();
 						await adminNotification.populate("sender", "name profilePicture");
 						this.sendSseNotification(admin._id.toString(), adminNotification);
+						this.sendPushNotification(
+							admin._id.toString(),
+							"New Review Submitted",
+							adminNotification.message,
+							adminNotification.link
+						);
 					}
 					// try {
 					// 	await sendEmail(process.env.EMAIL_USER, `New Review on ${product.name}`, "adminNewReview", {
@@ -270,6 +356,12 @@ const NotificationService = {
 						await notification.save();
 						await notification.populate("sender", "name profilePicture");
 						this.sendSseNotification(recipient._id.toString(), notification);
+						this.sendPushNotification(
+							recipient._id.toString(),
+							"Someone Liked Your Comment!",
+							notification.message,
+							notification.link
+						);
 						if (recipient.email) {
 							try {
 								await sendEmail(
@@ -303,6 +395,12 @@ const NotificationService = {
 						await notification.save();
 						await notification.populate("sender", "name profilePicture");
 						this.sendSseNotification(recipient._id.toString(), notification);
+						this.sendPushNotification(
+							recipient._id.toString(),
+							"You Have a New Reply",
+							notification.message,
+							notification.link
+						);
 						// if (recipient.email) {
 						// 	try {
 						// 		await sendEmail(
