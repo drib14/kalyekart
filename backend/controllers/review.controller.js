@@ -54,6 +54,55 @@ export const createReview = async (req, res) => {
 	}
 };
 
+// @desc    Get all reviews for admin
+// @route   GET /api/reviews
+// @access  Private/Admin
+export const getAllReviews = async (req, res) => {
+	try {
+		const reviews = await Review.find({})
+			.populate("user", "name")
+			.populate("product", "name");
+		res.json(reviews);
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+// @desc    Delete a review
+// @route   DELETE /api/reviews/:id
+// @access  Private/Admin
+export const deleteReview = async (req, res) => {
+	const { reviewId } = req.params;
+
+	try {
+		const review = await Review.findById(reviewId);
+
+		if (!review) {
+			return res.status(404).json({ message: "Review not found" });
+		}
+
+		const productId = review.product;
+		await review.deleteOne();
+
+		// Recalculate product rating
+		const product = await Product.findById(productId);
+		if (product) {
+			const reviews = await Review.find({ product: productId });
+			product.numReviews = reviews.length;
+			product.averageRating =
+				reviews.length > 0
+					? reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length
+					: 0;
+			product.reviews = reviews.map((r) => r._id);
+			await product.save();
+		}
+
+		res.json({ message: "Review removed" });
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const likeReview = async (req, res) => {
 	const { reviewId } = req.params;
 	const userId = req.user._id;
