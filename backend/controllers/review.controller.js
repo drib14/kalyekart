@@ -19,9 +19,7 @@ const findReplyById = (replies, replyId) => {
 
 // Helper function to get a fully populated review using an efficient, non-recursive method
 const getPopulatedReviewById = async (reviewId) => {
-	const review = await Review.findById(reviewId)
-		.populate("user", "name profilePicture")
-		.lean();
+	const review = await Review.findById(reviewId).populate("user", "name profilePicture").lean();
 
 	if (!review) return null;
 
@@ -85,14 +83,12 @@ export const createReview = async (req, res) => {
 
 		await review.save();
 
-		// Update product with new review
 		const reviews = await Review.find({ product: productId });
 		product.numReviews = reviews.length;
 		product.averageRating = reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length;
 		product.reviews.push(review._id);
 		await product.save();
 
-		// Send notifications
 		await NotificationService.createNotification("new_review", {
 			actor,
 			product,
@@ -127,15 +123,12 @@ export const deleteReview = async (req, res) => {
 		const productId = review.product;
 		await review.deleteOne();
 
-		// Recalculate product rating
 		const product = await Product.findById(productId);
 		if (product) {
 			const reviews = await Review.find({ product: productId });
 			product.numReviews = reviews.length;
 			product.averageRating =
-				reviews.length > 0
-					? reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length
-					: 0;
+				reviews.length > 0 ? reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length : 0;
 			product.reviews = reviews.map((r) => r._id);
 			await product.save();
 		}
@@ -163,7 +156,6 @@ export const likeReview = async (req, res) => {
 			review.likes.pull(actor._id);
 		} else {
 			review.likes.push(actor._id);
-			// Send notification only when liking, not unliking
 			await NotificationService.createNotification("new_like", {
 				actor,
 				recipient: review.user,
@@ -196,7 +188,6 @@ export const addReply = async (req, res) => {
 		review.replies.push(reply);
 		await review.save();
 
-		// Notify the original reviewer
 		await NotificationService.createNotification("new_reply", {
 			actor,
 			recipient: review.user,
@@ -227,9 +218,7 @@ export const getProductReviews = async (req, res) => {
 	const { productId } = req.params;
 
 	try {
-		const reviews = await Review.find({ product: productId })
-			.populate("user", "name profilePicture")
-			.lean();
+		const reviews = await Review.find({ product: productId }).populate("user", "name profilePicture").lean();
 
 		const getUserDetails = async (items) => {
 			const userIds = new Set();
@@ -297,7 +286,6 @@ export const replyToReply = async (req, res) => {
 		parentReply.replies.push(newReply);
 		await review.save();
 
-		// Notify the author of the parent reply
 		const recipient = await User.findById(parentReply.user);
 		if (recipient) {
 			await NotificationService.createNotification("new_reply", {
