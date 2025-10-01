@@ -54,6 +54,73 @@ export const createReview = async (req, res) => {
 	}
 };
 
+export const likeReview = async (req, res) => {
+	const { reviewId } = req.params;
+	const userId = req.user._id;
+
+	try {
+		const review = await Review.findById(reviewId);
+
+		if (!review) {
+			return res.status(404).json({ message: "Review not found" });
+		}
+
+		const isLiked = review.likes.includes(userId);
+
+		if (isLiked) {
+			// Unlike the review
+			review.likes.pull(userId);
+		} else {
+			// Like the review
+			review.likes.push(userId);
+		}
+
+		await review.save();
+		res.json({ message: "Review like status updated", likes: review.likes.length });
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const addReply = async (req, res) => {
+	const { reviewId } = req.params;
+	const { comment } = req.body;
+	const userId = req.user._id;
+
+	try {
+		const review = await Review.findById(reviewId);
+
+		if (!review) {
+			return res.status(404).json({ message: "Review not found" });
+		}
+
+		const reply = {
+			user: userId,
+			comment,
+		};
+
+		review.replies.push(reply);
+		await review.save();
+
+		const populatedReview = await Review.findById(reviewId).populate("replies.user", "name profilePicture");
+
+		res.status(201).json(populatedReview);
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const getMyReviews = async (req, res) => {
+	const userId = req.user._id;
+
+	try {
+		const reviews = await Review.find({ user: userId }).populate("product", "name image");
+		res.json(reviews);
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const getProductReviews = async (req, res) => {
 	const { productId } = req.params;
 
