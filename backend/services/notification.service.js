@@ -186,7 +186,7 @@ const NotificationService = {
 				break;
 
 			case "new_review":
-				// Notify Admin
+				// In-app notification for admin
 				if (admin) {
 					const adminNotification = new Notification({
 						recipient: admin._id,
@@ -199,21 +199,25 @@ const NotificationService = {
 					await adminNotification.populate("sender", "name profilePicture");
 					this.sendSseNotification(admin._id.toString(), adminNotification);
 				}
-				// Notify Customer (Confirmation)
-				const reviewConfirmation = new Notification({
-					recipient: actor._id,
-					sender: admin ? admin._id : null,
-					type: "review_confirmation",
-					message: `Your review for ${product.name} has been submitted. Thank you!`,
-					link: `/product/${product._id}?review=${review._id}`,
+				// Email notification for admin
+				await sendEmail(process.env.EMAIL_USER, `New Review on ${product.name}`, "adminNewReview", {
+					PRODUCT_NAME: product.name,
+					REVIEWER_NAME: actor.name,
+					RATING: review.rating,
+					COMMENT: review.comment,
+					CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
 				});
-				await reviewConfirmation.save();
-				this.sendSseNotification(actor._id.toString(), reviewConfirmation);
+				// Email confirmation for customer
+				await sendEmail(actor.email, "Your Review Has Been Submitted!", "userReviewConfirmation", {
+					NAME: actor.name,
+					PRODUCT_NAME: product.name,
+					CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
+				});
 				break;
 
 			case "new_like":
-                // Notify the author of the content being liked
 				if (recipient && actor._id.toString() !== recipient._id.toString()) {
+					// In-app notification
 					notification = new Notification({
 						recipient: recipient._id,
 						sender: actor._id,
@@ -224,12 +228,27 @@ const NotificationService = {
 					await notification.save();
 					await notification.populate("sender", "name profilePicture");
 					this.sendSseNotification(recipient._id.toString(), notification);
+					// Email notification
+					if (recipient.email) {
+						await sendEmail(
+							recipient.email,
+							`${actor.name} liked your ${data.likedEntityType || 'comment'}!`,
+							"userNewLike",
+							{
+								NAME: recipient.name,
+								ACTOR_NAME: actor.name,
+								LIKED_ENTITY: data.likedEntityType || "comment",
+								PRODUCT_NAME: product.name,
+								CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
+							}
+						);
+					}
 				}
 				break;
 
 			case "new_reply":
-				// Notify the author of the comment being replied to
 				if (recipient && actor._id.toString() !== recipient._id.toString()) {
+					// In-app notification
 					notification = new Notification({
 						recipient: recipient._id,
 						sender: actor._id,
@@ -240,6 +259,21 @@ const NotificationService = {
 					await notification.save();
 					await notification.populate("sender", "name profilePicture");
 					this.sendSseNotification(recipient._id.toString(), notification);
+					// Email notification
+					if (recipient.email) {
+						await sendEmail(
+							recipient.email,
+							`You have a new reply from ${actor.name}`,
+							"userNewReply",
+							{
+								NAME: recipient.name,
+								REPLIER_NAME: actor.name,
+								PRODUCT_NAME: product.name,
+								REPLY_COMMENT: data.reply.comment,
+								CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
+							}
+						);
+					}
 				}
 				break;
 
