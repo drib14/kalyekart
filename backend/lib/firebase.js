@@ -7,17 +7,28 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 try {
-  const serviceAccountPath = path.join(__dirname, "..", "firebase-service-account.json");
-  const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, "utf8"));
+	let serviceAccount;
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+	// Check if the environment variable is set
+	if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+		serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+		console.log("Initializing Firebase Admin SDK from environment variable...");
+	} else {
+		// Fallback to reading from the file
+		const serviceAccountPath = path.join(__dirname, "..", "firebase-service-account.json");
+		serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, "utf8"));
+		console.log("Initializing Firebase Admin SDK from file...");
+	}
 
-  console.log("Firebase Admin SDK initialized successfully.");
+	admin.initializeApp({
+		credential: admin.credential.cert(serviceAccount),
+	});
+
+	console.log("Firebase Admin SDK initialized successfully.");
 } catch (error) {
-  console.error("Firebase Admin SDK initialization error:", error.message);
-  process.exit(1);
+	console.error("Firebase Admin SDK initialization error:", error.message);
+	// Optional: Exit the process only if Firebase is absolutely essential for startup
+	process.exit(1);
 }
 
 export default admin;
