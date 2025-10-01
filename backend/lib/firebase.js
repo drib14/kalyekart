@@ -12,6 +12,10 @@ try {
 	// Check if the environment variable is set
 	if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
 		serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+		// Correctly format the private key by replacing escaped newlines
+		if (serviceAccount.private_key) {
+			serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
+		}
 		console.log("Initializing Firebase Admin SDK from environment variable...");
 	} else {
 		// Fallback to reading from the file
