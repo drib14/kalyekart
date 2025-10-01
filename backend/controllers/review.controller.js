@@ -1,16 +1,6 @@
 import Product from "../models/product.model.js";
 import Review from "../models/review.model.js";
-
-// Helper function to recursively populate replies
-async function populateReplies(replies) {
-	if (!replies || replies.length === 0) return;
-
-	for (const reply of replies) {
-		// Mongoose sub-docs need to be populated this way
-		await reply.populate({ path: "user", select: "name profilePicture" });
-		await populateReplies(reply.replies);
-	}
-}
+import User from "../models/user.model.js";
 
 // Helper function to find a reply by its ID within a review document
 const findReplyById = (replies, replyId) => {
@@ -25,6 +15,18 @@ const findReplyById = (replies, replyId) => {
 	}
 	return null;
 };
+
+// Helper function to recursively populate user details in replies
+async function populateReplies(replies) {
+	for (const reply of replies) {
+		// Populate the user for the current reply
+		await reply.populate({ path: "user", select: "name profilePicture" });
+		// If there are nested replies, recurse
+		if (reply.replies && reply.replies.length > 0) {
+			await populateReplies(reply.replies);
+		}
+	}
+}
 
 export const createReview = async (req, res) => {
 	const { productId } = req.params;
@@ -72,9 +74,7 @@ export const createReview = async (req, res) => {
 // @access  Private/Admin
 export const getAllReviews = async (req, res) => {
 	try {
-		const reviews = await Review.find({})
-			.populate("user", "name")
-			.populate("product", "name");
+		const reviews = await Review.find({}).populate("user", "name").populate("product", "name");
 		res.json(reviews);
 	} catch (error) {
 		res.status(500).json({ message: "Server error", error: error.message });
@@ -164,7 +164,8 @@ export const addReply = async (req, res) => {
 		review.replies.push(reply);
 		await review.save();
 
-		const populatedReview = await Review.findById(reviewId).populate("user", "name profilePicture");
+		const populatedReview = await Review.findById(reviewId);
+		await populatedReview.populate("user", "name profilePicture");
 		await populateReplies(populatedReview.replies);
 
 		res.status(201).json(populatedReview);
@@ -188,13 +189,48 @@ export const getProductReviews = async (req, res) => {
 	const { productId } = req.params;
 
 	try {
-		const reviews = await Review.find({ product: productId }).populate(
-			"user",
-			"name profilePicture"
-		);
+		const reviews = await Review.find({ product: productId })
+			.populate("user", "name profilePicture")
+			.lean();
+
+		const getUserDetails = async (items) => {
+			const userIds = new Set();
+			const collectUserIds = (replies) => {
+				for (const reply of replies) {
+					if (reply.user) userIds.add(reply.user.toString());
+					if (reply.replies && reply.replies.length > 0) {
+						collectUserIds(reply.replies);
+					}
+				}
+			};
+
+			for (const review of items) {
+				if (review.replies) collectUserIds(review.replies);
+			}
+
+			const users = await User.find({ _id: { $in: [...userIds] } })
+				.select("name profilePicture")
+				.lean();
+			return new Map(users.map((user) => [user._id.toString(), user]));
+		};
+
+		const userMap = await getUserDetails(reviews);
+
+		const populateUsers = (replies) => {
+			for (const reply of replies) {
+				if (reply.user) {
+					reply.user = userMap.get(reply.user.toString());
+				}
+				if (reply.replies && reply.replies.length > 0) {
+					populateUsers(reply.replies);
+				}
+			}
+		};
 
 		for (const review of reviews) {
-			await populateReplies(review.replies);
+			if (review.replies) {
+				populateUsers(review.replies);
+			}
 		}
 
 		res.json(reviews);
@@ -229,7 +265,8 @@ export const replyToReply = async (req, res) => {
 		parentReply.replies.push(newReply);
 		await review.save();
 
-		const populatedReview = await Review.findById(reviewId).populate("user", "name profilePicture");
+		const populatedReview = await Review.findById(reviewId);
+		await populatedReview.populate("user", "name profilePicture");
 		await populateReplies(populatedReview.replies);
 
 		res.status(201).json(populatedReview);
