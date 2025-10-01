@@ -12,7 +12,7 @@ const Comment = ({ comment, productId, topLevelReviewId }) => {
 	const [isReplying, setIsReplying] = useState(false);
 	const [replyText, setReplyText] = useState("");
 
-	const isTopLevelReview = comment.rating !== undefined;
+	const isTopLevelReview = comment._id === topLevelReviewId;
 
 	const likeMutation = useMutation({
 		mutationFn: () => {

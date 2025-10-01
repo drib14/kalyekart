@@ -25,6 +25,9 @@ const ManageReviewsTab = () => {
 		onSuccess: () => {
 			toast.success("Review deleted successfully");
 			queryClient.invalidateQueries({ queryKey: ["allReviews"] });
+			queryClient.invalidateQueries({ queryKey: ["products"] });
+			queryClient.invalidateQueries({ queryKey: ["product"] });
+			queryClient.invalidateQueries({ queryKey: ["most-reviewed"] });
 		},
 		onError: (error) => {
 			toast.error(error.response?.data?.message || "Failed to delete review.");
