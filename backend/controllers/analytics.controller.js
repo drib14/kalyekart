@@ -10,30 +10,32 @@ const getAnalyticsTimeframe = (filter) => {
 
 	switch (filter) {
 		case "daily":
-			startDate = startOfDay(now);
-			endDate = endOfDay(now);
-			groupByFormat = "%Y-%m-%d";
+			// Correctly calculates a rolling 24-hour window from the current time
+			startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+			endDate = now;
+			groupByFormat = "%Y-%m-%d %H:00"; // Group by hour for a daily view
 			break;
 		case "weekly":
-			startDate = startOfWeek(now, { weekStartsOn: 1 });
-			endDate = endOfWeek(now, { weekStartsOn: 1 });
-			groupByFormat = "%Y-%m-%d";
+			// Sets the start of the week to Sunday, aligning with common business reporting
+			startDate = startOfWeek(now, { weekStartsOn: 0 }); // 0 for Sunday
+			endDate = endOfWeek(now, { weekStartsOn: 0 });
+			groupByFormat = "%Y-%m-%d"; // Group by day for a weekly view
 			break;
 		case "monthly":
 			startDate = startOfMonth(now);
 			endDate = endOfMonth(now);
-			groupByFormat = "%Y-%m-%d";
+			groupByFormat = "%Y-%m-%d"; // Group by day for a monthly view
 			break;
 		case "yearly":
 			startDate = startOfYear(now);
 			endDate = endOfYear(now);
-			groupByFormat = "%Y-%m";
+			groupByFormat = "%Y-%m"; // Group by month for a yearly view
 			break;
 		case "overall":
 		default:
 			startDate = new Date(0); // Epoch start
 			endDate = now;
-			groupByFormat = "%Y";
+			groupByFormat = "%Y"; // Group by year for an overall view
 			break;
 	}
 	return { startDate, endDate, groupByFormat };
