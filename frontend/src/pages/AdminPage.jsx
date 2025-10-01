@@ -8,8 +8,6 @@ import ProductsList from "../components/ProductsList";
 import { useProductStore } from "../stores/useProductStore";
 import AdminOrdersTab from "../components/AdminOrdersTab";
 import ManageReviewsTab from "../components/ManageReviewsTab";
-import QuickStats from "../components/QuickStats";
-
 const tabs = [
 	{ id: "create", label: "Create Product", icon: PlusCircle },
 	{ id: "products", label: "Products", icon: ShoppingBasket },
@@ -37,8 +35,6 @@ const AdminPage = () => {
 				>
 					Admin Dashboard
 				</motion.h1>
-
-				<QuickStats />
 
 				<div className='flex justify-center mb-8 overflow-x-auto'>
 					{tabs.map((tab) => (

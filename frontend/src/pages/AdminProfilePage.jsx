@@ -6,6 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 import EditBusinessInfoModal from "../components/EditBusinessInfoModal";
+import QuickStats from "../components/QuickStats";
 
 const AdminProfilePage = () => {
 	const { user, checkAuth } = useUserStore();
@@ -149,9 +150,8 @@ const AdminProfilePage = () => {
 						</div>
 
 						{/* Quick Stats */}
-						<div className='bg-gray-800 p-6 rounded-lg md:col-span-2'>
-							<h2 className='text-xl font-semibold mb-4 flex items-center'><BarChart className="mr-2"/> Quick Stats</h2>
-							<p className='text-gray-500 italic'>Coming soon...</p>
+						<div className='md:col-span-2'>
+							<QuickStats />
 						</div>
 					</div>
 
