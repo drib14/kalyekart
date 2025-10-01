@@ -45,6 +45,11 @@ const getAnalyticsTimeframe = (filter) => {
 const getAnalyticsData = async (filter) => {
 	const { startDate, endDate, groupByFormat } = getAnalyticsTimeframe(filter);
 
+	// Defines the condition for an order to be considered refunded
+	const refundCondition = {
+		$or: [{ $eq: ["$paymentStatus", "refunded"] }, { $eq: ["$refundRequest.status", "approved"] }],
+	};
+
 	// Aggregation for period-specific stats (sales and revenue)
 	const periodStatsPromise = Order.aggregate([
 		{
@@ -57,7 +62,16 @@ const getAnalyticsData = async (filter) => {
 			$group: {
 				_id: null,
 				totalSales: { $sum: 1 },
-				totalRevenue: { $sum: "$totalAmount" },
+				totalRevenue: {
+					$sum: {
+						// If the order is refunded, its revenue is not included in the sum
+						$cond: {
+							if: refundCondition,
+							then: 0,
+							else: "$totalAmount",
+						},
+					},
+				},
 			},
 		},
 	]);
@@ -74,7 +88,16 @@ const getAnalyticsData = async (filter) => {
 			$group: {
 				_id: { $dateToString: { format: groupByFormat, date: "$createdAt" } },
 				sales: { $sum: 1 },
-				revenue: { $sum: "$totalAmount" },
+				revenue: {
+					$sum: {
+						// Same refund logic applied to each data point in the graph
+						$cond: {
+							if: refundCondition,
+							then: 0,
+							else: "$totalAmount",
+						},
+					},
+				},
 			},
 		},
 		{ $sort: { _id: 1 } },
