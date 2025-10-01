@@ -3,10 +3,12 @@ import bcrypt from "bcryptjs";
 
 const addressSchema = new mongoose.Schema({
 	fullName: { type: String, required: true },
-	address: { type: String, required: true },
+	contactNumber: { type: String, required: true },
+	sitio: { type: String },
+	barangay: { type: String, required: true },
 	city: { type: String, required: true },
+	province: { type: String, required: true, default: "Cebu" },
 	postalCode: { type: String, required: true },
-	country: { type: String, required: true },
 	isDefault: { type: Boolean, default: false },
 });
 

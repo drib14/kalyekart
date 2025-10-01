@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { User, MapPin, CreditCard, ShoppingBag, Heart, Camera, Save, MessageSquare } from "lucide-react";
+import { User, Camera, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useUserStore } from "../stores/useUserStore";
 import { useMutation } from "@tanstack/react-query";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
+import DeliveryAddressManager from "../components/DeliveryAddressManager";
+import RecentOrders from "../components/RecentOrders";
 
 const CustomerProfilePage = () => {
 	const { user, checkAuth } = useUserStore();
@@ -30,7 +31,7 @@ const CustomerProfilePage = () => {
 		},
 		onSuccess: () => {
 			toast.success("Profile updated successfully");
-			checkAuth(); // Refetch user data to ensure global state is updated
+			checkAuth();
 		},
 		onError: (error) => {
 			toast.error(error.response?.data?.message || "Failed to update profile");
@@ -57,14 +58,10 @@ const CustomerProfilePage = () => {
 		updateProfile(formData);
 	};
 
-	const handleNotImplemented = () => {
-		toast.info("This feature is not yet implemented.");
-	};
-
 	return (
 		<div className='min-h-screen bg-gray-900 text-white'>
 			<div className='container mx-auto p-4 sm:p-6 md:p-8'>
-				<form onSubmit={handleSubmit} className='max-w-4xl mx-auto'>
+				<div className='max-w-6xl mx-auto'>
 					{/* Header */}
 					<div className='flex flex-col sm:flex-row items-center gap-6 mb-8'>
 						<div className='relative'>
@@ -100,11 +97,11 @@ const CustomerProfilePage = () => {
 					</div>
 
 					{/* Profile Sections */}
-					<div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-						{/* Basic Info */}
-						<div className='bg-gray-800 p-6 rounded-lg'>
-							<h2 className='text-xl font-semibold mb-4 flex items-center'><User className="mr-2"/> Basic Info</h2>
-							<div className='space-y-4'>
+					<div className='space-y-8'>
+						{/* Basic Info Form */}
+						<form onSubmit={handleSubmit} className='bg-gray-800 p-6 rounded-lg'>
+							<h2 className='text-xl font-semibold mb-4 flex items-center'><User className="mr-2"/> Basic Information</h2>
+							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
 									<label className='block text-sm font-medium text-gray-400 mb-1'>Name</label>
 									<input
@@ -123,7 +120,7 @@ const CustomerProfilePage = () => {
 										className='w-full bg-gray-700 rounded-lg p-2'
 									/>
 								</div>
-								<div>
+								<div className='md:col-span-2'>
 									<label className='block text-sm font-medium text-gray-400 mb-1'>Phone Number</label>
 									<input
 										type='tel'
@@ -134,47 +131,24 @@ const CustomerProfilePage = () => {
 									/>
 								</div>
 							</div>
-						</div>
-
-						<div className='md:col-span-2'>
-							<div className='bg-gray-800 p-6 rounded-lg'>
-								<h2 className='text-xl font-semibold mb-4 flex items-center'>
-									<User className='mr-2' /> Account Management
-								</h2>
-								<div className='space-y-3'>
-									<Link
-										to='/my-orders'
-										className='flex items-center w-full text-left hover:text-emerald-400'
-									>
-										<ShoppingBag className='mr-2' /> View All Orders
-									</Link>
-									<Link
-										to='/my-reviews'
-										className='flex items-center w-full text-left hover:text-emerald-400'
-									>
-										<MessageSquare className='mr-2' /> My Reviews
-									</Link>
-									<Link
-										to='/my-favorites'
-										className='flex items-center w-full text-left hover:text-emerald-400'
-									>
-										<Heart className='mr-2' /> My Favorites
-									</Link>
-								</div>
+							<div className='mt-6 flex justify-end'>
+								<button
+									type='submit'
+									className='bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg flex items-center'
+									disabled={isPending}
+								>
+									{isPending ? <LoadingSpinner size="sm" /> : <><Save className="mr-2"/> Save Changes</>}
+								</button>
 							</div>
-						</div>
-					</div>
+						</form>
 
-					<div className='mt-8 flex justify-end'>
-						<button
-							type='submit'
-							className='bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg flex items-center'
-							disabled={isPending}
-						>
-							{isPending ? <LoadingSpinner size="sm" /> : <><Save className="mr-2"/> Save Changes</>}
-						</button>
+						{/* Delivery Address Manager */}
+						<DeliveryAddressManager />
+
+						{/* Recent Orders */}
+						<RecentOrders />
 					</div>
-				</form>
+				</div>
 			</div>
 		</div>
 	);
