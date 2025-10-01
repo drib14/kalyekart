@@ -132,6 +132,7 @@ const ProductDetailPage = () => {
 								Add to Cart
 							</button>
 							<button
+								type="button"
 								onClick={handleFavoriteClick}
 								disabled={toggleFavoriteMutation.isPending}
 								className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50"

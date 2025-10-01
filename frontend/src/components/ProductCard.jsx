@@ -63,6 +63,7 @@ const ProductCard = ({ product, onCardClick }) => {
 				<img className='object-cover w-full' src={product.image} alt={product.name} />
 				<div className='absolute inset-0 bg-black bg-opacity-20' />
 				<button
+					type="button"
 					className='absolute top-2 right-2 flex items-center justify-center rounded-full bg-white/20 p-2 text-white backdrop-blur-sm hover:bg-white/30 disabled:opacity-50'
 					onClick={handleFavoriteClick}
 					disabled={toggleFavoriteMutation.isPending}

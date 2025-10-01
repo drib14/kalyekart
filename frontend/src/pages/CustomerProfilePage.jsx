@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { User, MapPin, CreditCard, ShoppingBag, Heart, Camera, Save } from "lucide-react";
+import { User, MapPin, CreditCard, ShoppingBag, Heart, Camera, Save, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useUserStore } from "../stores/useUserStore";
 import { useMutation } from "@tanstack/react-query";
