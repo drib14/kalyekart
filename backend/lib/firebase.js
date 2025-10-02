@@ -8,6 +8,19 @@ const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// --- Firebase Initialization Debugging ---
+console.log("--- Firebase Auth Debugging ---");
+console.log(
+	`FIREBASE_PROJECT_ID found: ${!!process.env.FIREBASE_PROJECT_ID}`
+);
+console.log(
+	`FIREBASE_PRIVATE_KEY found: ${!!process.env.FIREBASE_PRIVATE_KEY}`
+);
+console.log(
+	`FIREBASE_CLIENT_EMAIL found: ${!!process.env.FIREBASE_CLIENT_EMAIL}`
+);
+console.log("-----------------------------");
+
 try {
   // More robust check for essential Firebase credentials
   if (

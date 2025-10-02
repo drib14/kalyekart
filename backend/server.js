@@ -1,13 +1,15 @@
-import "dotenv/config";
-import express from "express";
-import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
 import path from "path";
-import cors from "cors";
-import { fileURLToPath } from "url"; // Import for resolving __dirname
+import { fileURLToPath } from "url";
 
-// Correctly configure dotenv path for ES modules
+// Load environment variables before any other module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
+import express from "express";
+import cookieParser from "cookie-parser";
+import cors from "cors";
 
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
