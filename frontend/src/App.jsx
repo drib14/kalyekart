@@ -32,6 +32,7 @@ import CustomerProfilePage from "./pages/CustomerProfilePage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import BottomNav from "./components/BottomNav";
 import NotFoundPage from "./pages/NotFoundPage";
 import useOfflineStatus from "./hooks/useOfflineStatus";
 import OfflinePage from "./pages/OfflinePage";
@@ -104,7 +105,7 @@ function App() {
 				</div>
 			</div>
 
-			<div className='relative z-10 pt-20 pb-20 sm:pb-0'>
+			<div className='relative z-10 pt-20 pb-20 md:pb-0'>
 				<Navbar />
 				<Routes>
 					<Route path='/' element={<HomePage />} />
@@ -147,6 +148,7 @@ function App() {
 				<Footer />
 			</div>
 			<Toaster theme='dark' />
+			{user && <BottomNav />}
 			{user && <FloatingFeedbackButton onClick={() => setIsFeedbackModalOpen(true)} />}
 			<FeedbackModal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} />
 		</div>
