@@ -2,8 +2,6 @@
 
 Welcome to KalyeKart, a modern, full-stack e-commerce marketplace. This application is designed to be a robust, feature-rich platform for online shopping, complete with an advanced admin dashboard for store management. It is built as a Progressive Web App (PWA), ensuring a fast, reliable, and installable experience on any device.
 
-![Application Screenshot](frontend/public/screenshot-for-readme.png)
-
 ---
 
 ## ✨ Key Features
