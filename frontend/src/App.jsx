@@ -105,8 +105,8 @@ function App() {
 				</div>
 			</div>
 
-			<div className='relative z-10 pt-20 pb-20 md:pb-0 flex-grow'>
-				<Navbar />
+			<Navbar />
+			<main className='flex-grow relative z-10 pt-20 pb-20'>
 				<Routes>
 					<Route path='/' element={<HomePage />} />
 					<Route path='/signup' element={!user ? <SignUpPage /> : <Navigate to='/' />} />
@@ -145,7 +145,7 @@ function App() {
 					<Route path='/product/:productId' element={<ProductDetailPage />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
-			</div>
+			</main>
 			<Footer />
 			<Toaster theme='dark' />
 			{user && <BottomNav />}
