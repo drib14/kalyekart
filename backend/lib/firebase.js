@@ -29,11 +29,16 @@ try {
     process.env.FIREBASE_CLIENT_EMAIL
   ) {
     console.log("🔑 Initializing Firebase Admin SDK from environment variables...");
+    // Sanitize the private key by removing potential surrounding quotes and escaping newlines
+    const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '')
+      .replace(/^"|"$/g, '') // Remove leading/trailing quotes
+      .replace(/\\n/g, '\n'); // Replace newline characters
+
     const serviceAccount = {
       type: "service_account",
       project_id: process.env.FIREBASE_PROJECT_ID,
       private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-      private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      private_key: privateKey,
       client_email: process.env.FIREBASE_CLIENT_EMAIL,
       client_id: process.env.FIREBASE_CLIENT_ID,
       auth_uri: "https://accounts.google.com/o/oauth2/auth",
