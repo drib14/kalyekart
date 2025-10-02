@@ -36,7 +36,6 @@ import BottomNav from "./components/BottomNav";
 import NotFoundPage from "./pages/NotFoundPage";
 import useOfflineStatus from "./hooks/useOfflineStatus";
 import OfflinePage from "./pages/OfflinePage";
-import Footer from "./components/Footer";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -145,7 +144,6 @@ function App() {
 					<Route path='/product/:productId' element={<ProductDetailPage />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
-				<Footer />
 			</div>
 			<Toaster theme='dark' />
 			{user && <BottomNav />}
