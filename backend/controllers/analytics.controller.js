@@ -10,32 +10,30 @@ const getAnalyticsTimeframe = (filter) => {
 
 	switch (filter) {
 		case "daily":
-			// Correctly calculates a rolling 24-hour window from the current time
-			startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-			endDate = now;
-			groupByFormat = "%Y-%m-%d %H:00"; // Group by hour for a daily view
+			startDate = startOfDay(now);
+			endDate = endOfDay(now);
+			groupByFormat = "%Y-%m-%d";
 			break;
 		case "weekly":
-			// Sets the start of the week to Sunday, aligning with common business reporting
-			startDate = startOfWeek(now, { weekStartsOn: 0 }); // 0 for Sunday
-			endDate = endOfWeek(now, { weekStartsOn: 0 });
-			groupByFormat = "%Y-%m-%d"; // Group by day for a weekly view
+			startDate = startOfWeek(now, { weekStartsOn: 1 });
+			endDate = endOfWeek(now, { weekStartsOn: 1 });
+			groupByFormat = "%Y-%m-%d";
 			break;
 		case "monthly":
 			startDate = startOfMonth(now);
 			endDate = endOfMonth(now);
-			groupByFormat = "%Y-%m-%d"; // Group by day for a monthly view
+			groupByFormat = "%Y-%m-%d";
 			break;
 		case "yearly":
 			startDate = startOfYear(now);
 			endDate = endOfYear(now);
-			groupByFormat = "%Y-%m"; // Group by month for a yearly view
+			groupByFormat = "%Y-%m";
 			break;
 		case "overall":
 		default:
 			startDate = new Date(0); // Epoch start
 			endDate = now;
-			groupByFormat = "%Y"; // Group by year for an overall view
+			groupByFormat = "%Y";
 			break;
 	}
 	return { startDate, endDate, groupByFormat };
@@ -43,111 +41,69 @@ const getAnalyticsTimeframe = (filter) => {
 
 // Main function to fetch all analytics data
 const getAnalyticsData = async (filter) => {
-	// --- Timeframe for Filtered Stats ---
-	const { startDate: filteredStartDate, endDate: filteredEndDate } = getAnalyticsTimeframe(filter);
+	const { startDate, endDate, groupByFormat } = getAnalyticsTimeframe(filter);
 
-	// --- Dynamic Grouping for Overall Graph ---
-	const firstOrder = await Order.findOne().sort({ createdAt: 1 }).lean();
-	let overallGroupByFormat;
-
-	if (firstOrder) {
-		const now = new Date();
-		const firstOrderDate = new Date(firstOrder.createdAt);
-		const diffTime = Math.abs(now - firstOrderDate);
-		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-		if (diffDays <= 90) {
-			overallGroupByFormat = "%Y-%m-%d"; // Daily
-		} else if (diffDays <= 1095) { // Up to 3 years
-			overallGroupByFormat = "%Y-%m"; // Monthly
-		} else {
-			overallGroupByFormat = "%Y"; // Yearly
-		}
-	} else {
-		overallGroupByFormat = "%Y"; // Default if no orders
-	}
-
-
-	// Defines the condition for an order to be considered refunded
-	const refundCondition = {
-		$or: [{ $eq: ["$paymentStatus", "refunded"] }, { $eq: ["$refundRequest.status", "approved"] }],
-	};
-
-	// --- Promises ---
-
-	// 1. Promise for FILTERED stats (sales and revenue)
-	const filteredStatsPromise = Order.aggregate([
+	// Aggregation for period-specific stats (sales and revenue)
+	const periodStatsPromise = Order.aggregate([
 		{
 			$match: {
 				status: "Delivered",
-				createdAt: { $gte: filteredStartDate, $lte: filteredEndDate },
+				createdAt: { $gte: startDate, $lte: endDate },
 			},
 		},
 		{
 			$group: {
 				_id: null,
 				totalSales: { $sum: 1 },
-				totalRevenue: {
-					$sum: {
-						$cond: { if: refundCondition, then: 0, else: "$totalAmount" },
-					},
-				},
+				totalRevenue: { $sum: "$totalAmount" },
 			},
 		},
 	]);
 
-	// 2. Promise for OVERALL graph data with dynamic grouping
-	const overallGraphDataPromise = Order.aggregate([
+	// Aggregation for the graph data
+	const graphDataPromise = Order.aggregate([
 		{
 			$match: {
 				status: "Delivered",
+				createdAt: { $gte: startDate, $lte: endDate },
 			},
 		},
 		{
 			$group: {
-				_id: { $dateToString: { format: overallGroupByFormat, date: "$createdAt" } },
+				_id: { $dateToString: { format: groupByFormat, date: "$createdAt" } },
 				sales: { $sum: 1 },
-				revenue: {
-					$sum: {
-						$cond: { if: refundCondition, then: 0, else: "$totalAmount" },
-					},
-				},
+				revenue: { $sum: "$totalAmount" },
 			},
 		},
 		{ $sort: { _id: 1 } },
 	]);
 
-	// 3. Promises for OVERALL stats (users and products)
-	const totalUsersPromise = User.countDocuments();
+	// General stats (can be cached for performance)
+	const totalUsersPromise = User.countDocuments(); // Count all users including admins
 	const totalProductsPromise = Product.countDocuments();
 
-	// --- Execution ---
-	const [filteredStatsResult, overallGraphDataResult, totalUsers, totalProducts] =
-		await Promise.all([
-			filteredStatsPromise,
-			overallGraphDataPromise,
-			totalUsersPromise,
-			totalProductsPromise,
-		]);
+	// Execute all promises concurrently
+	const [periodStatsResult, graphDataResult, totalUsers, totalProducts] = await Promise.all([
+		periodStatsPromise,
+		graphDataPromise,
+		totalUsersPromise,
+		totalProductsPromise,
+	]);
 
-	// --- Formatting ---
-	const { totalSales: filteredSales = 0, totalRevenue: filteredRevenue = 0 } =
-		filteredStatsResult[0] || {};
+	const { totalSales = 0, totalRevenue = 0 } = periodStatsResult[0] || {};
 
 	return {
-		filteredStats: {
-			totalSales: filteredSales,
-			totalRevenue: filteredRevenue,
-		},
-		overallStats: {
-			totalUsers,
-			totalProducts,
-		},
-		overallGraphData: overallGraphDataResult.map((item) => ({
+		totalRevenue,
+		totalSales,
+		graphData: graphDataResult.map((item) => ({
 			name: item._id,
 			sales: item.sales,
 			revenue: item.revenue,
 		})),
+		stats: {
+			totalUsers,
+			totalProducts,
+		},
 	};
 };
 
@@ -192,22 +148,9 @@ export const streamAnalyticsData = async (req, res) => {
 
 export const getQuickStats = async (req, res) => {
 	try {
-		const refundCondition = {
-			$or: [{ $eq: ["$paymentStatus", "refunded"] }, { $eq: ["$refundRequest.status", "approved"] }],
-		};
-
 		const totalRevenuePromise = Order.aggregate([
 			{ $match: { status: "Delivered" } },
-			{
-				$group: {
-					_id: null,
-					totalRevenue: {
-						$sum: {
-							$cond: { if: refundCondition, then: 0, else: "$totalAmount" },
-						},
-					},
-				},
-			},
+			{ $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } },
 		]);
 
 		const totalSalesPromise = Order.countDocuments({ status: "Delivered" });

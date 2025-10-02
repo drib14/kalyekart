@@ -1,11 +1,14 @@
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 
 const Footer = () => {
+	const siteUrl = window.location.origin;
+
 	return (
 		<footer className='bg-gray-800 text-white mt-16'>
 			<div className='container mx-auto px-6 py-12'>
-				<div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
+				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8'>
 					{/* Brand Section */}
 					<div className='flex flex-col items-center md:items-start'>
 						<div className='flex items-center mb-4'>
@@ -56,6 +59,26 @@ const Footer = () => {
 								<span>Tres de Abril Ext. Brgy. Labangon Cebu City Philippines</span>
 							</li>
 						</ul>
+					</div>
+
+					{/* QR Code Section */}
+					<div className='flex flex-col items-center md:items-start'>
+						<h3 className='text-xl font-semibold mb-4 text-emerald-400'>Scan to Visit</h3>
+						<div className='bg-white p-2 rounded-lg inline-block shadow-lg'>
+							<QRCodeCanvas
+								value={siteUrl}
+								size={128}
+								bgColor={"#ffffff"}
+								fgColor={"#000000"}
+								level={"H"}
+								imageSettings={{
+									src: "/logo.jpg",
+									height: 24,
+									width: 24,
+									excavate: true,
+								}}
+							/>
+						</div>
 					</div>
 				</div>
 
