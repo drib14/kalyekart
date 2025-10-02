@@ -1,5 +1,6 @@
 import admin from "firebase-admin";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
 
@@ -7,57 +8,43 @@ const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Define the path for the Render Secret File
+const RENDER_SECRET_FILE_PATH = '/etc/secrets/firebase-service-account.json';
+
 try {
-  // Check if the individual Firebase environment variables are set.
-  if (
-    process.env.FIREBASE_PROJECT_ID &&
-    process.env.FIREBASE_PRIVATE_KEY &&
-    process.env.FIREBASE_CLIENT_EMAIL
-  ) {
-    console.log("🔑 Initializing Firebase Admin SDK from individual environment variables...");
+  let serviceAccount;
 
-    // Sanitize the private key to handle potential formatting issues from environment variables.
-    const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '')
-      // 1. Remove potential surrounding quotes that some systems add.
-      .replace(/^"|"$/g, '')
-      // 2. Replace literal "\\n" strings with actual newline characters.
-      .replace(/\\n/g, '\n');
+  // For production on Render, use the Secret File.
+  if (fs.existsSync(RENDER_SECRET_FILE_PATH)) {
+    console.log("🔑 Initializing Firebase Admin SDK from Render Secret File...");
+    const serviceAccountString = fs.readFileSync(RENDER_SECRET_FILE_PATH, 'utf8');
+    serviceAccount = JSON.parse(serviceAccountString);
 
-    const serviceAccount = {
-      type: "service_account",
-      project_id: process.env.FIREBASE_PROJECT_ID,
-      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-      private_key: privateKey,
-      client_email: process.env.FIREBASE_CLIENT_EMAIL,
-      client_id: process.env.FIREBASE_CLIENT_ID,
-      auth_uri: "https://accounts.google.com/o/oauth2/auth",
-      token_uri: "https://oauth2.googleapis.com/token",
-      auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
-    };
-
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-    console.log("✅ Firebase Admin SDK initialized successfully from environment variables.");
+    console.log("✅ Firebase Admin SDK initialized successfully from Render Secret File.");
 
   } else {
     // Fallback to a local service account file for local development.
+    // This file should be in .gitignore.
     console.log("🔑 Initializing Firebase Admin SDK from local service account file...");
-    const serviceAccountPath = path.resolve(__dirname, "../firebase-service-account.json");
-    const serviceAccount = require(serviceAccountPath);
+    const localServiceAccountPath = path.resolve(__dirname, "../firebase-service-account.json");
 
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-    console.log("✅ Firebase Admin SDK initialized successfully from file.");
+    if (!fs.existsSync(localServiceAccountPath)) {
+        throw new Error(`Local service account file not found at ${localServiceAccountPath}. Please ensure it exists for local development or that the Render Secret File is configured for production.`);
+    }
+
+    serviceAccount = require(localServiceAccountPath);
+
+    console.log("✅ Firebase Admin SDK initialized successfully from local file.");
   }
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+
 } catch (error) {
   console.error("❌ Firebase Admin SDK initialization error:", error.message);
-  if (error.code === 'MODULE_NOT_FOUND') {
-    console.error("👉 For local development, ensure 'firebase-service-account.json' exists in the 'backend' directory.");
-  }
-  console.error("👉 For production, ensure FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, and FIREBASE_CLIENT_EMAIL environment variables are set correctly.");
+  console.error("👉 For production, ensure you have uploaded your service account JSON as a Secret File on Render with the destination path set to `/etc/secrets/firebase-service-account.json`.");
+  console.error("👉 For local development, ensure 'firebase-service-account.json' exists in the 'backend' directory.");
   process.exit(1);
 }
 
