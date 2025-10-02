@@ -97,16 +97,16 @@ function App() {
 	}
 
 	return (
-		<div className='min-h-screen bg-gray-900 text-white relative overflow-hidden'>
+		<div className='min-h-screen bg-gray-900 text-white flex flex-col'>
 			{/* Background gradient */}
-			<div className='absolute inset-0 overflow-hidden'>
+			<div className='absolute inset-0 overflow-hidden -z-10'>
 				<div className='absolute inset-0'>
 					<div className='absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.3)_0%,rgba(10,80,60,0.2)_45%,rgba(0,0,0,0.1)_100%)]' />
 				</div>
 			</div>
 
-			<div className='relative z-10 pt-20 pb-20 sm:pb-0'>
-				<Navbar />
+			<Navbar />
+			<main className='flex-grow pt-20 pb-20 sm:pb-0'>
 				<Routes>
 					<Route path='/' element={<HomePage />} />
 					<Route path='/signup' element={!user ? <SignUpPage /> : <Navigate to='/' />} />
@@ -145,8 +145,9 @@ function App() {
 					<Route path='/product/:productId' element={<ProductDetailPage />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
-				<Footer />
-			</div>
+			</main>
+			<Footer />
+
 			<Toaster theme='dark' />
 			{user && <BottomNav />}
 			{user && <FloatingFeedbackButton onClick={() => setIsFeedbackModalOpen(true)} />}

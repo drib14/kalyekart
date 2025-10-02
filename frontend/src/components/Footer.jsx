@@ -6,8 +6,8 @@ const Footer = () => {
 	const siteUrl = window.location.origin;
 
 	return (
-		<footer className='bg-gray-800 text-white mt-16'>
-			<div className='container mx-auto px-6 py-12'>
+		<footer className='bg-gray-800 text-white mt-auto py-12'>
+			<div className='container mx-auto px-6'>
 				<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8'>
 					{/* Brand Section (col-span-2 on sm screens) */}
 					<div className='flex flex-col items-center text-center sm:text-left sm:items-start sm:col-span-2 lg:col-span-1'>
