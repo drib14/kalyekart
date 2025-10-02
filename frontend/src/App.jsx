@@ -97,7 +97,7 @@ function App() {
 	}
 
 	return (
-		<div className='min-h-screen bg-gray-900 text-white relative overflow-hidden'>
+		<div className='min-h-screen bg-gray-900 text-white relative flex flex-col'>
 			{/* Background gradient */}
 			<div className='absolute inset-0 overflow-hidden'>
 				<div className='absolute inset-0'>
@@ -105,7 +105,7 @@ function App() {
 				</div>
 			</div>
 
-			<div className='relative z-10 pt-20 pb-20 md:pb-0'>
+			<div className='relative z-10 pt-20 pb-20 md:pb-0 flex-grow'>
 				<Navbar />
 				<Routes>
 					<Route path='/' element={<HomePage />} />
@@ -145,8 +145,8 @@ function App() {
 					<Route path='/product/:productId' element={<ProductDetailPage />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
-				<Footer />
 			</div>
+			<Footer />
 			<Toaster theme='dark' />
 			{user && <BottomNav />}
 			{user && <FloatingFeedbackButton onClick={() => setIsFeedbackModalOpen(true)} />}

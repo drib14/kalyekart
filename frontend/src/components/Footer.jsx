@@ -31,9 +31,9 @@ const Footer = () => {
 
 	return (
 		<footer className='bg-gray-800 text-white py-12 px-4 sm:px-6 lg:px-8 mt-auto'>
-			<div className='max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8'>
+			<div className='max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8'>
 				{/* Section 1: Logo and Description */}
-				<div className='flex flex-col items-center md:items-start'>
+				<div className='flex flex-col items-center sm:items-start'>
 					<div className='flex items-center mb-4'>
 						<img src='/logo.jpg' alt='KalyeKart Logo' className='h-10 w-10 mr-3 rounded-full' />
 						<h2 className='text-2xl font-bold text-emerald-400'>KalyeKart</h2>
@@ -45,7 +45,7 @@ const Footer = () => {
 				</div>
 
 				{/* Section 2: Quick Links */}
-				<div>
+				<div className="flex flex-col items-center sm:items-start">
 					<h3 className='text-lg font-semibold text-emerald-400 mb-4'>Quick Links</h3>
 					<ul className='space-y-2'>
 						<li>
@@ -69,7 +69,7 @@ const Footer = () => {
 				</div>
 
 				{/* Section 3: Contacts */}
-				<div>
+				<div className="flex flex-col items-center sm:items-start">
 					<h3 className='text-lg font-semibold text-emerald-400 mb-4'>Contact Us</h3>
 					<ul className='space-y-2 text-gray-300'>
 						<li className='flex items-start'>
