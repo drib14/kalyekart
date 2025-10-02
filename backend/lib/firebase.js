@@ -13,10 +13,16 @@ try {
   if (process.env.FIREBASE_CREDENTIALS) {
     console.log("🔑 Initializing Firebase Admin SDK from FIREBASE_CREDENTIALS environment variable...");
 
+    console.log(">>>> DEBUG START <<<<");
+    console.log("RAW FIREBASE_CREDENTIALS:", JSON.stringify(process.env.FIREBASE_CREDENTIALS));
+
     const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
 
     // The private key within the JSON object needs its newlines correctly formatted.
     serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+
+    console.log("SANITIZED private_key:", JSON.stringify(serviceAccount.private_key));
+    console.log(">>>> DEBUG END <<<<");
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
