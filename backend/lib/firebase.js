@@ -1,5 +1,4 @@
 import admin from "firebase-admin";
-
 import path from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
@@ -8,70 +7,42 @@ const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// --- Firebase Initialization Debugging ---
-console.log("--- Firebase Auth Debugging ---");
-console.log(
-	`FIREBASE_PROJECT_ID found: ${!!process.env.FIREBASE_PROJECT_ID}`
-);
-console.log(
-	`FIREBASE_PRIVATE_KEY found: ${!!process.env.FIREBASE_PRIVATE_KEY}`
-);
-console.log(
-	`FIREBASE_CLIENT_EMAIL found: ${!!process.env.FIREBASE_CLIENT_EMAIL}`
-);
-console.log("-----------------------------");
-
 try {
-  // More robust check for essential Firebase credentials
-  if (
-    process.env.FIREBASE_PROJECT_ID &&
-    process.env.FIREBASE_PRIVATE_KEY &&
-    process.env.FIREBASE_CLIENT_EMAIL
-  ) {
-    console.log("🔑 Initializing Firebase Admin SDK from environment variables...");
-    // Sanitize the private key by removing potential surrounding quotes and escaping newlines
-    const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '')
-      .replace(/^"|"$/g, '') // Remove leading/trailing quotes
-      .replace(/\\n/g, '\n'); // Replace newline characters
+  // For production environments like Render, use a single environment variable
+  // containing the entire JSON service account object.
+  if (process.env.FIREBASE_CREDENTIALS) {
+    console.log("🔑 Initializing Firebase Admin SDK from FIREBASE_CREDENTIALS environment variable...");
 
-    const serviceAccount = {
-      type: "service_account",
-      project_id: process.env.FIREBASE_PROJECT_ID,
-      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-      private_key: privateKey,
-      client_email: process.env.FIREBASE_CLIENT_EMAIL,
-      client_id: process.env.FIREBASE_CLIENT_ID,
-      auth_uri: "https://accounts.google.com/o/oauth2/auth",
-      token_uri: "https://oauth2.googleapis.com/token",
-      auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
-    };
+    const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
+
+    // The private key within the JSON object needs its newlines correctly formatted.
+    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
-    console.log("✅ Firebase Admin SDK initialized successfully from environment variables.");
+
+    console.log("✅ Firebase Admin SDK initialized successfully from environment variable.");
+
   } else {
-    // Fallback to service account file for local development
-    console.log("🔑 Initializing Firebase Admin SDK from service account file...");
+    // Fallback to a local service account file for local development.
+    // This file should be in .gitignore.
+    console.log("🔑 Initializing Firebase Admin SDK from local service account file...");
     const serviceAccountPath = path.resolve(__dirname, "../firebase-service-account.json");
     const serviceAccount = require(serviceAccountPath);
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
+
     console.log("✅ Firebase Admin SDK initialized successfully from file.");
   }
 } catch (error) {
   console.error("❌ Firebase Admin SDK initialization error:", error.message);
-  if (error.code === "MODULE_NOT_FOUND") {
-    console.error(
-      "👉 For local development, ensure 'firebase-service-account.json' exists in the 'backend' directory."
-    );
-    console.error(
-      "👉 For production, ensure FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, and FIREBASE_CLIENT_EMAIL environment variables are set."
-    );
+  if (error.code === 'MODULE_NOT_FOUND') {
+      console.error("👉 For local development, ensure 'firebase-service-account.json' exists in the 'backend' directory.");
   }
+  console.error("👉 For production, ensure the FIREBASE_CREDENTIALS environment variable is set correctly.");
   process.exit(1);
 }
 
