@@ -18,11 +18,9 @@ import locationRoutes from "./routes/location.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import favoriteRoutes from "./routes/favorite.route.js";
-import Order from "./models/order.model.js";
-import { calculateETA } from "./lib/eta.js";
 import { connectDB } from "./lib/db.js";
 
-// Import the worker to start it
+// Import the worker and Firebase Admin SDK
 import "./workers/email-worker.js";
 import "./lib/firebase.js";
 
@@ -60,7 +58,6 @@ app.use("/api/favorites", favoriteRoutes);
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(projectRoot, "frontend/dist")));
 
-	// Catch-all route to serve the frontend
 	app.get(/.*/, (req, res) => {
 		res.sendFile(path.resolve(projectRoot, "frontend", "dist", "index.html"));
 	});
