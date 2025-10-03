@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { CheckCircle, Clock, Package, ShoppingCart, User, Home, CreditCard } from "lucide-react";
+import { CheckCircle, Clock, Package, ShoppingCart, User, Home, CreditCard, RefreshCw } from "lucide-react";
 import CountdownTimer from "../components/CountdownTimer";
 import ProgressBar from "../components/ProgressBar";
 import RefundModal from "../components/RefundModal";
+import { useCartStore } from "../stores/useCartStore";
+import { toast } from "sonner";
 
 const OrderDetailPage = () => {
 	const { orderId } = useParams();
+	const navigate = useNavigate();
+	const { addToCart } = useCartStore();
 	const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
 
 	const {
@@ -24,6 +28,35 @@ const OrderDetailPage = () => {
 			return res.data;
 		},
 	});
+
+	const handleReorder = async () => {
+		if (!order) return;
+
+		const availableProducts = order.products.filter((item) => item.product && !item.product.isDeleted);
+
+		if (availableProducts.length === 0) {
+			toast.error("There are no available products in this order to reorder.");
+			return;
+		}
+
+		try {
+			const reorderPromises = availableProducts.map((item) => {
+				const productWithOptions = {
+					...item.product,
+					selectedAddons: item.addons,
+				};
+				return addToCart(productWithOptions, item.quantity);
+			});
+
+			await Promise.all(reorderPromises);
+
+			toast.success("All available items have been added to your cart!");
+			navigate("/cart");
+		} catch (err) {
+			toast.error("Something went wrong while trying to reorder. Please try again.");
+			console.error("Reorder failed:", err);
+		}
+	};
 
 	if (isLoading) return <LoadingSpinner />;
 	if (isError) return <div className='text-center py-10 text-red-500'>Error: {error.response.data.message}</div>;
@@ -44,7 +77,7 @@ const OrderDetailPage = () => {
 	return (
 		<div className='min-h-screen bg-gray-900 text-white p-4 sm:p-8'>
 			<div className='max-w-4xl mx-auto bg-gray-800 rounded-lg shadow-2xl p-6 sm:p-8'>
-				<header className='flex justify-between items-start mb-8 border-b border-gray-700 pb-6'>
+				<header className='flex flex-wrap justify-between items-start mb-8 border-b border-gray-700 pb-6 gap-4'>
 					<div>
 						<h1 className='text-3xl font-bold text-emerald-400'>Order Details</h1>
 						<p className='text-gray-400'>Order ID: {order._id}</p>
@@ -62,51 +95,68 @@ const OrderDetailPage = () => {
 								</div>
 							)}
 						</div>
-						<button
-							className='mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-500'
-							disabled={order.status !== "Delivered" || order.refundRequest}
-							onClick={() => setIsRefundModalOpen(true)}
-							title={
-								order.status !== "Delivered"
-									? "You can only request a refund for delivered orders."
-									: order.refundRequest
-									? "You have already requested a refund for this order."
-									: "Request a refund for this order"
-							}
-						>
-							Request Refund
-						</button>
+						<div className='flex flex-wrap justify-end gap-2 mt-4'>
+							<button
+								className='px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center'
+								onClick={handleReorder}
+							>
+								<RefreshCw className='mr-2 h-4 w-4' /> Reorder
+							</button>
+							<button
+								className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-500'
+								disabled={order.status !== "Delivered" || order.refundRequest}
+								onClick={() => setIsRefundModalOpen(true)}
+								title={
+									order.status !== "Delivered"
+										? "You can only request a refund for delivered orders."
+										: order.refundRequest
+										? "You have already requested a refund for this order."
+										: "Request a refund for this order"
+								}
+							>
+								Request Refund
+							</button>
+						</div>
 					</div>
 				</header>
 
-				<section className='mb-8'>
-					<h3 className='text-xl font-semibold mb-4'>Order Progress</h3>
-					<ProgressBar status={order.status} />
-				</section>
-
 				<main>
 					<section className='mb-8'>
-						<h3 className='text-xl font-semibold mb-4 flex items-center'><ShoppingCart className='mr-2' /> Items Ordered</h3>
+						<h3 className='text-xl font-semibold mb-4 flex items-center'>
+							<ShoppingCart className='mr-2' /> Items Ordered
+						</h3>
 						<div className='space-y-4'>
 							{order.products.map((item) => {
 								if (!item.product || item.product.isDeleted) {
 									return (
-										<div key={item._id} className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'>
+										<div
+											key={item._id}
+											className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'
+										>
 											<div className='flex items-center gap-4'>
-										<div className='w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center'>
+												<div className='w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center'>
 													<p className='text-gray-400 text-lg'>?</p>
 												</div>
 												<div>
-													<p className='font-bold text-red-400 italic'>Product no longer available</p>
+													<p className='font-bold text-red-400 italic'>
+														Product no longer available
+													</p>
 												</div>
 											</div>
 										</div>
 									);
 								}
 								return (
-									<div key={item._id} className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'>
+									<div
+										key={item._id}
+										className='flex justify-between items-center bg-gray-700 p-4 rounded-lg'
+									>
 										<div className='flex items-center gap-4'>
-									<img src={item.product.image} alt={item.product.name} className='w-16 h-16 rounded-lg object-cover'/>
+											<img
+												src={item.product.image}
+												alt={item.product.name}
+												className='w-16 h-16 rounded-lg object-cover'
+											/>
 											<div>
 												<p className='font-bold text-white'>{item.product.name}</p>
 												<p className='text-sm text-gray-400'>
@@ -114,9 +164,11 @@ const OrderDetailPage = () => {
 												</p>
 											</div>
 										</div>
-										<p className='font-semibold text-white'>₱{(item.quantity * item.price).toFixed(2)}</p>
+										<p className='font-semibold text-white'>
+											₱{(item.quantity * item.price).toFixed(2)}
+										</p>
 									</div>
-								)
+								);
 							})}
 						</div>
 					</section>
@@ -128,9 +180,9 @@ const OrderDetailPage = () => {
 							</h3>
 							<div className='bg-gray-700 p-4 rounded-lg space-y-2'>
 								<p>
-									<strong>Address:</strong> {order.shippingAddress.sitio}, {order.shippingAddress.barangay},{" "}
-									{order.shippingAddress.city}, {order.shippingAddress.province},{" "}
-									{order.shippingAddress.postalCode}
+									<strong>Address:</strong> {order.shippingAddress.sitio},{" "}
+									{order.shippingAddress.barangay}, {order.shippingAddress.city},{" "}
+									{order.shippingAddress.province}, {order.shippingAddress.postalCode}
 								</p>
 								<p>
 									<strong>Contact:</strong> {order.contactNumber}
@@ -181,12 +233,7 @@ const OrderDetailPage = () => {
 					</div>
 				</main>
 			</div>
-			{isRefundModalOpen && (
-				<RefundModal
-					orderId={order._id}
-					onClose={() => setIsRefundModalOpen(false)}
-				/>
-			)}
+			{isRefundModalOpen && <RefundModal orderId={order._id} onClose={() => setIsRefundModalOpen(false)} />}
 		</div>
 	);
 };
