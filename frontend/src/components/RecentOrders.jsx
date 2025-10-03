@@ -1,18 +1,25 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "../lib/axios";
-import { Link } from "react-router-dom";
-import { format } from "date-fns";
+import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "./LoadingSpinner";
-import { ShoppingBag, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const RecentOrders = () => {
+	const { user } = useUserStore();
 	const {
 		data: orders,
 		isLoading,
 		isError,
+		error,
 	} = useQuery({
-		queryKey: ["myOrders"],
-		queryFn: () => axios.get("/orders").then((res) => res.data),
+		queryKey: ["orders", user?._id],
+		queryFn: async () => {
+			const res = await axios.get("/orders");
+			// Sort by date and take the 3 most recent
+			return res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3);
+		},
+		enabled: !!user,
 	});
 
 	if (isLoading) {
@@ -20,52 +27,67 @@ const RecentOrders = () => {
 	}
 
 	if (isError) {
-		return <p className='text-red-400'>Failed to load recent orders.</p>;
+		return <p className='text-red-500'>Error fetching recent orders: {error.message}</p>;
 	}
 
 	return (
-		<div className='bg-gray-800 p-6 rounded-lg'>
-			<h2 className='text-xl font-semibold mb-4 flex items-center'>
-				<ShoppingBag className='mr-2' /> Recent Orders
-			</h2>
+		<div className='mt-12'>
+			<h2 className='text-2xl font-bold text-white mb-6'>Recent Orders</h2>
 			{orders && orders.length > 0 ? (
-				<div className='space-y-4'>
-					{orders.slice(0, 5).map((order) => (
-						<Link
-							to={`/my-orders/${order._id}`}
-							key={order._id}
-							className='block bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition-colors'
-						>
-							<div className='flex justify-between items-center'>
+				<div className='space-y-8'>
+					{orders.map((order) => (
+						<div key={order._id} className='bg-gray-800 p-6 rounded-lg shadow-lg'>
+							<div className='flex justify-between items-start mb-4'>
 								<div>
-									<p className='font-bold text-white'>Order #{order._id.slice(-6)}</p>
+									<p className='text-lg font-bold text-emerald-400'>
+										Order #{order._id.substring(0, 8)}...
+									</p>
 									<p className='text-sm text-gray-400'>
-										{format(new Date(order.createdAt), "PPP")}
+										Ordered on: {new Date(order.createdAt).toLocaleDateString()}
 									</p>
 								</div>
-								<div className='text-right'>
-									<p className='font-semibold text-white'>
-										₱{order.totalAmount.toFixed(2)}
-									</p>
-									<span
-										className={`px-2 py-1 text-xs font-semibold rounded-full ${
-											order.status === "Delivered"
-												? "bg-green-500 text-white"
-												: "bg-yellow-500 text-black"
-										}`}
-									>
-										{order.status}
-									</span>
-								</div>
-								<ChevronRight className='text-gray-500' />
+								<Link
+									to={`/order/${order._id}`}
+									className='text-sm text-emerald-400 hover:underline'
+								>
+									View Details
+								</Link>
 							</div>
-						</Link>
+
+							{/* Product Images */}
+							<div className='flex flex-wrap gap-4 mb-4'>
+								{order.products.map((item) =>
+									item.product ? (
+										<img
+											key={item.product._id}
+											src={item.product.image}
+											alt={item.product.name}
+											className='w-16 h-16 object-cover rounded-md border-2 border-gray-700'
+											title={item.product.name}
+										/>
+									) : null
+								)}
+							</div>
+
+							{/* Pricing Details */}
+							<div className='border-t border-gray-700 pt-4'>
+								<dl className='space-y-2 text-sm'>
+									<div className='flex justify-between'>
+										<dt className='text-gray-400'>Subtotal</dt>
+										<dd className='text-white font-medium'>₱{order.subtotal.toFixed(2)}</dd>
+									</div>
+									<div className='flex justify-between'>
+										<dt className='text-gray-400'>Delivery Fee</dt>
+										<dd className='text-white font-medium'>₱{order.deliveryFee.toFixed(2)}</dd>
+									</div>
+									<div className='flex justify-between text-base font-bold'>
+										<dt className='text-emerald-400'>Total</dt>
+										<dd className='text-emerald-400'>₱{order.totalAmount.toFixed(2)}</dd>
+									</div>
+								</dl>
+							</div>
+						</div>
 					))}
-                    {orders.length > 5 && (
-                         <Link to="/my-orders" className="text-emerald-400 hover:text-emerald-300 font-semibold mt-4 block text-center">
-                            View All Orders
-                        </Link>
-                    )}
 				</div>
 			) : (
 				<p className='text-gray-400'>You have no recent orders.</p>
