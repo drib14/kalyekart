@@ -3,10 +3,16 @@ import NotificationService from "../services/notification.service.js";
 
 export const getNotifications = async (req, res) => {
 	try {
-		const userId = req.user._id;
-		const notifications = await Notification.find({ recipient: userId })
+		const { _id: userId, role } = req.user;
+
+		// Admins can see all notifications, while customers only see their own.
+		const query = role === "admin" ? {} : { recipient: userId };
+
+		const notifications = await Notification.find(query)
 			.populate("sender", "name profilePicture")
+			.populate("recipient", "name") // Helpful for admin view
 			.sort({ createdAt: -1 });
+
 		res.status(200).json(notifications);
 	} catch (error) {
 		console.error("Error in getNotifications controller:", error);

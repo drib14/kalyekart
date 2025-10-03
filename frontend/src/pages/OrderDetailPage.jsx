@@ -8,12 +8,14 @@ import CountdownTimer from "../components/CountdownTimer";
 import ProgressBar from "../components/ProgressBar";
 import RefundModal from "../components/RefundModal";
 import { useCartStore } from "../stores/useCartStore";
+import { useUserStore } from "../stores/useUserStore";
 import { toast } from "sonner";
 
 const OrderDetailPage = () => {
 	const { orderId } = useParams();
 	const navigate = useNavigate();
 	const { addToCart } = useCartStore();
+	const { user } = useUserStore();
 	const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
 
 	const {
@@ -96,12 +98,14 @@ const OrderDetailPage = () => {
 							)}
 						</div>
 						<div className='flex flex-wrap justify-end gap-2 mt-4'>
-							<button
-								className='px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center'
-								onClick={handleReorder}
-							>
-								<RefreshCw className='mr-2 h-4 w-4' /> Reorder
-							</button>
+							{order.status === "Delivered" && user?._id === order.user._id && (
+								<button
+									className='px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center'
+									onClick={handleReorder}
+								>
+									<RefreshCw className='mr-2 h-4 w-4' /> Reorder
+								</button>
+							)}
 							<button
 								className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-500'
 								disabled={order.status !== "Delivered" || order.refundRequest}
