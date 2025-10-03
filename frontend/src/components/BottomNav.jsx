@@ -1,16 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
 import { useCartStore } from "../stores/useCartStore";
-import { useUserStore } from "../stores/useUserStore"; // Import user store
-import { Home, ShoppingCart, Bell, User } from "lucide-react";
+import { useUserStore } from "../stores/useUserStore";
+import { Home, ShoppingCart, ClipboardList, User } from "lucide-react"; // Replaced Bell with ClipboardList
 
 const BottomNav = () => {
 	const { pathname } = useLocation();
 	const { cart } = useCartStore();
-	const { user } = useUserStore(); // Get user from the store
+	const { user } = useUserStore();
 
 	const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-	// Function to get the correct profile link based on user role
 	const getProfileLink = () => {
 		if (!user) return "/login";
 		return user.role === "admin" ? "/profile/admin" : "/profile/customer";
@@ -32,8 +31,8 @@ const BottomNav = () => {
 			),
 			label: "Cart",
 		},
-		{ href: "/notifications", icon: <Bell size={24} />, label: "Notifications" },
-		// Use the dynamic link for the profile
+		// Replaced Notifications with My Orders
+		{ href: "/my-orders", icon: <ClipboardList size={24} />, label: "My Orders" },
 		{ href: getProfileLink(), icon: <User size={24} />, label: "Profile" },
 	];
 
