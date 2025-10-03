@@ -2,7 +2,7 @@ import React from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { Link } from "react-router-dom";
 import { useUserStore } from "../stores/useUserStore";
-import { Home, User, ShoppingBag, Phone, Mail, MapPin } from "lucide-react";
+import { Home, User, ShoppingBag, Phone, Mail, MapPin, ShieldCheck } from "lucide-react";
 
 const Footer = () => {
 	const { user } = useUserStore();
@@ -63,6 +63,11 @@ const Footer = () => {
 									</Link>
 								</li>
 							)}
+							<li>
+								<Link to='/legal' className='flex items-center text-gray-300 hover:text-white'>
+									<ShieldCheck className='h-5 w-5 mr-2' /> Legal
+								</Link>
+							</li>
 						</ul>
 					</div>
 
