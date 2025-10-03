@@ -117,7 +117,7 @@ const NotificationService = {
 						sender: admin ? admin._id : null,
 						type: "order_confirmation",
 						message: `Your order #${order._id.toString().slice(-6)} has been placed successfully!`,
-						link: `/order/${order._id}`, // FIX: Correct link to order detail page
+						link: `/order/${order._id}`,
 					});
 					await customerNotification.save();
 					await customerNotification.populate("sender", "name profilePicture");
@@ -140,7 +140,7 @@ const NotificationService = {
 								SUBTOTAL: order.subtotal.toFixed(2),
 								DELIVERY_FEE: order.deliveryFee.toFixed(2),
 								TOTAL: order.totalAmount.toFixed(2),
-								CTA_LINK: `https://kalyekart.app/order/${order._id}` // FIX: Correct link to order detail page
+								CTA_LINK: `https://kalyekart.app/order/${order._id}`
 							}
 						);
 					} catch (emailError) {
@@ -154,7 +154,7 @@ const NotificationService = {
 						sender: admin ? admin._id : null,
 						type: "order_status_update",
 						message: `The status of your order #${order._id.toString().slice(-6)} has been updated to ${order.status}.`,
-						link: `/order/${order._id}`, // FIX: Correct link to order detail page
+						link: `/order/${order._id}`,
 					});
 					await notification.save();
 					await notification.populate("sender", "name profilePicture");
@@ -170,7 +170,7 @@ const NotificationService = {
 							recipient.email,
 							`Your KalyeKart Order #${order._id.toString().slice(-6)} has been updated!`,
 							"orderUpdate",
-							{ NAME: recipient.name, ORDER_ID: order._id.toString(), NEW_STATUS: order.status, CTA_LINK: `https://kalyekart.app/order/${order._id}` } // FIX: Correct link to order detail page
+							{ NAME: recipient.name, ORDER_ID: order._id.toString(), NEW_STATUS: order.status, CTA_LINK: `https://kalyekart.app/order/${order._id}` }
 						);
 					} catch (emailError) {
 						console.error(`Failed to send 'order_status_update' customer email:`, emailError);
@@ -201,7 +201,7 @@ const NotificationService = {
 						sender: admin ? admin._id : null,
 						type: "order_cancelled",
 						message: `Your order #${order._id.toString().slice(-6)} has been successfully cancelled.`,
-						link: `/my-orders`,
+						link: `/order/${order._id}`,
 					});
 					await customerCancelNotification.save();
 					await customerCancelNotification.populate("sender", "name profilePicture");
