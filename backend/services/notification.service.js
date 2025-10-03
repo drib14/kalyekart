@@ -117,7 +117,7 @@ const NotificationService = {
 						sender: admin ? admin._id : null,
 						type: "order_confirmation",
 						message: `Your order #${order._id.toString().slice(-6)} has been placed successfully!`,
-						link: `/my-orders/${order._id}`,
+						link: `/order/${order._id}`, // FIX: Correct link to order detail page
 					});
 					await customerNotification.save();
 					await customerNotification.populate("sender", "name profilePicture");
@@ -140,7 +140,7 @@ const NotificationService = {
 								SUBTOTAL: order.subtotal.toFixed(2),
 								DELIVERY_FEE: order.deliveryFee.toFixed(2),
 								TOTAL: order.totalAmount.toFixed(2),
-								CTA_LINK: `https://kalyekart.app/my-orders/${order._id}`
+								CTA_LINK: `https://kalyekart.app/order/${order._id}` // FIX: Correct link to order detail page
 							}
 						);
 					} catch (emailError) {
@@ -154,7 +154,7 @@ const NotificationService = {
 						sender: admin ? admin._id : null,
 						type: "order_status_update",
 						message: `The status of your order #${order._id.toString().slice(-6)} has been updated to ${order.status}.`,
-						link: `/my-orders/${order._id}`,
+						link: `/order/${order._id}`, // FIX: Correct link to order detail page
 					});
 					await notification.save();
 					await notification.populate("sender", "name profilePicture");
@@ -170,7 +170,7 @@ const NotificationService = {
 							recipient.email,
 							`Your KalyeKart Order #${order._id.toString().slice(-6)} has been updated!`,
 							"orderUpdate",
-							{ NAME: recipient.name, ORDER_ID: order._id.toString(), NEW_STATUS: order.status, CTA_LINK: `https://kalyekart.app/my-orders/${order._id}` }
+							{ NAME: recipient.name, ORDER_ID: order._id.toString(), NEW_STATUS: order.status, CTA_LINK: `https://kalyekart.app/order/${order._id}` } // FIX: Correct link to order detail page
 						);
 					} catch (emailError) {
 						console.error(`Failed to send 'order_status_update' customer email:`, emailError);
