@@ -10,7 +10,13 @@ const worker = new Worker(
 		const { to, subject, templateName, data } = job.data;
 		await _sendEmail(to, subject, templateName, data);
 	},
-	{ connection: redis }
+	{
+		connection: redis,
+		limiter: {
+			max: 100, // Max 100 jobs
+			duration: 60000, // per 60 seconds
+		},
+	}
 );
 
 worker.on("completed", (job) => {
