@@ -21,7 +21,6 @@ import favoriteRoutes from "./routes/favorite.route.js";
 import { connectDB } from "./lib/db.js";
 
 // Import the worker and Firebase Admin SDK
-import "./workers/email-worker.js";
 import "./lib/firebase.js";
 
 const app = express();
