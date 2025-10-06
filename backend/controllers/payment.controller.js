@@ -56,6 +56,10 @@ export const createPaymongoCheckoutSession = async (req, res) => {
 			}
 		}
 
+		if (totalAmount < 2000) {
+			return res.status(400).json({ message: "The total amount must be at least ₱20.00 to pay online." });
+		}
+
 		const response = await paymongoApi.post("/checkout_sessions", {
 			data: {
 				attributes: {
