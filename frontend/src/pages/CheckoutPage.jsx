@@ -115,7 +115,7 @@ const CheckoutPage = () => {
 	});
 
 	const { mutate: createPaymongoSession, isPending: isPaymongoPending } = useMutation({
-		mutationFn: (data) => axios.post("/payment/create-paymongo-checkout-session", data),
+		mutationFn: (data) => axios.post("/payments/create-paymongo-checkout-session", data),
 		onSuccess: (data) => {
 			window.location.href = data.data.url;
 		},
