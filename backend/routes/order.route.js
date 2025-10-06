@@ -1,7 +1,6 @@
 import express from "express";
 import {
 	createCodOrder,
-	createStripeCheckoutSession,
 	getOrders,
 	getOrderById,
 	updateOrderStatus,
@@ -21,7 +20,6 @@ router.get("/", protectRoute, getOrders);
 router.get("/all", protectRoute, adminRoute, getAllOrders); // Must be before /:orderId
 router.get("/:orderId", protectRoute, getOrderById);
 router.post("/cod", protectRoute, createCodOrder);
-router.post("/create-checkout-session", protectRoute, createStripeCheckoutSession);
 router.put("/:orderId/status", protectRoute, adminRoute, updateOrderStatus);
 router.put("/:orderId/payment-status", protectRoute, adminRoute, updatePaymentStatus);
 router.post("/:orderId/refund", protectRoute, upload.single("proof"), requestRefund);
