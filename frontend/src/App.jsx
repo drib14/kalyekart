@@ -45,8 +45,37 @@ function App() {
 	const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 	const isOffline = useOfflineStatus();
 
+	console.log("checkingAuth:", checkingAuth);
+
 	useEffect(() => {
+		let refreshPromise = null;
+		const interceptor = axiosInstance.interceptors.response.use(
+			(response) => response,
+			async (error) => {
+				const originalRequest = error.config;
+				if (error.response?.status === 401 && !originalRequest._retry) {
+					originalRequest._retry = true;
+					try {
+						if (!refreshPromise) {
+							refreshPromise = useUserStore.getState().refreshToken();
+						}
+						await refreshPromise;
+						refreshPromise = null;
+						return axiosInstance(originalRequest);
+					} catch (refreshError) {
+						useUserStore.getState().logout();
+						return Promise.reject(refreshError);
+					}
+				}
+				return Promise.reject(error);
+			}
+		);
+
 		checkAuth();
+
+		return () => {
+			axiosInstance.interceptors.response.eject(interceptor);
+		};
 	}, [checkAuth]);
 
 	useEffect(() => {

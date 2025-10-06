@@ -189,72 +189,12 @@ export const verifyPaymongoPayment = async (req, res) => {
 
 			await newOrder.save();
 
-			const orderItemsHtml = products
-				.map(
-					(item) => `
-				<tr>
-					<td>${item.name}</td>
-					<td>${item.quantity}</td>
-					<td>₱${item.price.toFixed(2)}</td>
-				</tr>
-			`
-				)
-				.join("");
-
-			await sendEmail(
-				user.email,
-				`Your KalyeKart Order #${newOrder._id.toString().slice(-6)} is Confirmed!`,
-				"orderConfirmation",
-				{
-					NAME: user.name,
-					ORDER_ID: newOrder._id.toString(),
-					ORDER_ITEMS: orderItemsHtml,
-					SUBTOTAL: newOrder.subtotal.toFixed(2),
-					DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
-					TOTAL: newOrder.totalAmount.toFixed(2),
-					CTA_LINK: `${process.env.CLIENT_URL}/my-orders/${newOrder._id}`,
-				}
-			);
-
-			await sendEmail(
-				process.env.EMAIL_USER,
-				`New Order Received: #${newOrder._id.toString().slice(-6)}`,
-				"adminNewOrderNotification",
-				{
-					ORDER_ID: newOrder._id.toString(),
-					CUSTOMER_NAME: user.name,
-					CUSTOMER_EMAIL: user.email,
-					ORDER_ITEMS: orderItemsHtml,
-					SUBTOTAL: newOrder.subtotal.toFixed(2),
-					DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
-					TOTAL: newOrder.totalAmount.toFixed(2),
-					CTA_LINK: `${process.env.CLIENT_URL}/secret-dashboard`,
-				}
-			);
-
-			if (admin) {
-				const adminNotification = new Notification({
-					recipient: admin._id,
-					sender: user._id,
-					type: "new_order",
-					message: `${user.name} has placed a new order (#${newOrder._id.toString().slice(-6)}).`,
-					link: `/order/${newOrder._id}`,
-				});
-				await adminNotification.save();
-				await adminNotification.populate("sender", "name profilePicture");
-				NotificationService.sendNotification(admin._id.toString(), adminNotification);
-			}
-
-			const customerNotification = new Notification({
-				recipient: user._id,
-				sender: admin ? admin._id : null,
-				type: "new_order",
-				message: `Your order #${newOrder._id.toString().slice(-6)} has been placed successfully!`,
-				link: `/my-orders`,
+			// Use the centralized notification service to handle all notifications
+			await NotificationService.createNotification("new_order", {
+				actor: user,
+				order: newOrder,
+				products: products,
 			});
-			await customerNotification.save();
-			await customerNotification.populate("sender", "name profilePicture");
-			NotificationService.sendNotification(user._id.toString(), customerNotification);
 
 			if (newOrder.totalAmount >= 2000) {
 				await createNewCoupon(user._id);
