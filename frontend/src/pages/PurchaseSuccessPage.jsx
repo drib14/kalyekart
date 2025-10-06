@@ -17,7 +17,7 @@ const PurchaseSuccessPage = () => {
 	const [orderId, setOrderId] = useState(location.state?.orderId || null);
 
 	const { mutate: verifyPayment, isPending: isVerifying } = useMutation({
-		mutationFn: (sessionId) => axios.post("/payment/verify-paymongo-payment", { sessionId }),
+		mutationFn: (sessionId) => axios.post("/payments/verify-paymongo-payment", { sessionId }),
 		onSuccess: (data) => {
 			setOrderId(data.data.orderId);
 			clearCart();
