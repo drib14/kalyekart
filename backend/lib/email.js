@@ -2,8 +2,6 @@ import SibApiV3Sdk from "sib-api-v3-sdk";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { emailQueue } from "./emailQueue.js";
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -94,7 +92,7 @@ const _sendEmail = async (to, subject, templateName, data) => {
 };
 
 /**
- * Adds an email job to the BullMQ queue.
+ * Sends an email directly, bypassing the queue.
  * @param {string} to - The recipient's email address.
  * @param {string} subject - The subject line of the email.
  * @param {string} templateName - The name of the template to use.
@@ -102,11 +100,15 @@ const _sendEmail = async (to, subject, templateName, data) => {
  */
 export const sendEmail = async (to, subject, templateName, data) => {
 	if (!SENDER_EMAIL) {
-		console.error("Cannot queue email: EMAIL_USER is not configured.");
+		console.error("Cannot send email: EMAIL_USER is not configured.");
 		return;
 	}
-	console.log(`[EMAIL_QUEUE] Adding email job for ${to} with subject: ${subject}`);
-	await emailQueue.add("send-email", { to, subject, templateName, data });
+	console.log(`[EMAIL] Sending email directly to ${to} with subject: ${subject}`);
+	try {
+		await _sendEmail(to, subject, templateName, data);
+	} catch (error) {
+		console.error(`[EMAIL] Failed to send email directly to ${to}:`, error);
+	}
 };
 
 export { _sendEmail };
