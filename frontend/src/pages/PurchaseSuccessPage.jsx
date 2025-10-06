@@ -1,21 +1,45 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle, HandHeart } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useCartStore } from "../stores/useCartStore";
 import axios from "../lib/axios";
 import Confetti from "react-confetti";
 import { toast } from "sonner";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const PurchaseSuccessPage = () => {
-	const [isProcessing, setIsProcessing] = useState(true);
 	const { clearCart } = useCartStore();
-	const [error, setError] = useState(null);
 	const location = useLocation();
+	const [searchParams] = useSearchParams();
 	const isCod = location.state?.cod;
 	const [orderId, setOrderId] = useState(location.state?.orderId || null);
 
-	const { data: order } = useQuery({
+	const { mutate: verifyPayment, isPending: isVerifying } = useMutation({
+		mutationFn: (sessionId) => axios.post("/payment/verify-paymongo-payment", { sessionId }),
+		onSuccess: (data) => {
+			setOrderId(data.data.orderId);
+			clearCart();
+			toast.success("Payment verified and order placed successfully!");
+		},
+		onError: (error) => {
+			toast.error(error.response?.data?.message || "Payment verification failed.");
+			navigate("/checkout");
+		},
+	});
+
+	useEffect(() => {
+		const paymongoSessionId = searchParams.get("id");
+
+		if (paymongoSessionId) {
+			verifyPayment(paymongoSessionId);
+		} else if (isCod) {
+			clearCart();
+			toast.success("Order placed successfully!");
+		}
+	}, [searchParams, isCod, clearCart, verifyPayment, navigate]);
+
+	const { data: order, isLoading: isLoadingOrder } = useQuery({
 		queryKey: ["order", orderId],
 		queryFn: async () => {
 			const res = await axios.get(`/orders/${orderId}`);
@@ -24,53 +48,31 @@ const PurchaseSuccessPage = () => {
 		enabled: !!orderId,
 	});
 
-	useEffect(() => {
-		const handleCheckoutSuccess = async (sessionId) => {
-			try {
-				const res = await axios.post("/payments/verify", {
-					sessionId,
-				});
-				setOrderId(res.data.orderId);
-				clearCart();
-			} catch (error) {
-				console.log(error);
-				setError(error.response?.data?.message || "An error occurred during payment verification.");
-			}
-		};
-
-		const processOrder = async () => {
-			try {
-				const sessionId = new URLSearchParams(window.location.search).get("session_id");
-				if (sessionId) {
-					await handleCheckoutSuccess(sessionId);
-				} else if (isCod) {
-					clearCart();
-				} else {
-					setError("No session ID or COD state found.");
-				}
-			} finally {
-				setIsProcessing(false);
-			}
-		};
-
-		processOrder().then(() => {
-			if (!error) {
-				toast.success("Order placed successfully!");
-			}
-		});
-	}, [clearCart, isCod, error]);
-
-	if (isProcessing) return "Processing...";
-
-	if (error) return `Error: ${error}`;
-
 	const getEstimatedDeliveryTime = (distance) => {
-		if (distance === undefined) return "30-45 minutes"; // Default if distance is not available
-		const prepTime = 15; // 15 minutes for preparation
-		const travelTime = Math.round(distance * 3); // 3 minutes per km
+		if (distance === undefined) return "30-45 minutes";
+		const prepTime = 15;
+		const travelTime = Math.round(distance * 3);
 		const totalTime = prepTime + travelTime;
-		return `${totalTime}-${totalTime + 10} minutes`; // e.g., 28-38 minutes
+		return `${totalTime}-${totalTime + 10} minutes`;
 	};
+
+	if (isVerifying || (searchParams.get("id") && !orderId)) {
+		return (
+			<div className='h-screen flex flex-col items-center justify-center'>
+				<LoadingSpinner />
+				<p className='mt-4 text-lg text-white'>Verifying your payment, please wait...</p>
+			</div>
+		);
+	}
+
+	if (isLoadingOrder) {
+		return (
+			<div className='h-screen flex flex-col items-center justify-center'>
+				<LoadingSpinner />
+				<p className='mt-4 text-lg text-white'>Loading order details...</p>
+			</div>
+		);
+	}
 
 	return (
 		<div className='h-screen flex items-center justify-center px-4'>
@@ -93,40 +95,36 @@ const PurchaseSuccessPage = () => {
 					</h1>
 
 					<p className='text-gray-300 text-center mb-2'>
-						{isCod
-							? "Your order is now being prepared."
-							: "Thank you for your order. We're preparing it now."}
+						{isCod ? "Your order is now being prepared." : "Thank you for your order. We're preparing it now."}
 					</p>
 					<p className='text-emerald-400 text-center text-sm mb-6'>
 						Check your email for order details and updates.
 					</p>
-					<div className='bg-gray-700 rounded-lg p-4 mb-6'>
-						<div className='flex items-center justify-between mb-2'>
-							<span className='text-sm text-gray-400'>Order number</span>
-							<span className='text-sm font-semibold text-emerald-400'>
-								#{order?._id.substring(0, 8)}...
-							</span>
+					{order && (
+						<div className='bg-gray-700 rounded-lg p-4 mb-6'>
+							<div className='flex items-center justify-between mb-2'>
+								<span className='text-sm text-gray-400'>Order number</span>
+								<span className='text-sm font-semibold text-emerald-400'>
+									#{order?._id.substring(0, 8)}...
+								</span>
+							</div>
+							<div className='flex items-center justify-between'>
+								<span className='text-sm text-gray-400'>Estimated delivery</span>
+								<span className='text-sm font-semibold text-emerald-400'>
+									{getEstimatedDeliveryTime(order?.distance)}
+								</span>
+							</div>
 						</div>
-						<div className='flex items-center justify-between'>
-							<span className='text-sm text-gray-400'>Estimated delivery</span>
-							<span className='text-sm font-semibold text-emerald-400'>
-								{getEstimatedDeliveryTime(order?.distance)}
-							</span>
-						</div>
-					</div>
+					)}
 
 					<div className='space-y-4'>
-						<button
-							className='w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4
-             rounded-lg transition duration-300 flex items-center justify-center'
-						>
+						<button className='w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center'>
 							<HandHeart className='mr-2' size={18} />
 							Thanks for trusting us!
 						</button>
 						<Link
 							to={"/"}
-							className='w-full bg-gray-700 hover:bg-gray-600 text-emerald-400 font-bold py-2 px-4 
-            rounded-lg transition duration-300 flex items-center justify-center'
+							className='w-full bg-gray-700 hover:bg-gray-600 text-emerald-400 font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center'
 						>
 							Continue Shopping
 							<ArrowRight className='ml-2' size={18} />

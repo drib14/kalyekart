@@ -2,128 +2,158 @@ import Coupon from "../models/coupon.model.js";
 import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
-import { stripe } from "../lib/stripe.js";
+import { paymongo } from "../lib/paymongo.js";
 import { sendEmail } from "../lib/email.js";
 import NotificationService from "../services/notification.service.js";
 
-export const createCheckoutSession = async (req, res) => {
+export const createPaymongoCheckoutSession = async (req, res) => {
 	try {
-		const { products, couponCode, shippingAddress, distance, deliveryFee } = req.body;
+		const { products, couponCode, shippingAddress, distance, deliveryFee, contactNumber, paymentMethod } = req.body;
+		const user = await User.findById(req.user._id);
 
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
 		if (!Array.isArray(products) || products.length === 0) {
 			return res.status(400).json({ error: "Invalid or empty products array" });
 		}
 
-		let totalAmount = 0;
-
+		let subtotal = 0;
 		const lineItems = products.map((product) => {
 			const amount = Math.round(product.price * 100);
-			totalAmount += amount * product.quantity;
-
+			subtotal += amount * product.quantity;
 			return {
-				price_data: {
-					currency: "php",
-					product_data: {
-						name: product.name,
-						images: [product.image],
-					},
-					unit_amount: amount,
-				},
+				currency: "PHP",
+				amount: amount,
+				name: product.name,
 				quantity: product.quantity || 1,
 			};
 		});
 
+		let totalAmount = subtotal + Math.round(deliveryFee * 100);
 		let coupon = null;
+		let couponDetails = {};
+
 		if (couponCode) {
 			coupon = await Coupon.findOne({ code: couponCode, userId: req.user._id, isActive: true });
 			if (coupon) {
-				totalAmount -= Math.round((totalAmount * coupon.discountPercentage) / 100);
+				const discount = Math.round(totalAmount * (coupon.discountPercentage / 100));
+				totalAmount -= discount;
+				couponDetails = {
+					code: coupon.code,
+					discountPercentage: coupon.discountPercentage,
+				};
 			}
 		}
 
-		const session = await stripe.checkout.sessions.create({
-			payment_method_types: ["card"],
-			line_items: lineItems,
-			mode: "payment",
-			success_url: `https://kalyekart.app/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-			cancel_url: `https://kalyekart.app/purchase-cancel`,
-			discounts: coupon
-				? [
-						{
-							coupon: await createStripeCoupon(coupon.discountPercentage),
-						},
-				  ]
-				: [],
-			metadata: {
-				userId: req.user._id.toString(),
-				couponCode: couponCode || "",
-				products: JSON.stringify(
-					products.map((p) => ({
-						product: p._id,
-						quantity: p.quantity,
-						price: p.price,
-						name: p.name,
-					}))
-				),
-				shippingAddress: JSON.stringify(shippingAddress),
-				distance: String(distance),
-				deliveryFee: String(deliveryFee),
+		const session = await paymongo.checkoutSessions.create({
+			data: {
+				attributes: {
+					billing: {
+						name: user.name,
+						email: user.email,
+						phone: contactNumber,
+					},
+					payment_method_types: [paymentMethod],
+					success_url: `${process.env.CLIENT_URL}/purchase-success`,
+					cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
+					line_items: lineItems,
+					description: "KalyeKart Order",
+					send_email_receipt: true,
+					metadata: {
+						userId: req.user._id.toString(),
+						products: JSON.stringify(
+							products.map((p) => ({
+								product: p._id,
+								quantity: p.quantity,
+								price: p.price,
+								name: p.name,
+							}))
+						),
+						shippingAddress: JSON.stringify(shippingAddress),
+						distance: String(distance),
+						deliveryFee: String(deliveryFee),
+						contactNumber: contactNumber,
+						coupon: JSON.stringify(couponDetails),
+						subtotal: String(subtotal / 100),
+						totalAmount: String(totalAmount / 100),
+						paymentMethod: paymentMethod,
+					},
+				},
 			},
 		});
 
-		if (totalAmount >= 20000) {
-			await createNewCoupon(req.user._id);
-		}
-		res.status(200).json({ id: session.id, totalAmount: totalAmount / 100 });
+		res.status(200).json({ id: session.data.id, url: session.data.attributes.checkout_url });
 	} catch (error) {
-		console.error("Error processing checkout:", error);
-		res.status(500).json({ message: "Error processing checkout", error: error.message });
+		console.error("Error creating PayMongo checkout session:", error);
+		res.status(500).json({ message: "Error creating PayMongo checkout session", error: error.message });
 	}
 };
 
-export const checkoutSuccess = async (req, res) => {
+export const verifyPaymongoPayment = async (req, res) => {
 	try {
 		const { sessionId } = req.body;
-		const session = await stripe.checkout.sessions.retrieve(sessionId);
+		const session = await paymongo.checkoutSessions.retrieve(sessionId);
 
-		if (session.payment_status === "paid") {
-			if (session.metadata.couponCode) {
-				await Coupon.findOneAndUpdate(
-					{
-						code: session.metadata.couponCode,
-						userId: session.metadata.userId,
-					},
-					{
-						isActive: false,
-					}
-				);
+		const paymentIntentId = session.data.attributes.payment_intent.id;
+		const paymentIntent = await paymongo.paymentIntents.retrieve(paymentIntentId);
+
+		if (paymentIntent.data.attributes.status === "succeeded") {
+			const metadata = session.data.attributes.metadata;
+			const {
+				userId,
+				coupon: couponString,
+				products: productsString,
+				shippingAddress: shippingAddressString,
+				distance,
+				deliveryFee,
+				contactNumber,
+				subtotal,
+				totalAmount,
+				paymentMethod,
+			} = metadata;
+
+			const existingOrder = await Order.findOne({ paymongoSessionId: sessionId });
+			if (existingOrder) {
+				return res.status(200).json({
+					success: true,
+					message: "Order already processed.",
+					orderId: existingOrder._id,
+				});
 			}
 
-			const user = await User.findById(session.metadata.userId);
+			const coupon = JSON.parse(couponString);
+			if (coupon && coupon.code) {
+				await Coupon.findOneAndUpdate({ code: coupon.code, userId: userId }, { isActive: false });
+			}
+
+			const user = await User.findById(userId);
 			const admin = await User.findOne({ role: "admin" });
 
 			if (!user) {
 				return res.status(404).json({ message: "User not found" });
 			}
 
-			const products = JSON.parse(session.metadata.products);
-			const shippingAddress = JSON.parse(session.metadata.shippingAddress);
-			const distance = parseFloat(session.metadata.distance);
-			const deliveryFee = parseFloat(session.metadata.deliveryFee);
+			const products = JSON.parse(productsString);
+			const shippingAddress = JSON.parse(shippingAddressString);
+
 			const newOrder = new Order({
-				user: session.metadata.userId,
+				user: userId,
 				products: products.map((product) => ({
 					product: product.product,
 					quantity: product.quantity,
 					price: product.price,
 					name: product.name,
 				})),
-				totalAmount: session.amount_total / 100,
-				stripeSessionId: sessionId,
+				subtotal: parseFloat(subtotal),
+				totalAmount: parseFloat(totalAmount),
+				coupon: coupon,
+				paymongoSessionId: sessionId,
 				shippingAddress,
-				distance,
-				deliveryFee,
-				paymentMethod: "card",
+				distance: parseFloat(distance),
+				deliveryFee: parseFloat(deliveryFee),
+				contactNumber,
+				paymentMethod: paymentMethod,
 				paymentStatus: "paid",
 			});
 
@@ -149,10 +179,10 @@ export const checkoutSuccess = async (req, res) => {
 					NAME: user.name,
 					ORDER_ID: newOrder._id.toString(),
 					ORDER_ITEMS: orderItemsHtml,
-					SUBTOTAL: (newOrder.totalAmount - newOrder.deliveryFee).toFixed(2),
+					SUBTOTAL: newOrder.subtotal.toFixed(2),
 					DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
 					TOTAL: newOrder.totalAmount.toFixed(2),
-					CTA_LINK: `https://kalyekart.app/my-orders/${newOrder._id}`,
+					CTA_LINK: `${process.env.CLIENT_URL}/my-orders/${newOrder._id}`,
 				}
 			);
 
@@ -166,10 +196,10 @@ export const checkoutSuccess = async (req, res) => {
 						CUSTOMER_NAME: user.name,
 						CUSTOMER_EMAIL: user.email,
 						ORDER_ITEMS: orderItemsHtml,
-						SUBTOTAL: (newOrder.totalAmount - newOrder.deliveryFee).toFixed(2),
+						SUBTOTAL: newOrder.subtotal.toFixed(2),
 						DELIVERY_FEE: newOrder.deliveryFee.toFixed(2),
 						TOTAL: newOrder.totalAmount.toFixed(2),
-						CTA_LINK: `https://kalyekart.app/secret-dashboard`,
+						CTA_LINK: `${process.env.CLIENT_URL}/secret-dashboard`,
 					}
 				);
 				const adminNotification = new Notification({
@@ -195,30 +225,26 @@ export const checkoutSuccess = async (req, res) => {
 			await customerNotification.populate("sender", "name profilePicture");
 			NotificationService.sendNotification(user._id.toString(), customerNotification);
 
+			if (newOrder.totalAmount >= 2000) {
+				await createNewCoupon(user._id);
+			}
 
 			res.status(200).json({
 				success: true,
 				message: "Payment successful, order created, and coupon deactivated if used.",
 				orderId: newOrder._id,
 			});
+		} else {
+			res.status(400).json({ success: false, message: "Payment not successful." });
 		}
 	} catch (error) {
-		console.error("Error processing successful checkout:", error);
-		res.status(500).json({ message: "Error processing successful checkout", error: error.message });
+		console.error("Error verifying PayMongo payment:", error);
+		res.status(500).json({ message: "Error verifying PayMongo payment", error: error.message });
 	}
 };
 
-async function createStripeCoupon(discountPercentage) {
-	const coupon = await stripe.coupons.create({
-		percent_off: discountPercentage,
-		duration: "once",
-	});
-
-	return coupon.id;
-}
-
 async function createNewCoupon(userId) {
-	await Coupon.findOneAndDelete({ userId });
+	await Coupon.findOneAndDelete({ userId, code: /GIFT/ });
 
 	const newCoupon = new Coupon({
 		code: "GIFT" + Math.random().toString(36).substring(2, 8).toUpperCase(),
@@ -228,6 +254,5 @@ async function createNewCoupon(userId) {
 	});
 
 	await newCoupon.save();
-
 	return newCoupon;
 }

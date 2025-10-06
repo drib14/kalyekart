@@ -97,7 +97,7 @@ const orderSchema = new mongoose.Schema(
 			},
 			rejectionReason: String,
 		},
-		stripeSessionId: {
+		paymongoSessionId: {
 			type: String,
 			unique: true,
 			sparse: true, // This ensures that the unique index only applies to documents where this field exists

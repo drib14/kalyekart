@@ -7,13 +7,15 @@ import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin } from "lucide-react";
+import { MapPin, CreditCard, Smartphone } from "lucide-react";
 
 const CheckoutPage = () => {
 	const { cart, subtotal, total, coupon } = useCartStore();
 	const { user } = useUserStore();
 	const navigate = useNavigate();
 
+	const [paymentMethod, setPaymentMethod] = useState("cod");
+	const [distance, setDistance] = useState(0);
 	const [deliveryInfo, setDeliveryInfo] = useState({
 		fullName: user?.name || "",
 		contactNumber: user?.phoneNumber || "",
@@ -77,9 +79,11 @@ const CheckoutPage = () => {
 						shippingAddress: { city: deliveryInfo.city, barangay: deliveryInfo.barangay },
 					});
 					setDeliveryFee(response.data.deliveryFee);
+					setDistance(response.data.distance || 0);
 				} catch {
 					toast.error("Could not calculate delivery fee.");
 					setDeliveryFee(0);
+					setDistance(0);
 				}
 			}, 500);
 
@@ -104,11 +108,20 @@ const CheckoutPage = () => {
 		toast.success("Delivery information filled from saved address.");
 	};
 
-
 	const { mutate: createCodOrder, isPending } = useMutation({
 		mutationFn: (data) => axios.post("/orders/cod", data),
 		onSuccess: (data) => navigate(`/purchase-success`, { state: { cod: true, orderId: data.data.orderId } }),
 		onError: (error) => toast.error(error.response.data.message),
+	});
+
+	const { mutate: createPaymongoSession, isPending: isPaymongoPending } = useMutation({
+		mutationFn: (data) => axios.post("/payment/create-paymongo-checkout-session", data),
+		onSuccess: (data) => {
+			window.location.href = data.data.url;
+		},
+		onError: (error) => {
+			toast.error(error.response?.data?.message || "Could not proceed to payment.");
+		},
 	});
 
 	const handleUseCurrentLocation = async () => {
@@ -126,7 +139,7 @@ const CheckoutPage = () => {
 			const normalize = (str) => str.replace(/City of|City/g, "").replace(/-/g, " ").trim().toLowerCase();
 			const normalizedApiCity = normalize(apiCityName);
 
-			const matchedLocation = locations.find(loc => {
+			const matchedLocation = locations.find((loc) => {
 				const normalizedLocName = normalize(loc.name);
 				return normalizedLocName.includes(normalizedApiCity) || normalizedApiCity.includes(normalizedLocName);
 			});
@@ -152,16 +165,19 @@ const CheckoutPage = () => {
 				if (matchedBarangay) newBarangay = matchedBarangay.name;
 			}
 
-			setDeliveryInfo(prev => ({
+			setDeliveryInfo((prev) => ({
 				...prev,
 				city: newCity,
 				barangay: newBarangay,
 				sitio: [address.road, address.house_number].filter(Boolean).join(", "),
-				postalCode: matchedLocation.zip_code || ""
+				postalCode: matchedLocation.zip_code || "",
 			}));
-
 		} catch (error) {
-			toast.error(error.code === error.PERMISSION_DENIED ? "Unable to retrieve your location. Please enable location services." : "Could not determine your address. Please enter it manually.");
+			toast.error(
+				error.code === error.PERMISSION_DENIED
+					? "Unable to retrieve your location. Please enable location services."
+					: "Could not determine your address. Please enter it manually."
+			);
 		} finally {
 			setIsLocating(false);
 		}
@@ -169,87 +185,238 @@ const CheckoutPage = () => {
 
 	const handleInputChange = (e) => {
 		const { id, value } = e.target;
-		setDeliveryInfo(prev => ({ ...prev, [id]: value }));
+		setDeliveryInfo((prev) => ({ ...prev, [id]: value }));
 	};
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		const products = cart.map((item) => ({
-			_id: item.product._id,
-			name: item.product.name,
-			price: item.product.price,
-			quantity: item.quantity,
-		}));
-		createCodOrder({ products, shippingAddress: deliveryInfo, contactNumber: deliveryInfo.contactNumber, couponCode: coupon?.code, subtotal });
+		if (cart.length === 0) {
+			toast.error("Your cart is empty.");
+			return;
+		}
+
+		const orderDetails = {
+			products: cart.map((item) => ({
+				_id: item.product._id,
+				name: item.product.name,
+				image: item.product.image,
+				price: item.product.price,
+				quantity: item.quantity,
+			})),
+			shippingAddress: deliveryInfo,
+			contactNumber: deliveryInfo.contactNumber,
+			couponCode: coupon?.code,
+			distance: distance,
+			deliveryFee: deliveryFee,
+		};
+
+		if (paymentMethod === "cod") {
+			createCodOrder(orderDetails);
+		} else {
+			createPaymongoSession({ ...orderDetails, paymentMethod });
+		}
 	};
+
+	const paymentOptions = [
+		{ id: "cod", name: "Cash on Delivery", icon: <Smartphone className='mr-2' /> },
+		{ id: "card", name: "Credit/Debit Card", icon: <CreditCard className='mr-2' /> },
+		{ id: "gcash", name: "GCash", icon: <img src='/gcash.png' alt='GCash' className='w-6 h-6 mr-2' /> },
+		{ id: "paymaya", name: "Maya", icon: <img src='/maya.png' alt='Maya' className='w-6 h-6 mr-2' /> },
+		{ id: "grab_pay", name: "GrabPay", icon: <img src='/grabpay.png' alt='GrabPay' className='w-6 h-6 mr-2' /> },
+	];
 
 	return (
 		<main className='container my-10'>
-			<motion.div className='max-w-4xl mx-auto' initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+			<motion.div
+				className='max-w-4xl mx-auto'
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.5 }}
+			>
 				<h1 className='text-3xl font-extrabold text-emerald-400 mb-8 text-center'>Checkout</h1>
 				<div className='grid md:grid-cols-2 md:gap-4 lg:gap-8'>
 					<div className='bg-gray-800 p-8 rounded-lg shadow-lg'>
 						<div className='flex justify-between items-center mb-4'>
 							<h2 className='text-2xl font-bold text-white'>Delivery Information</h2>
-							<button type="button" onClick={handleUseCurrentLocation} className="text-sm font-medium text-emerald-400 hover:text-emerald-300 disabled:opacity-50 flex items-center" disabled={isLocating || locations.length === 0}>
-								<MapPin className="w-4 h-4 mr-1" />
-								{isLocating ? 'Locating...' : 'Use Current Location'}
+							<button
+								type='button'
+								onClick={handleUseCurrentLocation}
+								className='text-sm font-medium text-emerald-400 hover:text-emerald-300 disabled:opacity-50 flex items-center'
+								disabled={isLocating || locations.length === 0}
+							>
+								<MapPin className='w-4 h-4 mr-1' />
+								{isLocating ? "Locating..." : "Use Current Location"}
 							</button>
 						</div>
-						{isLoadingAddresses ? <LoadingSpinner /> : savedAddresses && savedAddresses.length > 0 && (
-							<div className="mb-4">
-								<label className="block text-sm font-medium text-gray-300 mb-1">Use a saved address</label>
-								<div className="flex flex-wrap gap-2">
-									{savedAddresses.map(addr => (
-										<button key={addr._id} type="button" onClick={() => handleSelectSavedAddress(addr)} className={`px-3 py-1 text-sm rounded-full border ${addr.isDefault ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-gray-700 border-gray-600 hover:bg-gray-600'}`}>
-											{addr.fullName} - {addr.barangay}
+						{isLoadingAddresses ? (
+							<LoadingSpinner />
+						) : (
+							savedAddresses &&
+							savedAddresses.length > 0 && (
+								<div className='mb-4'>
+									<label className='block text-sm font-medium text-gray-300 mb-1'>Use a saved address</label>
+									<div className='flex flex-wrap gap-2'>
+										{savedAddresses.map((addr) => (
+											<button
+												key={addr._id}
+												type='button'
+												onClick={() => handleSelectSavedAddress(addr)}
+												className={`px-3 py-1 text-sm rounded-full border ${
+													addr.isDefault
+														? "bg-emerald-500 border-emerald-400 text-white"
+														: "bg-gray-700 border-gray-600 hover:bg-gray-600"
+												}`}
+											>
+												{addr.fullName} - {addr.barangay}
+											</button>
+										))}
+									</div>
+								</div>
+							)
+						)}
+						<form onSubmit={handleSubmit} className='space-y-4'>
+							<div>
+								<label htmlFor='fullName' className='block text-sm font-medium text-gray-300 mb-1'>
+									Full Name
+								</label>
+								<input
+									id='fullName'
+									type='text'
+									required
+									value={deliveryInfo.fullName}
+									onChange={handleInputChange}
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg'
+								/>
+							</div>
+							<div>
+								<label htmlFor='contactNumber' className='block text-sm font-medium text-gray-300 mb-1'>
+									Contact Number
+								</label>
+								<input
+									id='contactNumber'
+									type='text'
+									required
+									value={deliveryInfo.contactNumber}
+									onChange={handleInputChange}
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg'
+									placeholder='09123456789'
+								/>
+							</div>
+							<div>
+								<label htmlFor='sitio' className='block text-sm font-medium text-gray-300 mb-1'>
+									Sitio / Street / House No. (Optional)
+								</label>
+								<input
+									id='sitio'
+									type='text'
+									value={deliveryInfo.sitio}
+									onChange={handleInputChange}
+									className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg'
+								/>
+							</div>
+							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+								<div>
+									<label htmlFor='city' className='block text-sm font-medium text-gray-300 mb-1'>
+										City / Municipality
+									</label>
+									<select
+										id='city'
+										required
+										value={deliveryInfo.city}
+										onChange={handleInputChange}
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg'
+									>
+										<option value=''>Select a city</option>
+										{locations.map((loc) => (
+											<option key={loc.code} value={loc.name}>
+												{loc.name}
+											</option>
+										))}
+									</select>
+								</div>
+								<div>
+									<label htmlFor='barangay' className='block text-sm font-medium text-gray-300 mb-1'>
+										Barangay
+									</label>
+									<select
+										id='barangay'
+										required
+										value={deliveryInfo.barangay}
+										onChange={handleInputChange}
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg'
+										disabled={!deliveryInfo.city}
+									>
+										<option value=''>Select a barangay</option>
+										{barangays.map((b) => (
+											<option key={b.code} value={b.name}>
+												{b.name}
+											</option>
+										))}
+									</select>
+								</div>
+							</div>
+							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+								<div>
+									<label htmlFor='province' className='block text-sm font-medium text-gray-300 mb-1'>
+										Province
+									</label>
+									<input
+										id='province'
+										type='text'
+										required
+										value={deliveryInfo.province}
+										onChange={handleInputChange}
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg'
+										disabled
+									/>
+								</div>
+								<div>
+									<label htmlFor='postalCode' className='block text-sm font-medium text-gray-300 mb-1'>
+										Postal Code
+									</label>
+									<input
+										id='postalCode'
+										type='text'
+										value={deliveryInfo.postalCode}
+										readOnly
+										placeholder='e.g. 6000'
+										className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg'
+									/>
+								</div>
+							</div>
+							<div className='pt-4'>
+								<h3 className='text-lg font-medium text-white mb-2'>Payment Method</h3>
+								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+									{paymentOptions.map((option) => (
+										<button
+											key={option.id}
+											type='button'
+											onClick={() => setPaymentMethod(option.id)}
+											className={`flex items-center justify-center p-4 rounded-lg cursor-pointer border-2 transition-all duration-200 ${
+												paymentMethod === option.id
+													? "bg-emerald-500 border-emerald-400 text-white shadow-lg"
+													: "bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-300"
+											}`}
+										>
+											{option.icon}
+											<span className='font-medium'>{option.name}</span>
 										</button>
 									))}
 								</div>
 							</div>
-						)}
-						<form onSubmit={handleSubmit} className='space-y-4'>
-							<div>
-								<label htmlFor='fullName' className='block text-sm font-medium text-gray-300 mb-1'>Full Name</label>
-								<input id='fullName' type='text' required value={deliveryInfo.fullName} onChange={handleInputChange} className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg' />
-							</div>
-							<div>
-								<label htmlFor='contactNumber' className='block text-sm font-medium text-gray-300 mb-1'>Contact Number</label>
-								<input id='contactNumber' type='text' required value={deliveryInfo.contactNumber} onChange={handleInputChange} className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg' placeholder='09123456789' />
-							</div>
-							<div>
-								<label htmlFor='sitio' className='block text-sm font-medium text-gray-300 mb-1'>Sitio / Street / House No. (Optional)</label>
-								<input id='sitio' type='text' value={deliveryInfo.sitio} onChange={handleInputChange} className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg' />
-							</div>
-							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-								<div>
-									<label htmlFor='city' className='block text-sm font-medium text-gray-300 mb-1'>City / Municipality</label>
-									<select id='city' required value={deliveryInfo.city} onChange={handleInputChange} className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg'>
-										<option value=''>Select a city</option>
-										{locations.map((loc) => (<option key={loc.code} value={loc.name}>{loc.name}</option>))}
-									</select>
-								</div>
-								<div>
-									<label htmlFor='barangay' className='block text-sm font-medium text-gray-300 mb-1'>Barangay</label>
-									<select id='barangay' required value={deliveryInfo.barangay} onChange={handleInputChange} className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg' disabled={!deliveryInfo.city}>
-										<option value=''>Select a barangay</option>
-										{barangays.map((b) => (<option key={b.code} value={b.name}>{b.name}</option>))}
-									</select>
-								</div>
-							</div>
-							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-								<div>
-									<label htmlFor='province' className='block text-sm font-medium text-gray-300 mb-1'>Province</label>
-									<input id='province' type='text' required value={deliveryInfo.province} onChange={handleInputChange} className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg' disabled />
-								</div>
-								<div>
-									<label htmlFor='postalCode' className='block text-sm font-medium text-gray-300 mb-1'>Postal Code</label>
-									<input id='postalCode' type='text' value={deliveryInfo.postalCode} readOnly placeholder='e.g. 6000' className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg' />
-								</div>
-							</div>
 							<div className='pt-6'>
-								<button type='submit' className='w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-emerald-600 hover:bg-emerald-700' disabled={isPending || cart.length === 0}>
-									{isPending ? <LoadingSpinner /> : "Place Order (Cash on Delivery)"}
+								<button
+									type='submit'
+									className='w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-emerald-600 hover:bg-emerald-700'
+									disabled={isPending || isPaymongoPending || cart.length === 0}
+								>
+									{isPending || isPaymongoPending ? (
+										<LoadingSpinner />
+									) : paymentMethod === "cod" ? (
+										"Place Order"
+									) : (
+										"Proceed to Payment"
+									)}
 								</button>
 							</div>
 						</form>
@@ -257,25 +424,47 @@ const CheckoutPage = () => {
 					<div className='bg-gray-800 p-8 rounded-lg shadow-lg'>
 						<h2 className='text-2xl font-bold text-white mb-6'>Order Summary</h2>
 						<div className='space-y-4'>
-							{cart.filter(item => item && item.product).map(item => (
-								<div key={item.product._id} className='flex items-center justify-between'>
-									<div className='flex items-center'>
-										<img src={item.product.image} alt={item.product.name} className='w-16 h-16 object-cover rounded-lg mr-4' />
-										<div>
-											<p className='font-medium text-white'>{item.product.name}</p>
-											<p className='text-sm text-gray-400'>{item.quantity} x ₱{item.product.price.toFixed(2)}</p>
+							{cart
+								.filter((item) => item && item.product)
+								.map((item) => (
+									<div key={item.product._id} className='flex items-center justify-between'>
+										<div className='flex items-center'>
+											<img
+												src={item.product.image}
+												alt={item.product.name}
+												className='w-16 h-16 object-cover rounded-lg mr-4'
+											/>
+											<div>
+												<p className='font-medium text-white'>{item.product.name}</p>
+												<p className='text-sm text-gray-400'>
+													{item.quantity} x ₱{item.product.price.toFixed(2)}
+												</p>
+											</div>
 										</div>
+										<p className='font-medium text-white'>₱{(item.quantity * item.product.price).toFixed(2)}</p>
 									</div>
-									<p className='font-medium text-white'>₱{(item.quantity * item.product.price).toFixed(2)}</p>
-								</div>
-							))}
+								))}
 						</div>
 						<div className='border-t border-gray-700 my-6' />
 						<div className='space-y-2'>
-							<div className='flex justify-between text-gray-300'><span>Subtotal</span><span>₱{subtotal.toFixed(2)}</span></div>
-							{coupon && (<div className='flex justify-between text-emerald-400'><span>Discount ({coupon.code})</span><span>-{coupon.discountPercentage}%</span></div>)}
-							<div className='flex justify-between text-gray-300'><span>Delivery Fee</span><span>₱{deliveryFee.toFixed(2)}</span></div>
-							<div className='flex justify-between font-bold text-xl text-white pt-2'><span>Total</span><span>₱{finalTotal.toFixed(2)}</span></div>
+							<div className='flex justify-between text-gray-300'>
+								<span>Subtotal</span>
+								<span>₱{subtotal.toFixed(2)}</span>
+							</div>
+							{coupon && (
+								<div className='flex justify-between text-emerald-400'>
+									<span>Discount ({coupon.code})</span>
+									<span>-{coupon.discountPercentage}%</span>
+								</div>
+							)}
+							<div className='flex justify-between text-gray-300'>
+								<span>Delivery Fee</span>
+								<span>₱{deliveryFee.toFixed(2)}</span>
+							</div>
+							<div className='flex justify-between font-bold text-xl text-white pt-2'>
+								<span>Total</span>
+								<span>₱{finalTotal.toFixed(2)}</span>
+							</div>
 						</div>
 					</div>
 				</div>
