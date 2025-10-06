@@ -208,6 +208,7 @@ const CheckoutPage = () => {
 			couponCode: coupon?.code,
 			distance: distance,
 			deliveryFee: deliveryFee,
+			subtotal: subtotal,
 		};
 
 		if (paymentMethod === "cod") {
@@ -217,12 +218,14 @@ const CheckoutPage = () => {
 		}
 	};
 
+	const isPaymongoDisabled = finalTotal < 20;
+
 	const paymentOptions = [
 		{ id: "cod", name: "Cash on Delivery", icon: <Smartphone className='mr-2' /> },
-		{ id: "card", name: "Credit/Debit Card", icon: <CreditCard className='mr-2' /> },
-		{ id: "gcash", name: "GCash", icon: <img src='/gcash.png' alt='GCash' className='w-6 h-6 mr-2' /> },
-		{ id: "paymaya", name: "Maya", icon: <img src='/maya.png' alt='Maya' className='w-6 h-6 mr-2' /> },
-		{ id: "grab_pay", name: "GrabPay", icon: <img src='/grabpay.png' alt='GrabPay' className='w-6 h-6 mr-2' /> },
+		{ id: "card", name: "Credit/Debit Card", icon: <CreditCard className='mr-2' />, disabled: isPaymongoDisabled },
+		{ id: "gcash", name: "GCash", icon: <img src='/gcash.png' alt='GCash' className='w-6 h-6 mr-2' />, disabled: isPaymongoDisabled },
+		{ id: "paymaya", name: "Maya", icon: <img src='/maya.png' alt='Maya' className='w-6 h-6 mr-2' />, disabled: isPaymongoDisabled },
+		{ id: "grab_pay", name: "GrabPay", icon: <img src='/grabpay.png' alt='GrabPay' className='w-6 h-6 mr-2' />, disabled: isPaymongoDisabled },
 	];
 
 	return (
@@ -391,18 +394,24 @@ const CheckoutPage = () => {
 										<button
 											key={option.id}
 											type='button'
-											onClick={() => setPaymentMethod(option.id)}
+											onClick={() => !option.disabled && setPaymentMethod(option.id)}
 											className={`flex items-center justify-center p-4 rounded-lg cursor-pointer border-2 transition-all duration-200 ${
 												paymentMethod === option.id
 													? "bg-emerald-500 border-emerald-400 text-white shadow-lg"
 													: "bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-300"
-											}`}
+											} ${option.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+											disabled={option.disabled}
 										>
 											{option.icon}
 											<span className='font-medium'>{option.name}</span>
 										</button>
 									))}
 								</div>
+								{isPaymongoDisabled && (
+									<p className='text-xs text-center text-red-400 mt-2'>
+										Online payments are disabled for orders less than ₱20.00.
+									</p>
+								)}
 							</div>
 							<div className='pt-6'>
 								<button
