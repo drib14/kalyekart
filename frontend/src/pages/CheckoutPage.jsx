@@ -6,8 +6,8 @@ import { useCartStore } from "../stores/useCartStore";
 import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { MapPin, CreditCard, Smartphone } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MapPin, CreditCard, Truck } from "lucide-react";
 
 const CheckoutPage = () => {
 	const { cart, subtotal, total, coupon } = useCartStore();
@@ -221,12 +221,11 @@ const CheckoutPage = () => {
 
 	const isPaymongoDisabled = finalTotal < 20;
 
-	const paymentOptions = [
-		{ id: "cod", name: "Cash on Delivery", icon: <Smartphone className='mr-2' /> },
-		{ id: "card", name: "Credit/Debit Card", icon: <CreditCard className='mr-2' />, disabled: isPaymongoDisabled },
-		{ id: "gcash", name: "GCash", icon: <img src='/gcash.avif' alt='GCash' className='w-6 h-6 mr-2' />, disabled: isPaymongoDisabled },
-		{ id: "paymaya", name: "Maya", icon: <img src='/maya.png' alt='Maya' className='w-6 h-6 mr-2' />, disabled: isPaymongoDisabled },
-		{ id: "grab_pay", name: "GrabPay", icon: <img src='/g-pay.png' alt='GrabPay' className='w-6 h-6 mr-2' />, disabled: isPaymongoDisabled },
+	const onlinePaymentOptions = [
+		{ id: "card", name: "Card", icon: <CreditCard className='h-8 w-8' />, disabled: isPaymongoDisabled },
+		{ id: "gcash", name: "GCash", icon: <img src='/gcash.avif' alt='GCash' className='h-8 w-8 rounded-md' />, disabled: isPaymongoDisabled },
+		{ id: "paymaya", name: "Maya", icon: <img src='/maya.png' alt='Maya' className='h-8 w-8 rounded-md' />, disabled: isPaymongoDisabled },
+		{ id: "grab_pay", name: "GrabPay", icon: <img src='/g-pay.png' alt='GrabPay' className='h-8 w-8 rounded-md' />, disabled: isPaymongoDisabled },
 	];
 
 	return (
@@ -390,29 +389,74 @@ const CheckoutPage = () => {
 							</div>
 							<div className='pt-4'>
 								<h3 className='text-lg font-medium text-white mb-2'>Payment Method</h3>
-								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-									{paymentOptions.map((option) => (
-										<button
-											key={option.id}
-											type='button'
-											onClick={() => !option.disabled && setPaymentMethod(option.id)}
-											className={`flex items-center justify-center p-4 rounded-lg cursor-pointer border-2 transition-all duration-200 ${
-												paymentMethod === option.id
-													? "bg-emerald-500 border-emerald-400 text-white shadow-lg"
-													: "bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-300"
-											} ${option.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-											disabled={option.disabled}
-										>
-											{option.icon}
-											<span className='font-medium'>{option.name}</span>
-										</button>
-									))}
+								<div className='space-y-4'>
+									<button
+										type='button'
+										onClick={() => setPaymentMethod("cod")}
+										className={`w-full flex items-center justify-center p-4 rounded-lg cursor-pointer border-2 transition-all duration-200 overflow-hidden relative h-[60px] ${
+											paymentMethod === "cod"
+												? "bg-emerald-500 border-emerald-400 text-white shadow-lg"
+												: "bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-300"
+										}`}
+									>
+										<AnimatePresence>
+											{paymentMethod === "cod" ? (
+												<motion.div
+													key='truck-moving'
+													initial={{ x: "-150%" }}
+													animate={{ x: "150%" }}
+													transition={{ duration: 2, ease: "linear", repeat: Infinity }}
+													className='absolute'
+												>
+													<Truck className='w-8 h-8' />
+												</motion.div>
+											) : (
+												<motion.div key='truck-still' className='flex items-center' exit={{ opacity: 0 }}>
+													<Truck className='w-6 h-6 mr-3' />
+													<span className='font-medium'>Cash on Delivery</span>
+												</motion.div>
+											)}
+										</AnimatePresence>
+									</button>
+
+									<div className='flex items-center'>
+										<div className='flex-grow border-t border-gray-600'></div>
+										<span className='flex-shrink mx-4 text-gray-400 text-sm'>OR PAY WITH</span>
+										<div className='flex-grow border-t border-gray-600'></div>
+									</div>
+
+									<div className='relative'>
+										<div className={`grid grid-cols-4 gap-2 ${isPaymongoDisabled ? "opacity-50" : ""}`}>
+											{onlinePaymentOptions.map((option) => (
+												<div key={option.id} className='relative group'>
+													<button
+														type='button'
+														onClick={() => !option.disabled && setPaymentMethod(option.id)}
+														className={`w-full h-[60px] flex items-center justify-center p-3 rounded-lg cursor-pointer border-2 transition-all duration-200 ${
+															paymentMethod === option.id
+																? "bg-emerald-500 border-emerald-400 shadow-lg"
+																: "bg-gray-700 border-gray-600 hover:bg-gray-600"
+														} ${option.disabled ? "cursor-not-allowed" : ""}`}
+														disabled={option.disabled}
+													>
+														{option.icon}
+													</button>
+													<div
+														className='absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-gray-900 bg-opacity-80 text-white text-xs rounded-md
+                                                   opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10'
+													>
+														{option.name}
+													</div>
+												</div>
+											))}
+										</div>
+										{isPaymongoDisabled && (
+											<p className='text-xs text-center text-red-400 mt-2'>
+												Online payments are disabled for orders less than ₱20.00.
+											</p>
+										)}
+									</div>
 								</div>
-								{isPaymongoDisabled && (
-									<p className='text-xs text-center text-red-400 mt-2'>
-										Online payments are disabled for orders less than ₱20.00.
-									</p>
-								)}
 							</div>
 							<div className='pt-6'>
 								<button

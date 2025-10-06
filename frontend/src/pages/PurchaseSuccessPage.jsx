@@ -28,6 +28,7 @@ const PurchaseSuccessPage = () => {
 			navigate("/checkout");
 		},
 		onSettled: () => {
+			sessionStorage.removeItem("paymongoSessionId");
 			setIsVerifying(false);
 		},
 	});
@@ -37,7 +38,6 @@ const PurchaseSuccessPage = () => {
 
 		if (paymongoSessionId) {
 			verifyPayment(paymongoSessionId);
-			sessionStorage.removeItem("paymongoSessionId");
 		} else if (isCod) {
 			clearCart();
 			toast.success("Order placed successfully!");
