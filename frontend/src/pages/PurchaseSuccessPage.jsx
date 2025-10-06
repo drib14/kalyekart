@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle, HandHeart } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { useCartStore } from "../stores/useCartStore";
 import axios from "../lib/axios";
 import Confetti from "react-confetti";
@@ -11,6 +11,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 const PurchaseSuccessPage = () => {
 	const { clearCart } = useCartStore();
 	const location = useLocation();
+	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
 	const isCod = location.state?.cod;
 	const [orderId, setOrderId] = useState(location.state?.orderId || null);
@@ -37,7 +38,7 @@ const PurchaseSuccessPage = () => {
 			clearCart();
 			toast.success("Order placed successfully!");
 		}
-	}, [searchParams, isCod, clearCart, verifyPayment, navigate]);
+	}, [searchParams, isCod, clearCart, verifyPayment]);
 
 	const { data: order, isLoading: isLoadingOrder } = useQuery({
 		queryKey: ["order", orderId],
