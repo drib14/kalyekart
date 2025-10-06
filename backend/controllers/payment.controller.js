@@ -167,13 +167,13 @@ export const verifyPaymongoPayment = async (req, res) => {
 			const products = JSON.parse(productsString);
 			const shippingAddress = JSON.parse(shippingAddressString);
 
-			const newOrder = new Order({
+			const newOrderData = {
 				user: userId,
-				products: products.map((product) => ({
-					product: product.product,
-					quantity: product.quantity,
-					price: product.price,
-					name: product.name,
+				products: products.map((p) => ({
+					product: p.product,
+					quantity: p.quantity,
+					price: p.price,
+					name: p.name,
 				})),
 				subtotal: parseFloat(subtotal),
 				totalAmount: parseFloat(totalAmount),
@@ -185,26 +185,39 @@ export const verifyPaymongoPayment = async (req, res) => {
 				contactNumber,
 				paymentMethod: paymentMethod,
 				paymentStatus: "paid",
-			});
+			};
 
-			await newOrder.save();
+			try {
+				const newOrder = new Order(newOrderData);
+				await newOrder.save();
 
-			// Use the centralized notification service to handle all notifications
-			await NotificationService.createNotification("new_order", {
-				actor: user,
-				order: newOrder,
-				products: products,
-			});
+				await NotificationService.createNotification("new_order", {
+					actor: user,
+					order: newOrder,
+					products: products,
+				});
 
-			if (newOrder.totalAmount >= 2000) {
-				await createNewCoupon(user._id);
+				if (newOrder.totalAmount >= 2000) {
+					await createNewCoupon(user._id);
+				}
+
+				res.status(201).json({
+					success: true,
+					message: "Payment successful, order created.",
+					orderId: newOrder._id,
+				});
+			} catch (error) {
+				if (error.code === 11000) {
+					console.warn("Race condition detected: Duplicate order creation attempt blocked.");
+					const order = await Order.findOne({ paymongoSessionId: sessionId });
+					return res.status(200).json({
+						success: true,
+						message: "Order already processed.",
+						orderId: order._id,
+					});
+				}
+				throw error;
 			}
-
-			res.status(200).json({
-				success: true,
-				message: "Payment successful, order created, and coupon deactivated if used.",
-				orderId: newOrder._id,
-			});
 		} else {
 			res.status(400).json({ success: false, message: "Payment not successful." });
 		}

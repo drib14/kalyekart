@@ -406,21 +406,37 @@ const CheckoutPage = () => {
 													className='relative w-full h-full flex items-center justify-center'
 												>
 													<motion.div
-														className='absolute'
-														initial={{ x: "-150%" }}
-														animate={{ x: "150%" }}
-														transition={{ duration: 2, ease: "linear", repeat: Infinity }}
+														className='absolute left-0'
+														initial={{ x: "-10%" }}
+														animate={{ x: "110%" }}
+														transition={{
+															duration: 2.5,
+															ease: "linear",
+															repeat: Infinity,
+															repeatType: "loop",
+														}}
 													>
 														<Truck className='w-8 h-8' />
 													</motion.div>
-													<motion.span
-														className='font-medium'
-														initial={{ opacity: 1 }}
-														animate={{ opacity: 0 }}
-														transition={{ duration: 0.5, ease: "easeOut" }}
-													>
-														COD
-													</motion.span>
+													<div className='flex items-center'>
+														{"Cash on Delivery".split("").map((char, index) => (
+															<motion.span
+																key={index}
+																className='font-medium'
+																initial={{ opacity: 1 }}
+																animate={{ opacity: 0 }}
+																transition={{
+																	duration: 0.1,
+																	delay: index * (2.5 / "Cash on Delivery".length),
+																	repeat: Infinity,
+																	repeatDelay:
+																		2.5 - index * (2.5 / "Cash on Delivery".length),
+																}}
+															>
+																{char === " " ? "\u00A0" : char}
+															</motion.span>
+														))}
+													</div>
 												</motion.div>
 											) : (
 												<motion.div
@@ -430,7 +446,7 @@ const CheckoutPage = () => {
 													animate={{ opacity: 1 }}
 												>
 													<Truck className='w-6 h-6 mr-3' />
-													<span className='font-medium'>COD</span>
+													<span className='font-medium'>Cash on Delivery</span>
 												</motion.div>
 											)}
 										</AnimatePresence>

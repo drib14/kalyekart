@@ -105,7 +105,8 @@ const NotificationService = {
 									SUBTOTAL: order.subtotal.toFixed(2),
 									DELIVERY_FEE: order.deliveryFee.toFixed(2),
 									TOTAL: order.totalAmount.toFixed(2),
-									CTA_LINK: `https://kalyekart.app/order/${order._id}`
+									PAYMENT_METHOD: order.paymentMethod,
+									CTA_LINK: `https://kalyekart.app/order/${order._id}`,
 								}
 							);
 						} catch (emailError) {
@@ -140,7 +141,8 @@ const NotificationService = {
 								SUBTOTAL: order.subtotal.toFixed(2),
 								DELIVERY_FEE: order.deliveryFee.toFixed(2),
 								TOTAL: order.totalAmount.toFixed(2),
-								CTA_LINK: `https://kalyekart.app/order/${order._id}`
+								PAYMENT_METHOD: order.paymentMethod,
+								CTA_LINK: `https://kalyekart.app/order/${order._id}`,
 							}
 						);
 					} catch (emailError) {
