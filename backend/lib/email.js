@@ -82,6 +82,7 @@ const _sendEmail = async (to, subject, templateName, data) => {
 			sendSmtpEmail.replyTo = { email: SENDER_EMAIL, name: SENDER_NAME };
 		}
 
+		console.log(`[EMAIL PAYLOAD] Preparing to send email to ${to}. Payload:`, JSON.stringify(sendSmtpEmail, null, 2));
 		const response = await brevoApi.sendTransacEmail(sendSmtpEmail);
 		console.log(`Email sent to ${to} via Brevo. Response:`, JSON.stringify(response, null, 2));
 	} catch (error) {
