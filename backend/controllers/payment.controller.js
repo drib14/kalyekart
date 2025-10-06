@@ -78,7 +78,7 @@ export const createPaymongoCheckoutSession = async (req, res) => {
 						phone: contactNumber,
 					},
 					payment_method_types: [paymentMethod],
-					success_url: `${process.env.CLIENT_URL}/purchase-success?checkout_id={checkout_id}`,
+					success_url: `${process.env.CLIENT_URL}/purchase-success`,
 					cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
 					line_items: lineItems,
 					description: "KalyeKart Order",

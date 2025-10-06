@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle, HandHeart } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useLocation, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCartStore } from "../stores/useCartStore";
 import axios from "../lib/axios";
 import Confetti from "react-confetti";
@@ -12,11 +12,11 @@ const PurchaseSuccessPage = () => {
 	const { clearCart } = useCartStore();
 	const location = useLocation();
 	const navigate = useNavigate();
-	const [searchParams] = useSearchParams();
 	const isCod = location.state?.cod;
 	const [orderId, setOrderId] = useState(location.state?.orderId || null);
+	const [isVerifying, setIsVerifying] = useState(true);
 
-	const { mutate: verifyPayment, isPending: isVerifying } = useMutation({
+	const { mutate: verifyPayment, isPending: isVerifyPending } = useMutation({
 		mutationFn: (sessionId) => axios.post("/payments/verify-paymongo-payment", { sessionId }),
 		onSuccess: (data) => {
 			setOrderId(data.data.orderId);
@@ -27,18 +27,25 @@ const PurchaseSuccessPage = () => {
 			toast.error(error.response?.data?.message || "Payment verification failed.");
 			navigate("/checkout");
 		},
+		onSettled: () => {
+			setIsVerifying(false);
+		},
 	});
 
 	useEffect(() => {
-		const paymongoSessionId = searchParams.get("checkout_id");
+		const paymongoSessionId = sessionStorage.getItem("paymongoSessionId");
 
 		if (paymongoSessionId) {
 			verifyPayment(paymongoSessionId);
+			sessionStorage.removeItem("paymongoSessionId");
 		} else if (isCod) {
 			clearCart();
 			toast.success("Order placed successfully!");
+			setIsVerifying(false);
+		} else {
+			setIsVerifying(false);
 		}
-	}, [searchParams, isCod, clearCart, verifyPayment]);
+	}, [isCod, clearCart, verifyPayment]);
 
 	const { data: order, isLoading: isLoadingOrder } = useQuery({
 		queryKey: ["order", orderId],
@@ -57,7 +64,7 @@ const PurchaseSuccessPage = () => {
 		return `${totalTime}-${totalTime + 10} minutes`;
 	};
 
-	if (isVerifying || (searchParams.get("id") && !orderId)) {
+	if (isVerifying || isVerifyPending) {
 		return (
 			<div className='h-screen flex flex-col items-center justify-center'>
 				<LoadingSpinner />
