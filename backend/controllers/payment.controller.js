@@ -1,10 +1,20 @@
+import axios from "axios";
+import { Buffer } from "buffer";
 import Coupon from "../models/coupon.model.js";
 import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
-import { paymongo } from "../lib/paymongo.js";
 import { sendEmail } from "../lib/email.js";
 import NotificationService from "../services/notification.service.js";
+
+const paymongoApi = axios.create({
+	baseURL: "https://api.paymongo.com/v1",
+	headers: {
+		accept: "application/json",
+		"Content-Type": "application/json",
+		authorization: `Basic ${Buffer.from(process.env.PAYMONGO_SECRET_KEY).toString("base64")}`,
+	},
+});
 
 export const createPaymongoCheckoutSession = async (req, res) => {
 	try {
@@ -46,7 +56,7 @@ export const createPaymongoCheckoutSession = async (req, res) => {
 			}
 		}
 
-		const session = await paymongo.checkoutSessions.create({
+		const response = await paymongoApi.post("/checkout_sessions", {
 			data: {
 				attributes: {
 					billing: {
@@ -55,7 +65,7 @@ export const createPaymongoCheckoutSession = async (req, res) => {
 						phone: contactNumber,
 					},
 					payment_method_types: [paymentMethod],
-					success_url: `${process.env.CLIENT_URL}/purchase-success`,
+					success_url: `${process.env.CLIENT_URL}/purchase-success?id={checkout_id}`,
 					cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
 					line_items: lineItems,
 					description: "KalyeKart Order",
@@ -83,9 +93,10 @@ export const createPaymongoCheckoutSession = async (req, res) => {
 			},
 		});
 
+		const session = response.data;
 		res.status(200).json({ id: session.data.id, url: session.data.attributes.checkout_url });
 	} catch (error) {
-		console.error("Error creating PayMongo checkout session:", error);
+		console.error("Error creating PayMongo checkout session:", error.response ? error.response.data : error.message);
 		res.status(500).json({ message: "Error creating PayMongo checkout session", error: error.message });
 	}
 };
@@ -93,10 +104,12 @@ export const createPaymongoCheckoutSession = async (req, res) => {
 export const verifyPaymongoPayment = async (req, res) => {
 	try {
 		const { sessionId } = req.body;
-		const session = await paymongo.checkoutSessions.retrieve(sessionId);
+		const sessionResponse = await paymongoApi.get(`/checkout_sessions/${sessionId}`);
+		const session = sessionResponse.data;
 
 		const paymentIntentId = session.data.attributes.payment_intent.id;
-		const paymentIntent = await paymongo.paymentIntents.retrieve(paymentIntentId);
+		const paymentIntentResponse = await paymongoApi.get(`/payment_intents/${paymentIntentId}`);
+		const paymentIntent = paymentIntentResponse.data;
 
 		if (paymentIntent.data.attributes.status === "succeeded") {
 			const metadata = session.data.attributes.metadata;
@@ -122,7 +135,6 @@ export const verifyPaymongoPayment = async (req, res) => {
 						orderId: existingOrder._id,
 					});
 				} else {
-					// If order exists but not paid, this is an inconsistent state.
 					return res.status(400).json({ success: false, message: "Existing order is not marked as paid." });
 				}
 			}
@@ -243,7 +255,7 @@ export const verifyPaymongoPayment = async (req, res) => {
 			res.status(400).json({ success: false, message: "Payment not successful." });
 		}
 	} catch (error) {
-		console.error("Error verifying PayMongo payment:", error);
+		console.error("Error verifying PayMongo payment:", error.response ? error.response.data : error.message);
 		res.status(500).json({ message: "Error verifying PayMongo payment", error: error.message });
 	}
 };
