@@ -75,8 +75,10 @@ const _sendEmail = async (to, subject, templateName, data) => {
 			htmlContent: htmlContent,
 		};
 
-		// If sending to the platform's own email, set replyTo to prevent spam filters
+		// If sending to the platform's own email, use a 'noreply' address
+		// to improve deliverability and set replyTo to the actual admin email.
 		if (to === SENDER_EMAIL) {
+			sendSmtpEmail.sender = { email: `noreply@${SENDER_EMAIL.split("@")[1]}`, name: SENDER_NAME };
 			sendSmtpEmail.replyTo = { email: SENDER_EMAIL, name: SENDER_NAME };
 		}
 
