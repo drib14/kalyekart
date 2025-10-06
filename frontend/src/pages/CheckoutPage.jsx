@@ -6,8 +6,8 @@ import { useCartStore } from "../stores/useCartStore";
 import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { MapPin, Truck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MapPin, CreditCard, Truck } from "lucide-react";
 
 const CheckoutPage = () => {
 	const { cart, subtotal, total, coupon } = useCartStore();
@@ -219,6 +219,13 @@ const CheckoutPage = () => {
 		}
 	};
 
+	const onlinePaymentOptions = [
+		{ id: "card", name: "Card", icon: <CreditCard className='h-8 w-8' /> },
+		{ id: "gcash", name: "GCash", icon: <img src='/gcash.avif' alt='GCash' className='h-8 w-8 rounded-md' /> },
+		{ id: "paymaya", name: "Maya", icon: <img src='/maya.png' alt='Maya' className='h-8 w-8 rounded-md' /> },
+		{ id: "grab_pay", name: "GrabPay", icon: <img src='/g-pay.png' alt='GrabPay' className='h-8 w-8 rounded-md' /> },
+	];
+
 	return (
 		<main className='container my-10'>
 			<motion.div
@@ -381,11 +388,48 @@ const CheckoutPage = () => {
 							<div className='pt-4'>
 								<h3 className='text-lg font-medium text-white mb-2'>Payment Method</h3>
 								<div className='space-y-4'>
-									<div
-										className={`w-full flex items-center justify-center p-4 rounded-lg cursor-pointer border-2 transition-all duration-200 bg-emerald-500 border-emerald-400 text-white shadow-lg`}
+									<button
+										type='button'
+										onClick={() => setPaymentMethod("cod")}
+										className={`w-full flex items-center justify-center p-4 rounded-lg cursor-pointer border-2 transition-all duration-200 ${
+											paymentMethod === "cod"
+												? "bg-emerald-500 border-emerald-400 text-white shadow-lg"
+												: "bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-300"
+										}`}
 									>
 										<Truck className='w-6 h-6 mr-3' />
 										<span className='font-medium'>Cash on Delivery</span>
+									</button>
+
+									<div className='flex items-center'>
+										<div className='flex-grow border-t border-gray-600'></div>
+										<span className='flex-shrink mx-4 text-gray-400 text-sm'>OR PAY WITH</span>
+										<div className='flex-grow border-t border-gray-600'></div>
+									</div>
+
+									<div className='relative'>
+										<div className={`grid grid-cols-4 gap-2 opacity-50 cursor-not-allowed`}>
+											{onlinePaymentOptions.map((option) => (
+												<div key={option.id} className='relative group'>
+													<button
+														type='button'
+														className={`w-full h-[60px] flex items-center justify-center p-3 rounded-lg border-2 bg-gray-700 border-gray-600`}
+														disabled={true}
+													>
+														{option.icon}
+													</button>
+													<div
+														className='absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-gray-900 bg-opacity-80 text-white text-xs rounded-md
+                                                   opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10'
+													>
+														{option.name}
+													</div>
+												</div>
+											))}
+										</div>
+										<p className='text-xs text-center text-yellow-400 mt-2'>
+											Online payments are coming soon!
+										</p>
 									</div>
 								</div>
 							</div>
@@ -395,7 +439,13 @@ const CheckoutPage = () => {
 									className='w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-emerald-600 hover:bg-emerald-700'
 									disabled={isPending || isPaymongoPending || cart.length === 0}
 								>
-									{isPending || isPaymongoPending ? <LoadingSpinner /> : "Place Order"}
+									{isPending || isPaymongoPending ? (
+										<LoadingSpinner />
+									) : paymentMethod === "cod" ? (
+										"Place Order"
+									) : (
+										"Proceed to Payment"
+									)}
 								</button>
 							</div>
 						</form>

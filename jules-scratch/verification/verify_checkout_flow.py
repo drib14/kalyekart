@@ -8,7 +8,7 @@ def run_verification(playwright):
 
     try:
         # 1. Login
-        page.goto("http://localhost:5173/login")
+        page.goto("http://localhost:5174/login")
         page.get_by_label("Email address").fill("testuser@gmail.com")
         page.get_by_label("Password").fill("password")
         page.get_by_role("button", name="Login").click()
@@ -29,7 +29,7 @@ def run_verification(playwright):
         time.sleep(2)
 
         # 3. Go to checkout
-        page.goto("http://localhost:5173/checkout")
+        page.goto("http://localhost:5174/checkout")
         print("Navigated to checkout")
 
         # 4. Verify payment methods
