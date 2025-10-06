@@ -115,11 +115,16 @@ export const verifyPaymongoPayment = async (req, res) => {
 
 			const existingOrder = await Order.findOne({ paymongoSessionId: sessionId });
 			if (existingOrder) {
-				return res.status(200).json({
-					success: true,
-					message: "Order already processed.",
-					orderId: existingOrder._id,
-				});
+				if (existingOrder.paymentStatus === "paid") {
+					return res.status(200).json({
+						success: true,
+						message: "Order already processed.",
+						orderId: existingOrder._id,
+					});
+				} else {
+					// If order exists but not paid, this is an inconsistent state.
+					return res.status(400).json({ success: false, message: "Existing order is not marked as paid." });
+				}
 			}
 
 			const coupon = JSON.parse(couponString);
