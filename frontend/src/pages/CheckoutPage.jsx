@@ -399,21 +399,38 @@ const CheckoutPage = () => {
 												: "bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-300"
 										}`}
 									>
-										<AnimatePresence>
+										<AnimatePresence mode='wait'>
 											{paymentMethod === "cod" ? (
 												<motion.div
-													key='truck-moving'
-													initial={{ x: "-150%" }}
-													animate={{ x: "150%" }}
-													transition={{ duration: 2, ease: "linear", repeat: Infinity }}
-													className='absolute'
+													key='cod-selected'
+													className='relative w-full h-full flex items-center justify-center'
 												>
-													<Truck className='w-8 h-8' />
+													<motion.div
+														className='absolute'
+														initial={{ x: "-150%" }}
+														animate={{ x: "150%" }}
+														transition={{ duration: 2, ease: "linear", repeat: Infinity }}
+													>
+														<Truck className='w-8 h-8' />
+													</motion.div>
+													<motion.span
+														className='font-medium'
+														initial={{ opacity: 1 }}
+														animate={{ opacity: 0 }}
+														transition={{ duration: 0.5, ease: "easeOut" }}
+													>
+														COD
+													</motion.span>
 												</motion.div>
 											) : (
-												<motion.div key='truck-still' className='flex items-center' exit={{ opacity: 0 }}>
+												<motion.div
+													key='cod-initial'
+													className='flex items-center'
+													initial={{ opacity: 0 }}
+													animate={{ opacity: 1 }}
+												>
 													<Truck className='w-6 h-6 mr-3' />
-													<span className='font-medium'>Cash on Delivery</span>
+													<span className='font-medium'>COD</span>
 												</motion.div>
 											)}
 										</AnimatePresence>
