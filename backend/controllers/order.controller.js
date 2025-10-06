@@ -1,6 +1,5 @@
 import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
-import { stripe } from "../lib/stripe.js";
 import { v4 as uuidv4 } from "uuid";
 import { uploadOnCloudinary } from "../lib/cloudinary.js";
 import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
@@ -51,18 +50,17 @@ export const createCodOrder = async (req, res) => {
 			deliveryFee,
 			distance,
 			totalAmount,
-			stripeSessionId: `cod_${uuidv4()}`,
+			paymongoSessionId: `cod_${uuidv4()}`,
 		});
 
 		await newOrder.save();
 		user.cartItems = [];
 		await user.save();
 
-		// Use the centralized notification service
 		await NotificationService.createNotification("new_order", {
 			actor: user,
 			order: newOrder,
-			products: products, // Pass the detailed product list
+			products: products,
 		});
 
 		res.status(201).json({ message: "Order created successfully", orderId: newOrder._id });
@@ -142,89 +140,6 @@ export const getOrderById = async (req, res) => {
 	}
 };
 
-export const createStripeCheckoutSession = async (req, res) => {
-	try {
-		const { products, shippingAddress, contactNumber, couponCode, subtotal } = req.body;
-		const idempotencyKey = uuidv4();
-
-		const fullAddress = `${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
-		const coordinates = await getCoordinates(fullAddress);
-		if (!coordinates) {
-			return res.status(400).json({ message: "Could not determine coordinates for the provided address." });
-		}
-		const distance = calculateHaversineDistance(
-			WAREHOUSE_COORDINATES.lat,
-			WAREHOUSE_COORDINATES.lon,
-			coordinates.lat,
-			coordinates.lon
-		);
-		const baseFee = 15;
-		const feePerKm = 5;
-		const deliveryFee = Math.round(baseFee + distance * feePerKm);
-		const totalAmount = subtotal + deliveryFee;
-
-		const line_items = products.map((product) => ({
-			price_data: {
-				currency: "php",
-				product_data: {
-					name: product.name,
-					images: [product.image],
-				},
-				unit_amount: product.price * 100,
-			},
-			quantity: product.quantity,
-		}));
-
-		if (deliveryFee > 0) {
-			line_items.push({
-				price_data: {
-					currency: "php",
-					product_data: {
-						name: "Delivery Fee",
-					},
-					unit_amount: deliveryFee * 100,
-				},
-				quantity: 1,
-			});
-		}
-
-		const session = await stripe.checkout.sessions.create(
-			{
-				payment_method_types: ["card"],
-				line_items,
-				mode: "payment",
-				success_url: `https://kalyekart.app/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-				cancel_url: `https://kalyekart.app/purchase-cancel`,
-				metadata: {
-					userId: req.user._id.toString(),
-					products: JSON.stringify(
-						products.map((p) => ({
-							product: p._id,
-							quantity: p.quantity,
-							price: p.price,
-							name: p.name,
-						}))
-					),
-					shippingAddress: JSON.stringify(shippingAddress),
-					contactNumber,
-					paymentMethod: "card",
-					couponCode,
-					subtotal,
-					deliveryFee,
-					distance,
-					totalAmount,
-				},
-			},
-			{ idempotencyKey }
-		);
-
-		res.json({ id: session.id });
-	} catch (error) {
-		console.log("Error in createStripeCheckoutSession controller", error.message);
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
-};
-
 export const getOrders = async (req, res) => {
 	try {
 		const orders = await Order.find({ user: req.user._id })
@@ -295,13 +210,10 @@ export const requestRefund = async (req, res) => {
 		};
 		await order.save();
 
-		// This can be refactored to use NotificationService in the future
-		// For now, leaving it as is to limit scope of change.
 		const admin = await User.findOne({ role: "admin" });
 		if (admin) {
 			// Create in-app notif
 		}
-		// Send emails
 
 		res.json(order);
 	} catch (error) {
@@ -309,9 +221,6 @@ export const requestRefund = async (req, res) => {
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
-
-// Note: The 'requestRefund' function still contains manual notification logic
-// that could be refactored in the future.
 
 export const getRefunds = async (req, res) => {
 	try {
@@ -327,7 +236,6 @@ export const updateRefundStatus = async (req, res) => {
 	try {
 		const { orderId } = req.params;
 		const { status, rejectionReason } = req.body;
-		const admin = await User.findOne({ role: "admin" });
 
 		const order = await Order.findById(orderId).populate("user", "name email");
 		if (!order) {
@@ -343,29 +251,14 @@ export const updateRefundStatus = async (req, res) => {
 			order.refundRequest.rejectionReason = rejectionReason;
 		}
 
-		if (status === "approved" && order.paymentMethod === "card" && order.stripeSessionId) {
-			try {
-				const session = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
-				if (!session.payment_intent) {
-					throw new Error("Could not find Payment Intent for this order.");
-				}
-				await stripe.refunds.create({ payment_intent: session.payment_intent });
-				order.paymentStatus = "refunded";
-			} catch (stripeError) {
-				console.error("Stripe refund failed:", stripeError);
-				return res
-					.status(500)
-					.json({ message: "Stripe refund failed. Please process manually.", error: stripeError.message });
-			}
-		} else if (status === "approved" && order.paymentMethod === "cod") {
+		if (status === "approved" && order.paymentMethod === "cod") {
+			order.paymentStatus = "refunded";
+		} else if (status === "approved" && order.paymentMethod !== "cod") {
+			console.warn(`Refund approved for non-COD order ${order._id}, but automated refund is not implemented.`);
 			order.paymentStatus = "refunded";
 		}
 
 		await order.save();
-
-		// This can be refactored to use NotificationService in the future
-		// For now, leaving it as is to limit scope of change.
-		// Send emails
 
 		res.json(order);
 	} catch (error) {
