@@ -22,7 +22,17 @@ try {
     // The private key within the JSON object needs its newlines correctly formatted.
     // This handles the escaped newlines from the environment variable.
     if (serviceAccount.private_key) {
-        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        let privateKey = serviceAccount.private_key;
+        // The private key within the JSON object needs its newlines correctly formatted.
+        // This handles the escaped newlines from the environment variable.
+        privateKey = privateKey.replace(/\\n/g, '\n');
+
+        // Remove surrounding quotes if they exist
+        if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+            privateKey = privateKey.substring(1, privateKey.length - 1);
+        }
+
+        serviceAccount.private_key = privateKey;
     }
 
     admin.initializeApp({
