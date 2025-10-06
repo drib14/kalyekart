@@ -30,7 +30,7 @@ const PurchaseSuccessPage = () => {
 	});
 
 	useEffect(() => {
-		const paymongoSessionId = searchParams.get("id");
+		const paymongoSessionId = searchParams.get("checkout_id");
 
 		if (paymongoSessionId) {
 			verifyPayment(paymongoSessionId);
