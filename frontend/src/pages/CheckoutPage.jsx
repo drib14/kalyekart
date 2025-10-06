@@ -224,9 +224,9 @@ const CheckoutPage = () => {
 	const paymentOptions = [
 		{ id: "cod", name: "Cash on Delivery", icon: <Smartphone className='mr-2' /> },
 		{ id: "card", name: "Credit/Debit Card", icon: <CreditCard className='mr-2' />, disabled: isPaymongoDisabled },
-		{ id: "gcash", name: "GCash", icon: <img src='/gcash.png' alt='GCash' className='w-6 h-6 mr-2' />, disabled: isPaymongoDisabled },
+		{ id: "gcash", name: "GCash", icon: <img src='/gcash.avif' alt='GCash' className='w-6 h-6 mr-2' />, disabled: isPaymongoDisabled },
 		{ id: "paymaya", name: "Maya", icon: <img src='/maya.png' alt='Maya' className='w-6 h-6 mr-2' />, disabled: isPaymongoDisabled },
-		{ id: "grab_pay", name: "GrabPay", icon: <img src='/grabpay.png' alt='GrabPay' className='w-6 h-6 mr-2' />, disabled: isPaymongoDisabled },
+		{ id: "grab_pay", name: "GrabPay", icon: <img src='/g-pay.png' alt='GrabPay' className='w-6 h-6 mr-2' />, disabled: isPaymongoDisabled },
 	];
 
 	return (
