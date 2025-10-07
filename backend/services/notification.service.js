@@ -1,6 +1,6 @@
 import admin from "firebase-admin";
 import Notification from "../models/notification.model.js";
-import { sendEmail } from "../lib/email.js";
+import { sendEmail, _sendEmail } from "../lib/email.js";
 import User from "../models/user.model.js";
 
 // A simple in-memory store for active client connections for SSE
@@ -58,7 +58,7 @@ const NotificationService = {
 
 	async createNotification(type, data) {
 		let notification;
-		const admin = await User.findOne({ role: "admin" }).lean();
+		const adminUser = await User.findOne({ role: "admin" }).lean();
 		const { actor, recipient, order, review, reply, feedback, product, cancellationReason, products } = data;
 
 		try {
@@ -75,9 +75,10 @@ const NotificationService = {
 						)
 						.join("");
 
-					if (admin) {
+					// In-app notification for admin (if admin exists)
+					if (adminUser) {
 						const adminNotification = new Notification({
-							recipient: admin._id,
+							recipient: adminUser._id,
 							sender: actor._id,
 							type: "new_order",
 							message: `${actor.name} has placed a new order (#${order._id.toString().slice(-6)}).`,
@@ -85,16 +86,19 @@ const NotificationService = {
 						});
 						await adminNotification.save();
 						await adminNotification.populate("sender", "name profilePicture");
-						this.sendSseNotification(admin._id.toString(), adminNotification);
+						this.sendSseNotification(adminUser._id.toString(), adminNotification);
 						this.sendPushNotification(
-							admin._id.toString(),
+							adminUser._id.toString(),
 							"New Order Received!",
 							adminNotification.message,
 							adminNotification.link
 						);
 					}
+
+					// Admin Email Notification (Bypass queue for reliability)
 					try {
-						await sendEmail(
+						console.log("[ADMIN EMAIL] Bypassing queue to send admin notification directly.");
+						await _sendEmail(
 							process.env.EMAIL_USER,
 							`New Order Received: #${order._id.toString().slice(-6)}`,
 							"adminNewOrderNotification",
@@ -108,14 +112,16 @@ const NotificationService = {
 								TOTAL: order.totalAmount.toFixed(2),
 								PAYMENT_METHOD: order.paymentMethod,
 								CTA_LINK: `https://kalyekart.app/order/${order._id}`,
-								}
+							}
 						);
 					} catch (emailError) {
-						console.error(`Failed to send 'new_order' admin email:`, emailError);
+						console.error(`[ADMIN EMAIL] Failed to send 'new_order' admin email directly:`, emailError);
 					}
+
+					// Customer in-app notification
 					const customerNotification = new Notification({
 						recipient: actor._id,
-						sender: admin ? admin._id : null,
+						sender: adminUser ? adminUser._id : null,
 						type: "order_confirmation",
 						message: `Your order #${order._id.toString().slice(-6)} has been placed successfully!`,
 						link: `/order/${order._id}`,
@@ -129,6 +135,8 @@ const NotificationService = {
 						customerNotification.message,
 						customerNotification.link
 					);
+
+					// Customer Email Notification (Use queue)
 					try {
 						await sendEmail(
 							actor.email,
@@ -153,7 +161,7 @@ const NotificationService = {
 				case "order_status_update":
 					notification = new Notification({
 						recipient: recipient._id,
-						sender: admin ? admin._id : null,
+						sender: adminUser ? adminUser._id : null,
 						type: "order_status_update",
 						message: `The status of your order #${order._id.toString().slice(-6)} has been updated to ${order.status}.`,
 						link: `/order/${order._id}`,
@@ -180,9 +188,9 @@ const NotificationService = {
 					break;
 
 				case "order_cancelled":
-					if (admin) {
+					if (adminUser) {
 						const adminNotification = new Notification({
-							recipient: admin._id,
+							recipient: adminUser._id,
 							sender: actor._id,
 							type: "order_cancelled",
 							message: `Order #${order._id.toString().slice(-6)} has been cancelled by ${actor.name}. Reason: ${cancellationReason}`,
@@ -190,9 +198,9 @@ const NotificationService = {
 						});
 						await adminNotification.save();
 						await adminNotification.populate("sender", "name profilePicture");
-						this.sendSseNotification(admin._id.toString(), adminNotification);
+						this.sendSseNotification(adminUser._id.toString(), adminNotification);
 						this.sendPushNotification(
-							admin._id.toString(),
+							adminUser._id.toString(),
 							"Order Cancelled",
 							adminNotification.message,
 							adminNotification.link
@@ -200,7 +208,7 @@ const NotificationService = {
 					}
 					const customerCancelNotification = new Notification({
 						recipient: actor._id,
-						sender: admin ? admin._id : null,
+						sender: adminUser ? adminUser._id : null,
 						type: "order_cancelled",
 						message: `Your order #${order._id.toString().slice(-6)} has been successfully cancelled.`,
 						link: `/order/${order._id}`,
@@ -242,9 +250,9 @@ const NotificationService = {
 					break;
 
 				case "new_feedback":
-					if (admin) {
+					if (adminUser) {
 						const adminNotification = new Notification({
-							recipient: admin._id,
+							recipient: adminUser._id,
 							sender: actor ? actor._id : null,
 							type: "new_feedback",
 							message: `${actor?.name || "An anonymous user"} has submitted new feedback.`,
@@ -252,15 +260,16 @@ const NotificationService = {
 						});
 						await adminNotification.save();
 						if (actor) await adminNotification.populate("sender", "name profilePicture");
-						this.sendSseNotification(admin._id.toString(), adminNotification);
+						this.sendSseNotification(adminUser._id.toString(), adminNotification);
 						this.sendPushNotification(
-							admin._id.toString(),
+							adminUser._id.toString(),
 							"New Feedback Received",
 							adminNotification.message,
 							adminNotification.link
 						);
 						try {
-							await sendEmail(
+							// Bypass queue for admin feedback as well
+							await _sendEmail(
 								process.env.EMAIL_USER,
 								`New Feedback Submission (Rating: ${feedback.rating}/5)`,
 								"adminFeedbackNotification",
@@ -269,8 +278,7 @@ const NotificationService = {
 									USER_EMAIL: actor?.email || "No email provided",
 									RATING: feedback.rating,
 									FEEDBACK_MESSAGE: feedback.feedback,
-								},
-								actor ? { email: actor.email, name: actor.name } : null
+								}
 							);
 						} catch (emailError) {
 							console.error(`Failed to send 'new_feedback' admin email:`, emailError);
@@ -279,13 +287,13 @@ const NotificationService = {
 					if (actor && actor._id) {
 						const customerNotification = new Notification({
 							recipient: actor._id,
-							sender: admin ? admin._id : null,
+							sender: adminUser ? adminUser._id : null,
 							type: "feedback_confirmation",
 							message: "Thank you for your feedback! We appreciate you helping us improve.",
 							link: `/`,
 						});
 						await customerNotification.save();
-						if (admin) await customerNotification.populate("sender", "name profilePicture");
+						if (adminUser) await customerNotification.populate("sender", "name profilePicture");
 						this.sendSseNotification(actor._id.toString(), customerNotification);
 						this.sendPushNotification(
 							actor._id.toString(),
@@ -307,9 +315,9 @@ const NotificationService = {
 					break;
 
 				case "new_review":
-					if (admin) {
+					if (adminUser) {
 						const adminNotification = new Notification({
-							recipient: admin._id,
+							recipient: adminUser._id,
 							sender: actor._id,
 							type: "new_review",
 							message: `${actor.name} left a new review on ${product.name}.`,
@@ -317,34 +325,14 @@ const NotificationService = {
 						});
 						await adminNotification.save();
 						await adminNotification.populate("sender", "name profilePicture");
-						this.sendSseNotification(admin._id.toString(), adminNotification);
+						this.sendSseNotification(adminUser._id.toString(), adminNotification);
 						this.sendPushNotification(
-							admin._id.toString(),
+							adminUser._id.toString(),
 							"New Review Submitted",
 							adminNotification.message,
 							adminNotification.link
 						);
 					}
-					// try {
-					// 	await sendEmail(process.env.EMAIL_USER, `New Review on ${product.name}`, "adminNewReview", {
-					// 		PRODUCT_NAME: product.name,
-					// 		REVIEWER_NAME: actor.name,
-					// 		RATING: review.rating,
-					// 		COMMENT: review.comment,
-					// 		CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
-					// 	});
-					// } catch (emailError) {
-					// 	console.error(`Failed to send 'new_review' admin email:`, emailError);
-					// }
-					// try {
-					// 	await sendEmail(actor.email, "Your Review Has Been Submitted!", "userReviewConfirmation", {
-					// 		NAME: actor.name,
-					// 		PRODUCT_NAME: product.name,
-					// 		CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
-					// 	});
-					// } catch (emailError) {
-					// 	console.error(`Failed to send 'review_confirmation' customer email:`, emailError);
-					// }
 					break;
 
 				case "new_like":
@@ -404,24 +392,6 @@ const NotificationService = {
 							notification.message,
 							notification.link
 						);
-						// if (recipient.email) {
-						// 	try {
-						// 		await sendEmail(
-						// 			recipient.email,
-						// 			`You have a new reply from ${actor.name}`,
-						// 			"userNewReply",
-						// 			{
-						// 				NAME: recipient.name,
-						// 				REPLIER_NAME: actor.name,
-						// 				PRODUCT_NAME: product.name,
-						// 				REPLY_COMMENT: data.reply.comment,
-						// 				CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
-						// 			}
-						// 		);
-						// 	} catch (emailError) {
-						// 		console.error(`Failed to send 'new_reply' customer email:`, emailError);
-						// 	}
-						// }
 					}
 					break;
 
