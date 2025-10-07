@@ -108,8 +108,7 @@ const NotificationService = {
 								TOTAL: order.totalAmount.toFixed(2),
 								PAYMENT_METHOD: order.paymentMethod,
 								CTA_LINK: `https://kalyekart.app/order/${order._id}`,
-							},
-							{ email: actor.email, name: actor.name }
+								}
 						);
 					} catch (emailError) {
 						console.error(`Failed to send 'new_order' admin email:`, emailError);

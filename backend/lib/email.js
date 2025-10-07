@@ -50,7 +50,6 @@ const verifyEmailStatus = async (messageId) => {
 	console.log(`[VERIFY_EMAIL] Waiting 20 seconds before checking delivery status for messageId: ${messageId}`);
 	await new Promise((resolve) => setTimeout(resolve, 20000));
 
-	// The Brevo API expects the messageId without the leading/trailing angle brackets.
 	const rawMessageId = messageId.slice(1, -1);
 	console.log(`[VERIFY_EMAIL] Using raw messageId for API call: ${rawMessageId}`);
 
@@ -77,7 +76,7 @@ const verifyEmailStatus = async (messageId) => {
 	}
 };
 
-const _sendEmail = async (to, subject, templateName, data, replyTo = null) => {
+const _sendEmail = async (to, subject, templateName, data) => {
 	if (!BREVO_KEY) {
 		throw new Error("Cannot send email: BREVO_KEY is not configured.");
 	}
@@ -96,9 +95,7 @@ const _sendEmail = async (to, subject, templateName, data, replyTo = null) => {
 		const messageId = response.messageId;
 		console.log(`[BREVO API] Successfully sent email to ${to}. Brevo Message ID:`, messageId);
 
-		// If this is an admin email, trigger the verification process.
 		if (to === SENDER_EMAIL) {
-			// Do not await this, let it run in the background
 			verifyEmailStatus(messageId);
 		}
 	} catch (error) {
@@ -109,14 +106,14 @@ const _sendEmail = async (to, subject, templateName, data, replyTo = null) => {
 	}
 };
 
-export const sendEmail = async (to, subject, templateName, data, replyTo = null) => {
+export const sendEmail = async (to, subject, templateName, data) => {
 	if (!SENDER_EMAIL) {
 		console.error("Cannot queue email: EMAIL_USER is not configured.");
 		return;
 	}
 
 	const jobName = `${templateName}-${to}`;
-	const jobData = { to, subject, templateName, data, replyTo };
+	const jobData = { to, subject, templateName, data };
 
 	try {
 		await emailQueue.add(jobName, jobData, {
