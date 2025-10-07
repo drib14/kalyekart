@@ -75,7 +75,10 @@ const _sendEmail = async (to, subject, templateName, data, replyTo = null) => {
 			htmlContent: htmlContent,
 		};
 
-		if (replyTo) {
+		// If a replyTo address is provided for an admin email, use a 'noreply' sender
+		// to improve deliverability and set the customer's email as the Reply-To address.
+		if (replyTo && to === SENDER_EMAIL) {
+			sendSmtpEmail.sender = { email: `noreply@${SENDER_EMAIL.split("@")[1]}`, name: SENDER_NAME };
 			sendSmtpEmail.replyTo = replyTo;
 		}
 
