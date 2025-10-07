@@ -75,16 +75,19 @@ const _sendEmail = async (to, subject, templateName, data, replyTo = null) => {
 			htmlContent: htmlContent,
 		};
 
-		// If a replyTo address is provided, set the sender name to include the customer's name
-		// to improve deliverability and provide context.
+		// If a replyTo address is provided for an admin email, use an alias for the 'to' address
+		// and set the sender name to include the customer's name to improve deliverability.
 		if (replyTo && to === SENDER_EMAIL) {
+			const [localPart, domain] = SENDER_EMAIL.split("@");
+			const aliasTo = `${localPart}+notifications@${domain}`;
+			sendSmtpEmail.to = [{ email: aliasTo }];
 			sendSmtpEmail.sender = { email: SENDER_EMAIL, name: `${replyTo.name} via ${SENDER_NAME}` };
 			sendSmtpEmail.replyTo = replyTo;
 		}
 
-		console.log(`[EMAIL PAYLOAD] Preparing to send email to ${to}. Payload:`, JSON.stringify(sendSmtpEmail, null, 2));
+		console.log(`[EMAIL PAYLOAD] Preparing to send email. Payload:`, JSON.stringify(sendSmtpEmail, null, 2));
 		const response = await brevoApi.sendTransacEmail(sendSmtpEmail);
-		console.log(`[BREVO API] Successfully sent email to ${to}. Brevo Message ID:`, response.messageId);
+		console.log(`[BREVO API] Successfully sent email to ${sendSmtpEmail.to[0].email}. Brevo Message ID:`, response.messageId);
 	} catch (error) {
 		console.error(
 			`Brevo failed for ${to}: ${error.response ? JSON.stringify(error.response.data, null, 2) : error.message}`
