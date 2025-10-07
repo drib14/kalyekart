@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { Queue } from "bullmq";
 import { redis } from "../lib/redis.js";
+import axios from "axios";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,6 +46,33 @@ const loadTemplate = (templateName, data) => {
 	return htmlContent;
 };
 
+const verifyEmailStatus = async (messageId) => {
+	console.log(`[VERIFY_EMAIL] Waiting 20 seconds before checking delivery status for messageId: ${messageId}`);
+	await new Promise((resolve) => setTimeout(resolve, 20000));
+
+	try {
+		const response = await axios.get(`https://api.brevo.com/v3/smtp/emailStatus/${messageId}`, {
+			headers: {
+				"api-key": BREVO_KEY,
+				accept: "application/json",
+			},
+		});
+		console.log("==================== EMAIL DELIVERY VERIFICATION ====================");
+		console.log(`[VERIFY_EMAIL] FINAL DELIVERY STATUS FOR: ${messageId}`);
+		console.log(JSON.stringify(response.data, null, 2));
+		console.log("=====================================================================");
+	} catch (error) {
+		console.error("==================== EMAIL DELIVERY VERIFICATION ====================");
+		console.error(`[VERIFY_EMAIL] Could not get delivery status for ${messageId}.`);
+		if (error.response) {
+			console.error("Brevo API Error:", JSON.stringify(error.response.data, null, 2));
+		} else {
+			console.error("Error:", error.message);
+		}
+		console.error("=====================================================================");
+	}
+};
+
 const _sendEmail = async (to, subject, templateName, data, replyTo = null) => {
 	if (!BREVO_KEY) {
 		throw new Error("Cannot send email: BREVO_KEY is not configured.");
@@ -60,12 +88,15 @@ const _sendEmail = async (to, subject, templateName, data, replyTo = null) => {
 			htmlContent: htmlContent,
 		};
 
-		// The replyTo functionality was causing deliverability issues with some providers.
-		// It has been removed to ensure reliable admin notifications. The customer's
-		// email address is still present in the email body for manual replies.
-
 		const response = await brevoApi.sendTransacEmail(sendSmtpEmail);
-		console.log(`[BREVO API] Successfully sent email to ${sendSmtpEmail.to[0].email}. Brevo Message ID:`, response.messageId);
+		const messageId = response.messageId;
+		console.log(`[BREVO API] Successfully sent email to ${to}. Brevo Message ID:`, messageId);
+
+		// If this is an admin email, trigger the verification process.
+		if (to === SENDER_EMAIL) {
+			// Do not await this, let it run in the background
+			verifyEmailStatus(messageId);
+		}
 	} catch (error) {
 		console.error(
 			`Brevo failed for ${to}: ${error.response ? JSON.stringify(error.response.data, null, 2) : error.message}`
