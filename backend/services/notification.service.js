@@ -92,27 +92,27 @@ const NotificationService = {
 							adminNotification.message,
 							adminNotification.link
 						);
-						try {
-							await sendEmail(
-								process.env.EMAIL_USER,
-								`New Order Received: #${order._id.toString().slice(-6)}`,
-								"adminNewOrderNotification",
-								{
-									ORDER_ID: order._id.toString(),
-									CUSTOMER_NAME: actor.name,
-									CUSTOMER_EMAIL: actor.email,
-									ORDER_ITEMS: orderItemsHtml,
-									SUBTOTAL: order.subtotal.toFixed(2),
-									DELIVERY_FEE: order.deliveryFee.toFixed(2),
-									TOTAL: order.totalAmount.toFixed(2),
-									PAYMENT_METHOD: order.paymentMethod,
-									CTA_LINK: `https://kalyekart.app/order/${order._id}`,
-								},
-								{ email: actor.email, name: actor.name }
-							);
-						} catch (emailError) {
-							console.error(`Failed to send 'new_order' admin email:`, emailError);
-						}
+					}
+					try {
+						await sendEmail(
+							process.env.EMAIL_USER,
+							`New Order Received: #${order._id.toString().slice(-6)}`,
+							"adminNewOrderNotification",
+							{
+								ORDER_ID: order._id.toString(),
+								CUSTOMER_NAME: actor.name,
+								CUSTOMER_EMAIL: actor.email,
+								ORDER_ITEMS: orderItemsHtml,
+								SUBTOTAL: order.subtotal.toFixed(2),
+								DELIVERY_FEE: order.deliveryFee.toFixed(2),
+								TOTAL: order.totalAmount.toFixed(2),
+								PAYMENT_METHOD: order.paymentMethod,
+								CTA_LINK: `https://kalyekart.app/order/${order._id}`,
+							},
+							{ email: actor.email, name: actor.name }
+						);
+					} catch (emailError) {
+						console.error(`Failed to send 'new_order' admin email:`, emailError);
 					}
 					const customerNotification = new Notification({
 						recipient: actor._id,

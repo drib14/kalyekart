@@ -7,8 +7,8 @@ const worker = new Worker(
 	"email-queue",
 	async (job) => {
 		console.log(`[EMAIL_WORKER] Processing job ${job.id}...`);
-		const { to, subject, templateName, data } = job.data;
-		await _sendEmail(to, subject, templateName, data);
+		const { to, subject, templateName, data, replyTo } = job.data;
+		await _sendEmail(to, subject, templateName, data, replyTo);
 	},
 	{
 		connection: redis,
