@@ -1,6 +1,6 @@
 import admin from "firebase-admin";
 import Notification from "../models/notification.model.js";
-import { _sendEmail } from "../lib/email.js";
+import { sendEmail } from "../lib/email.js";
 import User from "../models/user.model.js";
 
 // A simple in-memory store for active client connections for SSE
@@ -97,7 +97,7 @@ const NotificationService = {
 
 					// Admin Email Notification (Direct Send)
 					try {
-						await _sendEmail(
+						await sendEmail(
 							process.env.EMAIL_USER,
 							`New Order Received: #${order._id.toString().slice(-6)}`,
 							"adminNewOrderNotification",
@@ -137,7 +137,7 @@ const NotificationService = {
 
 					// Customer Email Notification (Direct Send)
 					try {
-						await _sendEmail(
+						await sendEmail(
 							actor.email,
 							`Your KalyeKart Order #${order._id.toString().slice(-6)} is Confirmed!`,
 							"orderConfirmation",
@@ -175,7 +175,7 @@ const NotificationService = {
 						notification.link
 					);
 					try {
-						await _sendEmail(
+						await sendEmail(
 							recipient.email,
 							`Your KalyeKart Order #${order._id.toString().slice(-6)} has been updated!`,
 							"orderUpdate",
@@ -239,7 +239,7 @@ const NotificationService = {
 						welcomeNotification.link
 					);
 					try {
-						await _sendEmail(actor.email, "Welcome to KalyeKart!", "welcome", {
+						await sendEmail(actor.email, "Welcome to KalyeKart!", "welcome", {
 							NAME: actor.name,
 							CTA_LINK: "https://kalyekart.app",
 						});
@@ -267,7 +267,7 @@ const NotificationService = {
 							adminNotification.link
 						);
 						try {
-							await _sendEmail(
+							await sendEmail(
 								process.env.EMAIL_USER,
 								`New Feedback Submission (Rating: ${feedback.rating}/5)`,
 								"adminFeedbackNotification",
@@ -300,7 +300,7 @@ const NotificationService = {
 							customerNotification.link
 						);
 						try {
-							await _sendEmail(
+							await sendEmail(
 								actor.email,
 								"We've Received Your Feedback!",
 								"userFeedbackConfirmation",
@@ -353,7 +353,7 @@ const NotificationService = {
 						);
 						if (recipient.email) {
 							try {
-								await _sendEmail(
+								await sendEmail(
 									recipient.email,
 									`${actor.name} liked your ${data.likedEntityType || 'comment'}!`,
 									"userNewLike",
