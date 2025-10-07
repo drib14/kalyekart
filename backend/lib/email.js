@@ -84,7 +84,7 @@ const _sendEmail = async (to, subject, templateName, data, replyTo = null) => {
 
 		console.log(`[EMAIL PAYLOAD] Preparing to send email to ${to}. Payload:`, JSON.stringify(sendSmtpEmail, null, 2));
 		const response = await brevoApi.sendTransacEmail(sendSmtpEmail);
-		console.log(`Email sent to ${to} via Brevo. Response:`, JSON.stringify(response, null, 2));
+		console.log(`[BREVO API] Successfully sent email to ${to}. Brevo Message ID:`, response.messageId);
 	} catch (error) {
 		console.error(
 			`Brevo failed for ${to}: ${error.response ? JSON.stringify(error.response.data, null, 2) : error.message}`
