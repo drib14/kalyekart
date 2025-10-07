@@ -60,10 +60,9 @@ const _sendEmail = async (to, subject, templateName, data, replyTo = null) => {
 			htmlContent: htmlContent,
 		};
 
-		if (replyTo && to === SENDER_EMAIL) {
-			sendSmtpEmail.sender = { email: SENDER_EMAIL, name: `${replyTo.name} (via KalyeKart)` };
-			sendSmtpEmail.replyTo = replyTo;
-		}
+		// The replyTo functionality was causing deliverability issues with some providers.
+		// It has been removed to ensure reliable admin notifications. The customer's
+		// email address is still present in the email body for manual replies.
 
 		const response = await brevoApi.sendTransacEmail(sendSmtpEmail);
 		console.log(`[BREVO API] Successfully sent email to ${sendSmtpEmail.to[0].email}. Brevo Message ID:`, response.messageId);
