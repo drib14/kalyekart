@@ -4,7 +4,6 @@ import Coupon from "../models/coupon.model.js";
 import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
-import { sendEmail } from "../lib/email.js";
 import NotificationService from "../services/notification.service.js";
 
 const paymongoApi = axios.create({

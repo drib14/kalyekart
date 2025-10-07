@@ -41,7 +41,7 @@ const loadTemplate = (templateName, data) => {
 	return htmlContent;
 };
 
-export const _sendEmail = async (to, subject, templateName, data) => {
+export const sendEmail = async (to, subject, templateName, data) => {
 	if (!BREVO_KEY) {
 		console.error("Cannot send email: BREVO_KEY is not configured.");
 		return;
@@ -66,6 +66,5 @@ export const _sendEmail = async (to, subject, templateName, data) => {
 				error.response ? JSON.stringify(error.response.data, null, 2) : error.message
 			}`
 		);
-		// Do not re-throw, just log the error.
 	}
 };
