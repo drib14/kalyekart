@@ -83,6 +83,11 @@ const _sendEmail = async (to, subject, templateName, data, replyTo = null) => {
 			sendSmtpEmail.to = [{ email: aliasTo }];
 			sendSmtpEmail.sender = { email: SENDER_EMAIL, name: `${replyTo.name} via ${SENDER_NAME}` };
 			sendSmtpEmail.replyTo = replyTo;
+
+			// Save the email content to a file for debugging
+			const debugFilePath = path.join(__dirname, "../../last_admin_email.html");
+			fs.writeFileSync(debugFilePath, htmlContent);
+			console.log(`[DEBUG] Admin email HTML content saved to ${debugFilePath}`);
 		}
 
 		console.log(`[EMAIL PAYLOAD] Preparing to send email. Payload:`, JSON.stringify(sendSmtpEmail, null, 2));
