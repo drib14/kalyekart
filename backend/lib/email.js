@@ -60,7 +60,7 @@ const loadTemplate = (templateName, data) => {
  * @param {object} data - The data to populate the template with.
  * @throws {Error} If the email fails to send.
  */
-const _sendEmail = async (to, subject, templateName, data, replyToEmail = null) => {
+const _sendEmail = async (to, subject, templateName, data, replyTo = null) => {
 	if (!BREVO_KEY) {
 		throw new Error("Cannot send email: BREVO_KEY is not configured.");
 	}
@@ -75,8 +75,8 @@ const _sendEmail = async (to, subject, templateName, data, replyToEmail = null) 
 			htmlContent: htmlContent,
 		};
 
-		if (replyToEmail) {
-			sendSmtpEmail.replyTo = { email: replyToEmail };
+		if (replyTo) {
+			sendSmtpEmail.replyTo = replyTo;
 		}
 
 		console.log(`[EMAIL PAYLOAD] Preparing to send email to ${to}. Payload:`, JSON.stringify(sendSmtpEmail, null, 2));
@@ -96,16 +96,16 @@ const _sendEmail = async (to, subject, templateName, data, replyToEmail = null) 
  * @param {string} subject - The subject line of the email.
  * @param {string} templateName - The name of the template to use.
  * @param {object} data - The data to populate the template with.
- * @param {string|null} replyToEmail - Optional email address for the Reply-To header.
+ * @param {object|null} replyTo - Optional object with `email` and `name` for the Reply-To header.
  */
-export const sendEmail = async (to, subject, templateName, data, replyToEmail = null) => {
+export const sendEmail = async (to, subject, templateName, data, replyTo = null) => {
 	if (!SENDER_EMAIL) {
 		console.error("Cannot send email: EMAIL_USER is not configured.");
 		return;
 	}
 	console.log(`[EMAIL] Sending email directly to ${to} with subject: ${subject}`);
 	try {
-		await _sendEmail(to, subject, templateName, data, replyToEmail);
+		await _sendEmail(to, subject, templateName, data, replyTo);
 	} catch (error) {
 		console.error(`[EMAIL] Failed to send email directly to ${to}:`, error);
 	}

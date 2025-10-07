@@ -108,7 +108,7 @@ const NotificationService = {
 									PAYMENT_METHOD: order.paymentMethod,
 									CTA_LINK: `https://kalyekart.app/order/${order._id}`,
 								},
-								actor.email
+								{ email: actor.email, name: actor.name }
 							);
 						} catch (emailError) {
 							console.error(`Failed to send 'new_order' admin email:`, emailError);
@@ -271,7 +271,7 @@ const NotificationService = {
 									RATING: feedback.rating,
 									FEEDBACK_MESSAGE: feedback.feedback,
 								},
-								actor?.email
+								actor ? { email: actor.email, name: actor.name } : null
 							);
 						} catch (emailError) {
 							console.error(`Failed to send 'new_feedback' admin email:`, emailError);
