@@ -50,8 +50,12 @@ const verifyEmailStatus = async (messageId) => {
 	console.log(`[VERIFY_EMAIL] Waiting 20 seconds before checking delivery status for messageId: ${messageId}`);
 	await new Promise((resolve) => setTimeout(resolve, 20000));
 
+	// The Brevo API expects the messageId without the leading/trailing angle brackets.
+	const rawMessageId = messageId.slice(1, -1);
+	console.log(`[VERIFY_EMAIL] Using raw messageId for API call: ${rawMessageId}`);
+
 	try {
-		const response = await axios.get(`https://api.brevo.com/v3/smtp/emailStatus/${messageId}`, {
+		const response = await axios.get(`https://api.brevo.com/v3/smtp/emailStatus/${rawMessageId}`, {
 			headers: {
 				"api-key": BREVO_KEY,
 				accept: "application/json",
