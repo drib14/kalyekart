@@ -61,10 +61,7 @@ const _sendEmail = async (to, subject, templateName, data, replyTo = null) => {
 		};
 
 		if (replyTo && to === SENDER_EMAIL) {
-			const [localPart, domain] = SENDER_EMAIL.split("@");
-			const aliasTo = `${localPart}+notifications@${domain}`;
-			sendSmtpEmail.to = [{ email: aliasTo }];
-			sendSmtpEmail.sender = { email: SENDER_EMAIL, name: `${replyTo.name} via ${SENDER_NAME}` };
+			sendSmtpEmail.sender = { email: SENDER_EMAIL, name: `${replyTo.name} (via KalyeKart)` };
 			sendSmtpEmail.replyTo = replyTo;
 		}
 
