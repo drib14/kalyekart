@@ -246,7 +246,7 @@ const NotificationService = {
 					if (admin) {
 						const adminNotification = new Notification({
 							recipient: admin._id,
-							sender: actor?._id,
+							sender: actor ? actor._id : null,
 							type: "new_feedback",
 							message: `${actor?.name || "An anonymous user"} has submitted new feedback.`,
 							link: `/secret-dashboard`,
@@ -277,7 +277,7 @@ const NotificationService = {
 							console.error(`Failed to send 'new_feedback' admin email:`, emailError);
 						}
 					}
-					if (actor) {
+					if (actor && actor._id) {
 						const customerNotification = new Notification({
 							recipient: actor._id,
 							sender: admin ? admin._id : null,
