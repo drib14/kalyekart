@@ -2,9 +2,6 @@ import SibApiV3Sdk from "sib-api-v3-sdk";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { Queue } from "bullmq";
-import { redis } from "../lib/redis.js";
-import axios from "axios";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,8 +24,6 @@ if (BREVO_KEY) {
 }
 const brevoApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
-const emailQueue = new Queue("email-queue", { connection: redis });
-
 const loadTemplate = (templateName, data) => {
 	const templatePath = path.join(__dirname, `../templates/${templateName}.html`);
 	if (!fs.existsSync(templatePath)) {
@@ -46,42 +41,14 @@ const loadTemplate = (templateName, data) => {
 	return htmlContent;
 };
 
-const verifyEmailStatus = async (messageId) => {
-	console.log(`[VERIFY_EMAIL] Waiting 20 seconds before checking delivery status for messageId: ${messageId}`);
-	await new Promise((resolve) => setTimeout(resolve, 20000));
-
-	const rawMessageId = messageId.slice(1, -1);
-	console.log(`[VERIFY_EMAIL] Using raw messageId for API call: ${rawMessageId}`);
-
-	try {
-		const response = await axios.get(`https://api.brevo.com/v3/smtp/emailStatus/${rawMessageId}`, {
-			headers: {
-				"api-key": BREVO_KEY,
-				accept: "application/json",
-			},
-		});
-		console.log("==================== EMAIL DELIVERY VERIFICATION ====================");
-		console.log(`[VERIFY_EMAIL] FINAL DELIVERY STATUS FOR: ${messageId}`);
-		console.log(JSON.stringify(response.data, null, 2));
-		console.log("=====================================================================");
-	} catch (error) {
-		console.error("==================== EMAIL DELIVERY VERIFICATION ====================");
-		console.error(`[VERIFY_EMAIL] Could not get delivery status for ${messageId}.`);
-		if (error.response) {
-			console.error("Brevo API Error:", JSON.stringify(error.response.data, null, 2));
-		} else {
-			console.error("Error:", error.message);
-		}
-		console.error("=====================================================================");
-	}
-};
-
-const _sendEmail = async (to, subject, templateName, data) => {
+export const _sendEmail = async (to, subject, templateName, data) => {
 	if (!BREVO_KEY) {
-		throw new Error("Cannot send email: BREVO_KEY is not configured.");
+		console.error("Cannot send email: BREVO_KEY is not configured.");
+		return;
 	}
 
 	const htmlContent = loadTemplate(templateName, data);
+	console.log(`[EMAIL] Preparing to send email directly to ${to} with subject: ${subject}`);
 
 	try {
 		const sendSmtpEmail = {
@@ -92,43 +59,13 @@ const _sendEmail = async (to, subject, templateName, data) => {
 		};
 
 		const response = await brevoApi.sendTransacEmail(sendSmtpEmail);
-		const messageId = response.messageId;
-		console.log(`[BREVO API] Successfully sent email to ${to}. Brevo Message ID:`, messageId);
-
-		if (to === SENDER_EMAIL) {
-			verifyEmailStatus(messageId);
-		}
+		console.log(`[BREVO API] Successfully sent email to ${to}. Brevo Message ID:`, response.messageId);
 	} catch (error) {
 		console.error(
-			`Brevo failed for ${to}: ${error.response ? JSON.stringify(error.response.data, null, 2) : error.message}`
+			`[BREVO API ERROR] Failed to send email to ${to}. Reason: ${
+				error.response ? JSON.stringify(error.response.data, null, 2) : error.message
+			}`
 		);
-		throw new Error(`Failed to send email to ${to} via Brevo.`);
+		// Do not re-throw, just log the error.
 	}
 };
-
-export const sendEmail = async (to, subject, templateName, data) => {
-	if (!SENDER_EMAIL) {
-		console.error("Cannot queue email: EMAIL_USER is not configured.");
-		return;
-	}
-
-	const jobName = `${templateName}-${to}`;
-	const jobData = { to, subject, templateName, data };
-
-	try {
-		await emailQueue.add(jobName, jobData, {
-			removeOnComplete: true,
-			removeOnFail: false,
-			attempts: 3,
-			backoff: {
-				type: "exponential",
-				delay: 1000,
-			},
-		});
-		console.log(`[EMAIL_QUEUE] Successfully queued email job '${jobName}' for ${to}`);
-	} catch (error) {
-		console.error(`[EMAIL_QUEUE] Failed to queue email job for ${to}:`, error);
-	}
-};
-
-export { _sendEmail };

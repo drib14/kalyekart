@@ -1,6 +1,6 @@
 import admin from "firebase-admin";
 import Notification from "../models/notification.model.js";
-import { sendEmail, _sendEmail } from "../lib/email.js";
+import { _sendEmail } from "../lib/email.js";
 import User from "../models/user.model.js";
 
 // A simple in-memory store for active client connections for SSE
@@ -95,9 +95,8 @@ const NotificationService = {
 						);
 					}
 
-					// Admin Email Notification (Bypass queue for reliability)
+					// Admin Email Notification (Direct Send)
 					try {
-						console.log("[ADMIN EMAIL] Bypassing queue to send admin notification directly.");
 						await _sendEmail(
 							process.env.EMAIL_USER,
 							`New Order Received: #${order._id.toString().slice(-6)}`,
@@ -115,7 +114,7 @@ const NotificationService = {
 							}
 						);
 					} catch (emailError) {
-						console.error(`[ADMIN EMAIL] Failed to send 'new_order' admin email directly:`, emailError);
+						console.error(`Failed to send 'new_order' admin email:`, emailError);
 					}
 
 					// Customer in-app notification
@@ -136,9 +135,9 @@ const NotificationService = {
 						customerNotification.link
 					);
 
-					// Customer Email Notification (Use queue)
+					// Customer Email Notification (Direct Send)
 					try {
-						await sendEmail(
+						await _sendEmail(
 							actor.email,
 							`Your KalyeKart Order #${order._id.toString().slice(-6)} is Confirmed!`,
 							"orderConfirmation",
@@ -176,7 +175,7 @@ const NotificationService = {
 						notification.link
 					);
 					try {
-						await sendEmail(
+						await _sendEmail(
 							recipient.email,
 							`Your KalyeKart Order #${order._id.toString().slice(-6)} has been updated!`,
 							"orderUpdate",
@@ -240,7 +239,7 @@ const NotificationService = {
 						welcomeNotification.link
 					);
 					try {
-						await sendEmail(actor.email, "Welcome to KalyeKart!", "welcome", {
+						await _sendEmail(actor.email, "Welcome to KalyeKart!", "welcome", {
 							NAME: actor.name,
 							CTA_LINK: "https://kalyekart.app",
 						});
@@ -268,7 +267,6 @@ const NotificationService = {
 							adminNotification.link
 						);
 						try {
-							// Bypass queue for admin feedback as well
 							await _sendEmail(
 								process.env.EMAIL_USER,
 								`New Feedback Submission (Rating: ${feedback.rating}/5)`,
@@ -302,7 +300,7 @@ const NotificationService = {
 							customerNotification.link
 						);
 						try {
-							await sendEmail(
+							await _sendEmail(
 								actor.email,
 								"We've Received Your Feedback!",
 								"userFeedbackConfirmation",
@@ -355,7 +353,7 @@ const NotificationService = {
 						);
 						if (recipient.email) {
 							try {
-								await sendEmail(
+								await _sendEmail(
 									recipient.email,
 									`${actor.name} liked your ${data.likedEntityType || 'comment'}!`,
 									"userNewLike",
