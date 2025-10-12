@@ -11,12 +11,28 @@ const DriverPanelPage = () => {
   // Set the first pending order as selected by default
   useEffect(() => {
     const firstPending = orders.find(o => o.status === 'Pending');
-    setSelectedOrder(firstPending || orders[0]);
+    setSelectedOrder(firstPending || orders[0] || null);
   }, [orders]);
 
   const handleSelectOrder = (order) => {
     setSelectedOrder(order);
   };
+
+  const handleUpdateOrderStatus = (orderId, newStatus) => {
+    const updatedOrders = orders.map((order) => {
+      if (order.id === orderId) {
+        return { ...order, status: newStatus };
+      }
+      return order;
+    });
+    setOrders(updatedOrders);
+
+    // Also update the selected order if it's the one being changed
+    if (selectedOrder && selectedOrder.id === orderId) {
+      setSelectedOrder({ ...selectedOrder, status: newStatus });
+    }
+  };
+
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
@@ -27,7 +43,10 @@ const DriverPanelPage = () => {
           onSelectOrder={handleSelectOrder}
           selectedOrder={selectedOrder}
         />
-        <OrderMap selectedOrder={selectedOrder} />
+        <OrderMap
+          selectedOrder={selectedOrder}
+          onUpdateStatus={handleUpdateOrderStatus}
+        />
       </div>
     </div>
   );
