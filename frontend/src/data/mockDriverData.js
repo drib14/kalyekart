@@ -1,0 +1,68 @@
+export const mockOrders = [
+  {
+    id: 'KRT-0817',
+    customerName: 'Maria Dela Cruz',
+    deliveryAddress: '123 Sampaguita St, Quezon City',
+    restaurantName: 'Jollibee - SM Megamall',
+    restaurantAddress: 'EDSA corner Doña Julia Vargas Ave, Mandaluyong',
+    status: 'Pending',
+    items: [
+      { name: '1-pc Chickenjoy w/ Jolly Spaghetti', quantity: 1 },
+      { name: 'Peach Mango Pie', quantity: 2 },
+      { name: 'Coke', quantity: 1 },
+    ],
+    total: 350.00,
+    paymentMethod: 'Cash on Delivery',
+    pickupCoordinates: [14.5857, 121.0566],
+    deliveryCoordinates: [14.6186, 121.0267],
+  },
+  {
+    id: 'KRT-0818',
+    customerName: 'Juan Santos',
+    deliveryAddress: '456 Narra Ave, BGC, Taguig',
+    restaurantName: 'Mang Inasal - Glorietta 3',
+    restaurantAddress: 'Ayala Center, Makati',
+    status: 'Accepted',
+    items: [
+      { name: 'Paa Large (PM1)', quantity: 1 },
+      { name: 'Extra Rice', quantity: 2 },
+      { name: 'Iced Tea', quantity: 1 },
+    ],
+    total: 185.00,
+    paymentMethod: 'Card',
+    pickupCoordinates: [14.5510, 121.0260],
+    deliveryCoordinates: [14.5500, 121.0520],
+  },
+  {
+    id: 'KRT-0819',
+    customerName: 'Lito Reyes',
+    deliveryAddress: '789 Ilang-Ilang Rd, Kapitolyo, Pasig',
+    restaurantName: 'Chowking - Robinsons Galleria',
+    restaurantAddress: 'Ortigas Ave, Quezon City',
+    status: 'Out for Delivery',
+    items: [
+        { name: 'Chinese-Style Fried Chicken Lauriat', quantity: 1 },
+        { name: 'SuperSangkap Halo-Halo', quantity: 1 }
+    ],
+    total: 278.00,
+    paymentMethod: 'Cash on Delivery',
+    pickupCoordinates: [14.5910, 121.0610],
+    deliveryCoordinates: [14.5710, 121.0630],
+  },
+  {
+    id: 'KRT-0820',
+    customerName: 'Ana Gomez',
+    deliveryAddress: 'Blk 10 Lot 4, San Lorenzo Village, Makati',
+    restaurantName: 'Greenwich - Ayala Malls Circuit',
+    restaurantAddress: 'Circuit Makati, Makati',
+    status: 'Delivered',
+    items: [
+        { name: 'Hawaiian Overload Pizza (Double)', quantity: 1 },
+        { name: 'Lasagna Supreme', quantity: 1 }
+    ],
+    total: 750.00,
+    paymentMethod: 'GCash',
+    pickupCoordinates: [14.5658, 121.0135],
+    deliveryCoordinates: [14.5540, 121.0185],
+  },
+];

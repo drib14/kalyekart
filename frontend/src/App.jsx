@@ -38,6 +38,7 @@ import useOfflineStatus from "./hooks/useOfflineStatus";
 import OfflinePage from "./pages/OfflinePage";
 import Footer from "./components/Footer";
 import LegalPage from "./pages/LegalPage";
+import DriverPanelPage from "./pages/DriverPanelPage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -174,6 +175,7 @@ function App() {
 					<Route path='/order/:orderId' element={user ? <OrderDetailPage /> : <Navigate to='/login' />} />
 					<Route path='/product/:productId' element={<ProductDetailPage />} />
 					<Route path='/legal' element={<LegalPage />} />
+					<Route path='/driver/panel' element={<DriverPanelPage />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
 			</main>
