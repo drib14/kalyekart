@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Confirmation</title>
+</head>
+<body>
+    <p>Hi {{customerName}},</p>
+    <p>Thank you for your order! Your order #{{orderId}} has been confirmed.</p>
+    <p><strong>Order Date:</strong> {{orderDate}}</p>
+    <p><strong>Shipping Address:</strong> {{shippingAddress}}</p>
+    <h3>Order Details:</h3>
+    <ul>
+        {{items}}
+    </ul>
+    <p><strong>Subtotal:</strong> {{subtotal}}</p>
+    <p><strong>Delivery Fee:</strong> {{deliveryFee}}</p>
+    <p><strong>Total:</strong> {{total}}</p>
+    <p>Thank you for shopping with <a href="https://{{domain}}">kalyekart.app</a>!</p>
+</body>
+</html>

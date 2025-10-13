@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { uploadOnCloudinary } from "../lib/cloudinary.js";
 import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
 import NotificationService from "../services/notification.service.js";
+import EmailService from "../services/email.service.js";
 
 const WAREHOUSE_COORDINATES = { lat: 10.2983, lon: 123.8991 };
 
@@ -62,6 +63,8 @@ export const createCodOrder = async (req, res) => {
 			order: newOrder,
 			products: products,
 		});
+
+		await EmailService.sendOrderConfirmationEmail(user, newOrder, products);
 
 		res.status(201).json({ message: "Order created successfully", orderId: newOrder._id });
 	} catch (error) {
@@ -177,6 +180,8 @@ export const updateOrderStatus = async (req, res) => {
 			order: order,
 		});
 
+		await EmailService.sendOrderStatusUpdateEmail(order.user, order);
+
 		res.json(order);
 	} catch (error) {
 		console.log("Error in updateOrderStatus controller", error.message);
@@ -214,6 +219,8 @@ export const requestRefund = async (req, res) => {
 		if (admin) {
 			// Create in-app notif
 		}
+
+		await EmailService.sendRefundRequestEmail(order.user, order);
 
 		res.json(order);
 	} catch (error) {
