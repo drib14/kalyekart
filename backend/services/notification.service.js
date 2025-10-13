@@ -1,6 +1,5 @@
 import admin from "firebase-admin";
 import Notification from "../models/notification.model.js";
-import { sendEmail } from "../lib/email.js";
 import User from "../models/user.model.js";
 
 // A simple in-memory store for active client connections for SSE
@@ -95,28 +94,6 @@ const NotificationService = {
 						);
 					}
 
-					// Admin Email Notification (Direct Send)
-					try {
-						await sendEmail(
-							process.env.EMAIL_USER,
-							`New Order Received: #${order._id.toString().slice(-6)}`,
-							"adminNewOrderNotification",
-							{
-								ORDER_ID: order._id.toString(),
-								CUSTOMER_NAME: actor.name,
-								CUSTOMER_EMAIL: actor.email,
-								ORDER_ITEMS: orderItemsHtml,
-								SUBTOTAL: order.subtotal.toFixed(2),
-								DELIVERY_FEE: order.deliveryFee.toFixed(2),
-								TOTAL: order.totalAmount.toFixed(2),
-								PAYMENT_METHOD: order.paymentMethod,
-								CTA_LINK: `https://kalyekart.app/order/${order._id}`,
-							}
-						);
-					} catch (emailError) {
-						console.error(`Failed to send 'new_order' admin email:`, emailError);
-					}
-
 					// Customer in-app notification
 					const customerNotification = new Notification({
 						recipient: actor._id,
@@ -134,27 +111,6 @@ const NotificationService = {
 						customerNotification.message,
 						customerNotification.link
 					);
-
-					// Customer Email Notification (Direct Send)
-					try {
-						await sendEmail(
-							actor.email,
-							`Your KalyeKart Order #${order._id.toString().slice(-6)} is Confirmed!`,
-							"orderConfirmation",
-							{
-								NAME: actor.name,
-								ORDER_ID: order._id.toString(),
-								ORDER_ITEMS: orderItemsHtml,
-								SUBTOTAL: order.subtotal.toFixed(2),
-								DELIVERY_FEE: order.deliveryFee.toFixed(2),
-								TOTAL: order.totalAmount.toFixed(2),
-								PAYMENT_METHOD: order.paymentMethod,
-								CTA_LINK: `https://kalyekart.app/order/${order._id}`,
-							}
-						);
-					} catch (emailError) {
-						console.error(`Failed to send 'order_confirmation' customer email:`, emailError);
-					}
 					break;
 
 				case "order_status_update":
@@ -174,16 +130,6 @@ const NotificationService = {
 						notification.message,
 						notification.link
 					);
-					try {
-						await sendEmail(
-							recipient.email,
-							`Your KalyeKart Order #${order._id.toString().slice(-6)} has been updated!`,
-							"orderUpdate",
-							{ NAME: recipient.name, ORDER_ID: order._id.toString(), NEW_STATUS: order.status, CTA_LINK: `https://kalyekart.app/order/${order._id}` }
-						);
-					} catch (emailError) {
-						console.error(`Failed to send 'order_status_update' customer email:`, emailError);
-					}
 					break;
 
 				case "order_cancelled":
@@ -238,14 +184,6 @@ const NotificationService = {
 						welcomeNotification.message,
 						welcomeNotification.link
 					);
-					try {
-						await sendEmail(actor.email, "Welcome to KalyeKart!", "welcome", {
-							NAME: actor.name,
-							CTA_LINK: "https://kalyekart.app",
-						});
-					} catch (emailError) {
-						console.error(`Failed to send 'welcome' customer email:`, emailError);
-					}
 					break;
 
 				case "new_feedback":
@@ -266,21 +204,6 @@ const NotificationService = {
 							adminNotification.message,
 							adminNotification.link
 						);
-						try {
-							await sendEmail(
-								process.env.EMAIL_USER,
-								`New Feedback Submission (Rating: ${feedback.rating}/5)`,
-								"adminFeedbackNotification",
-								{
-									USER_NAME: actor?.name || "Anonymous",
-									USER_EMAIL: actor?.email || "No email provided",
-									RATING: feedback.rating,
-									FEEDBACK_MESSAGE: feedback.feedback,
-								}
-							);
-						} catch (emailError) {
-							console.error(`Failed to send 'new_feedback' admin email:`, emailError);
-						}
 					}
 					if (actor && actor._id) {
 						const customerNotification = new Notification({
@@ -299,16 +222,6 @@ const NotificationService = {
 							customerNotification.message,
 							customerNotification.link
 						);
-						try {
-							await sendEmail(
-								actor.email,
-								"We've Received Your Feedback!",
-								"userFeedbackConfirmation",
-								{ NAME: actor.name, FEEDBACK_MESSAGE: feedback.feedback, CTA_LINK: "https://kalyekart.app" }
-							);
-						} catch (emailError) {
-							console.error(`Failed to send 'feedback_confirmation' customer email:`, emailError);
-						}
 					}
 					break;
 
@@ -351,24 +264,6 @@ const NotificationService = {
 							notification.message,
 							notification.link
 						);
-						if (recipient.email) {
-							try {
-								await sendEmail(
-									recipient.email,
-									`${actor.name} liked your ${data.likedEntityType || 'comment'}!`,
-									"userNewLike",
-									{
-										NAME: recipient.name,
-										ACTOR_NAME: actor.name,
-										LIKED_ENTITY: data.likedEntityType || "comment",
-										PRODUCT_NAME: product.name,
-										CTA_LINK: `https://kalyekart.app/product/${product._id}?review=${review._id}`,
-									}
-								);
-							} catch (emailError) {
-								console.error(`Failed to send 'new_like' customer email:`, emailError);
-							}
-						}
 					}
 					break;
 
