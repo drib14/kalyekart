@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-	baseURL: import.meta.env.VITE_API_URL || "/api",
+	baseURL: "/api",
 	withCredentials: true, // send cookies to the server
 });
 
@@ -13,7 +13,7 @@ axiosInstance.interceptors.response.use(
 			originalRequest._retry = true;
 			try {
 				const refreshAxios = axios.create({
-					baseURL: import.meta.env.VITE_API_URL || "/api",
+					baseURL: "/api",
 					withCredentials: true,
 				});
 				await refreshAxios.post("/auth/refresh-token");
