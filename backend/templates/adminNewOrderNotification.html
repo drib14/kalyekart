@@ -40,6 +40,9 @@
             line-height: 1.6;
             font-size: 16px;
         }
+        .customer-info {
+            margin-bottom: 20px;
+        }
         .order-details {
             width: 100%;
             border-collapse: collapse;
@@ -84,10 +87,12 @@
         <div class="content">
             <p>A new order has been placed on KalyeKart.</p>
 
-            <h2>Order Details (ID: {{ORDER_ID}})</h2>
-            <p><strong>Customer:</strong> {{CUSTOMER_NAME}} ({{CUSTOMER_EMAIL}})</p>
+            <div class="customer-info">
+                <h2>New Order</h2>
+                <p><strong>{{CUSTOMER_NAME}}</strong> ordered:</p>
+            </div>
 
-            <h2>Items:</h2>
+            <h2>Order Details (ID: {{ORDER_ID}})</h2>
             <table class="order-details">
                 <thead>
                     <tr>
