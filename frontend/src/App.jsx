@@ -39,6 +39,8 @@ import OfflinePage from "./pages/OfflinePage";
 import Footer from "./components/Footer";
 import LegalPage from "./pages/LegalPage";
 import DriverPanelPage from "./pages/DriverPanelPage";
+import DriverOrderHistory from "./pages/DriverOrderHistory";
+import DriverProfilePage from "./pages/DriverProfilePage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -176,6 +178,8 @@ function App() {
 					<Route path='/product/:productId' element={<ProductDetailPage />} />
 					<Route path='/legal' element={<LegalPage />} />
 					<Route path='/driver/panel' element={<DriverPanelPage />} />
+					<Route path='/driver/history' element={<DriverOrderHistory />} />
+					<Route path='/driver/profile' element={<DriverProfilePage />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
 			</main>
