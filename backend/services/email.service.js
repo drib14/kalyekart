@@ -37,9 +37,10 @@ const EmailService = {
 	sendOrderConfirmationEmail: async (user, order, products) => {
 		const customerTemplateData = {
 			customerName: user.name,
-			orderId: order._id.toString().slice(-6),
+			orderId: order._id.toString(),
+			orderIdShort: order._id.toString().slice(-6),
 			orderDate: new Date(order.createdAt).toLocaleDateString(),
-			shippingAddress: `${order.shippingAddress.street}, ${order.shippingAddress.barangay}, ${order.shippingAddress.city}`,
+			shippingAddress: `${order.shippingAddress.sitio}, ${order.shippingAddress.barangay}, ${order.shippingAddress.city}`,
 			items: products
 				.map((p) => `<li>${p.name} (x${p.quantity}) - ₱${(p.price * p.quantity).toFixed(2)}</li>`)
 				.join(""),
@@ -50,7 +51,8 @@ const EmailService = {
 		};
 
 		const adminTemplateData = {
-			orderId: order._id.toString().slice(-6),
+			orderId: order._id.toString(),
+			orderIdShort: order._id.toString().slice(-6),
 			customerName: user.name,
 			orderDate: new Date(order.createdAt).toLocaleDateString(),
 			totalAmount: `₱${order.totalAmount.toFixed(2)}`,
@@ -60,14 +62,14 @@ const EmailService = {
 		const customerEmail = {
 			to: [{ email: user.email, name: user.name }],
 			sender: { email: process.env.EMAIL_USER, name: "KalyeKart" },
-			subject: `Your KalyeKart Order #${customerTemplateData.orderId} is Confirmed!`,
+			subject: `Your KalyeKart Order #${customerTemplateData.orderIdShort} is Confirmed!`,
 			htmlContent: loadTemplate("customer_order_confirmation", customerTemplateData),
 		};
 
 		const adminEmail = {
 			to: [{ email: process.env.EMAIL_USER, name: "KalyeKart Admin" }],
 			sender: { email: process.env.EMAIL_USER, name: "KalyeKart System" },
-			subject: `New Order Received #${adminTemplateData.orderId}`,
+			subject: `New Order Received #${adminTemplateData.orderIdShort}`,
 			htmlContent: loadTemplate("admin_new_order", adminTemplateData),
 		};
 
@@ -78,7 +80,8 @@ const EmailService = {
 	sendOrderStatusUpdateEmail: async (user, order) => {
 		const templateData = {
 			customerName: user.name,
-			orderId: order._id.toString().slice(-6),
+			orderId: order._id.toString(),
+			orderIdShort: order._id.toString().slice(-6),
 			newStatus: order.status,
 			domain: "kalyekart.app",
 		};
@@ -86,7 +89,7 @@ const EmailService = {
 		const email = {
 			to: [{ email: user.email, name: user.name }],
 			sender: { email: process.env.EMAIL_USER, name: "KalyeKart" },
-			subject: `Your KalyeKart Order #${templateData.orderId} has been updated`,
+			subject: `Your KalyeKart Order #${templateData.orderIdShort} has been updated`,
 			htmlContent: loadTemplate("customer_order_status_update", templateData),
 		};
 
@@ -127,7 +130,8 @@ const EmailService = {
 	sendRefundRequestEmail: async (user, order) => {
 		const adminTemplateData = {
 			customerName: user.name,
-			orderId: order._id.toString().slice(-6),
+			orderId: order._id.toString(),
+			orderIdShort: order._id.toString().slice(-6),
 			reason: order.refundRequest.reason,
 			domain: "kalyekart.app",
 		};
@@ -135,7 +139,7 @@ const EmailService = {
 		const adminEmail = {
 			to: [{ email: process.env.EMAIL_USER, name: "KalyeKart Admin" }],
 			sender: { email: process.env.EMAIL_USER, name: "KalyeKart System" },
-			subject: `New Refund Request for Order #${adminTemplateData.orderId}`,
+			subject: `New Refund Request for Order #${adminTemplateData.orderIdShort}`,
 			htmlContent: loadTemplate("admin_refund_request", adminTemplateData),
 		};
 

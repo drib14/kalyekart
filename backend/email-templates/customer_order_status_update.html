@@ -1,12 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Status Update</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #ddd; }
+        .header h1 { margin: 0; color: #0056b3; }
+        .content { padding: 20px 0; text-align: center; }
+        .status-box { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .status-box h2 { margin: 0; font-size: 24px; color: #28a745; }
+        .button-container { text-align: center; margin-top: 20px; }
+        .button { background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px; }
+        .footer { text-align: center; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #888; }
+    </style>
 </head>
 <body>
-    <p>Hi {{customerName}},</p>
-    <p>The status of your order #{{orderId}} has been updated to: <strong>{{newStatus}}</strong>.</p>
-    <p>You can view your order details here: <a href="https://{{domain}}/order/{{orderId}}">View Order</a></p>
-    <p>Thank you for shopping with <a href="https://{{domain}}">kalyekart.app</a>!</p>
+    <div class="container">
+        <div class="header">
+            <h1>KalyeKart</h1>
+            <p>Your Order Has Been Updated</p>
+        </div>
+        <div class="content">
+            <h2>Hi {{customerName}},</h2>
+            <p>There's an update on your order #{{orderIdShort}}.</p>
+
+            <div class="status-box">
+                <p>The new status is:</p>
+                <h2>{{newStatus}}</h2>
+            </div>
+
+            <p>You can track your order and view more details by clicking the button below.</p>
+
+            <div class="button-container">
+                <a href="https://{{domain}}/order/{{orderId}}" class="button">Track Your Order</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>If you have any questions, reply to this email.</p>
+            <p>&copy; 2024 KalyeKart. All rights reserved.</p>
+        </div>
+    </div>
 </body>
 </html>
