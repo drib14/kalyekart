@@ -22,15 +22,18 @@ const FavoriteButton = ({ product, className, standalone = false }) => {
 			await queryClient.cancelQueries({ queryKey: ["myFavorites"] });
 			const previousUser = useUserStore.getState().user;
 
+			// Get the most up-to-date state directly within the mutation
+			const currentIsFavorited = previousUser?.favorites?.includes(product?._id);
+
 			useUserStore.setState((state) => {
 				const currentFavorites = state.user?.favorites || [];
-				const newFavorites = !isFavorited
+				const newFavorites = !currentIsFavorited
 					? [...currentFavorites, product._id]
 					: currentFavorites.filter((id) => id !== product._id);
 				return { user: { ...state.user, favorites: newFavorites } };
 			});
 
-			toast.success(`Product ${!isFavorited ? "added to" : "removed from"} favorites.`);
+			toast.success(`Product ${!currentIsFavorited ? "added to" : "removed from"} favorites.`);
 			return { previousUser };
 		},
 		onError: (err, variables, context) => {
