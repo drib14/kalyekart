@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "../lib/axios";
@@ -8,34 +7,19 @@ import { toast } from "sonner";
 const FavoriteButton = ({ product, className, standalone = false }) => {
 	const { user, refreshUser } = useUserStore();
 	const queryClient = useQueryClient();
-	const [isFavorited, setIsFavorited] = useState(false);
 
-	useEffect(() => {
-		if (user && product) {
-			// Ensure we are checking against a valid array
-			setIsFavorited(Array.isArray(user.favorites) && user.favorites.includes(product._id));
-		} else {
-			setIsFavorited(false);
-		}
-	}, [user, product]);
+	// Derive `isFavorited` directly from the user store. No local state needed.
+	const isFavorited = user?.favorites?.includes(product?._id);
 
 	const { mutate: toggleFavorite, isLoading } = useMutation({
 		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
 		onMutate: async () => {
-			// Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-			await queryClient.cancelQueries({ queryKey: ["user"] });
 			await queryClient.cancelQueries({ queryKey: ["myFavorites"] });
-
-			// Snapshot the previous value
 			const previousUser = useUserStore.getState().user;
-
-			// Optimistically update to the new value
 			const newIsFavorited = !isFavorited;
-			setIsFavorited(newIsFavorited);
 
-			// Update the user store optimistically
 			useUserStore.setState((state) => {
-				const currentFavorites = state.user.favorites || [];
+				const currentFavorites = state.user?.favorites || [];
 				const newFavorites = newIsFavorited
 					? [...currentFavorites, product._id]
 					: currentFavorites.filter((id) => id !== product._id);
@@ -43,21 +27,13 @@ const FavoriteButton = ({ product, className, standalone = false }) => {
 			});
 
 			toast.success(`Product ${newIsFavorited ? "added to" : "removed from"} favorites.`);
-
-			// Return a context object with the snapshotted value
 			return { previousUser };
 		},
-		onError: (err, newTodo, context) => {
-			// Rollback to the previous value
+		onError: (err, variables, context) => {
 			useUserStore.setState({ user: context.previousUser });
-			setIsFavorited(
-				context.previousUser?.favorites?.includes(product._id) || false
-			);
 			toast.error("Failed to update favorites. Please try again.");
 		},
-		// Always refetch after error or success:
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: ["user"] });
 			queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
 			refreshUser();
 		},
