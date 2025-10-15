@@ -5,27 +5,32 @@ import { useUserStore } from "../stores/useUserStore";
 import { toast } from "sonner";
 
 const FavoriteButton = ({ product, className, standalone = false }) => {
-	const { user, refreshUser } = useUserStore();
 	const queryClient = useQueryClient();
 
-	const isFavorited = user?.favorites?.includes(product?._id);
+	// Selectors for more granular state updates
+	const { user, refreshUser } = useUserStore((state) => ({
+		user: state.user,
+		refreshUser: state.refreshUser,
+	}));
+	const favorites = useUserStore((state) => state.user?.favorites);
+
+	const isFavorited = favorites?.includes(product?._id);
 
 	const { mutate: toggleFavorite, isLoading } = useMutation({
 		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
 		onMutate: async () => {
 			await queryClient.cancelQueries({ queryKey: ["myFavorites"] });
 			const previousUser = useUserStore.getState().user;
-			const newIsFavorited = !isFavorited;
 
 			useUserStore.setState((state) => {
 				const currentFavorites = state.user?.favorites || [];
-				const newFavorites = newIsFavorited
+				const newFavorites = !isFavorited
 					? [...currentFavorites, product._id]
 					: currentFavorites.filter((id) => id !== product._id);
 				return { user: { ...state.user, favorites: newFavorites } };
 			});
 
-			toast.success(`Product ${newIsFavorited ? "added to" : "removed from"} favorites.`);
+			toast.success(`Product ${!isFavorited ? "added to" : "removed from"} favorites.`);
 			return { previousUser };
 		},
 		onError: (err, variables, context) => {
@@ -39,7 +44,7 @@ const FavoriteButton = ({ product, className, standalone = false }) => {
 	});
 
 	const handleFavoriteClick = (e) => {
-		e.stopPropagation(); // Prevent card click event
+		e.stopPropagation();
 		if (!user) {
 			toast.info("Please log in to favorite items.");
 			return;
