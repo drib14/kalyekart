@@ -71,6 +71,15 @@ export const useUserStore = create((set, get) => ({
 		}
 	},
 
+	refreshUser: async () => {
+		try {
+			const response = await axios.get("/auth/profile");
+			set({ user: response.data });
+		} catch (error) {
+			console.log("Silent user refresh failed:", error.message);
+		}
+	},
+
 	refreshToken: async () => {
 		// Prevent multiple simultaneous refresh attempts
 		if (get().checkingAuth) return;

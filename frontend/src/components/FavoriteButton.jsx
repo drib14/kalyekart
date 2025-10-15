@@ -6,7 +6,7 @@ import { useUserStore } from "../stores/useUserStore";
 import { toast } from "sonner";
 
 const FavoriteButton = ({ product, className, standalone = false }) => {
-	const { user, checkAuth } = useUserStore();
+	const { user, refreshUser } = useUserStore();
 	const queryClient = useQueryClient();
 	const [isFavorited, setIsFavorited] = useState(false);
 
@@ -22,8 +22,9 @@ const FavoriteButton = ({ product, className, standalone = false }) => {
 	const { mutate: toggleFavorite, isLoading } = useMutation({
 		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
 		onSuccess: () => {
-			toast.success("Favorite status updated!");
-			checkAuth(); // Refetch user data to update favorites everywhere
+			const newIsFavorited = !isFavorited;
+			toast.success(`Product ${newIsFavorited ? "added to" : "removed from"} favorites.`);
+			refreshUser(); // Silently refetch user data
 			queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
 		},
 		onError: (error) => {
