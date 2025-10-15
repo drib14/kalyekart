@@ -17,29 +17,16 @@ const FavoriteButton = ({ product, className, standalone = false }) => {
 
 	const { mutate: toggleFavorite, isLoading } = useMutation({
 		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
-		onMutate: async () => {
-			await queryClient.cancelQueries({ queryKey: ["myFavorites"] });
-			const previousUser = useUserStore.getState().user;
-			const currentIsFavorited = previousUser?.favorites?.includes(product?._id);
-
-			useUserStore.setState((state) => {
-				const currentFavorites = state.user?.favorites || [];
-				const newFavorites = !currentIsFavorited
-					? [...currentFavorites, product._id]
-					: currentFavorites.filter((id) => id !== product._id);
-				return { user: { ...state.user, favorites: newFavorites } };
+		onSuccess: () => {
+			const wasFavorited = isFavorited;
+			refreshUser().then(() => {
+				toast.success(`Product ${!wasFavorited ? "added to" : "removed from"} favorites.`);
+				queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
 			});
-
-			toast.success(`Product ${!currentIsFavorited ? "added to" : "removed from"} favorites.`);
-			return { previousUser };
 		},
-		onError: (err, variables, context) => {
-			useUserStore.setState({ user: context.previousUser });
+		onError: (err) => {
 			toast.error("Failed to update favorites. Please try again.");
-		},
-		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
-			refreshUser();
+			console.error(err);
 		},
 	});
 
