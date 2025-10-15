@@ -6,7 +6,7 @@ import { useUserStore } from "../stores/useUserStore";
 import { toast } from "sonner";
 
 const FavoriteButton = ({ product, className, standalone = false }) => {
-	const { user } = useUserStore();
+	const { user, checkAuth } = useUserStore();
 	const queryClient = useQueryClient();
 	const [isFavorited, setIsFavorited] = useState(false);
 
@@ -21,19 +21,10 @@ const FavoriteButton = ({ product, className, standalone = false }) => {
 
 	const { mutate: toggleFavorite, isLoading } = useMutation({
 		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
-		onSuccess: (data) => {
-			const newFavorites = data.data.favorites;
-			setIsFavorited(newFavorites.includes(product._id));
-			queryClient.invalidateQueries(["myFavorites"]);
-			// Update the user object in the user store
-			useUserStore.setState((state) => ({
-				user: { ...state.user, favorites: newFavorites },
-			}));
-			toast.success(
-				`Product ${
-					newFavorites.includes(product._id) ? "added to" : "removed from"
-				} favorites.`
-			);
+		onSuccess: () => {
+			toast.success("Favorite status updated!");
+			checkAuth(); // Refetch user data to update favorites everywhere
+			queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
 		},
 		onError: (error) => {
 			console.error("Error toggling favorite:", error);

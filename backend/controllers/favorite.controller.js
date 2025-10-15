@@ -6,11 +6,10 @@ export const toggleFavorite = async (req, res) => {
 	const userId = req.user._id;
 
 	try {
-		const product = await Product.findById(productId);
 		const user = await User.findById(userId);
 
-		if (!product) {
-			return res.status(404).json({ message: "Product not found" });
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
 		}
 
 		const isFavorited = user.favorites.includes(productId);
@@ -18,15 +17,12 @@ export const toggleFavorite = async (req, res) => {
 		if (isFavorited) {
 			// Remove from favorites
 			user.favorites.pull(productId);
-			product.favoritedBy.pull(userId);
 		} else {
 			// Add to favorites
 			user.favorites.push(productId);
-			product.favoritedBy.push(userId);
 		}
 
 		await user.save();
-		await product.save();
 
 		res.status(200).json({
 			message: "Favorite status updated",
