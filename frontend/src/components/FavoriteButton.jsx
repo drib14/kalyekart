@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "../lib/axios";
@@ -8,31 +7,34 @@ import { toast } from "sonner";
 const FavoriteButton = ({ product, className, standalone = false }) => {
 	const { user, refreshUser } = useUserStore();
 	const queryClient = useQueryClient();
-	const [isFavorited, setIsFavorited] = useState(false);
 
-	// Sync local state with global state
-	useEffect(() => {
-		setIsFavorited(user?.favorites?.includes(product?._id) || false);
-	}, [user, product]);
+	const isFavorited = user?.favorites?.includes(product?._id);
 
 	const { mutate: toggleFavorite, isLoading } = useMutation({
 		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
 		onMutate: async () => {
-			// Optimistically update the local state for instant feedback
-			const previousIsFavorited = isFavorited;
-			setIsFavorited(!previousIsFavorited);
-			toast.success(`Product ${!previousIsFavorited ? "added to" : "removed from"} favorites.`);
-			return { previousIsFavorited };
+			await queryClient.cancelQueries({ queryKey: ["myFavorites"] });
+			const previousUser = useUserStore.getState().user;
+			const newIsFavorited = !isFavorited;
+
+			useUserStore.setState((state) => {
+				const currentFavorites = state.user?.favorites || [];
+				const newFavorites = newIsFavorited
+					? [...currentFavorites, product._id]
+					: currentFavorites.filter((id) => id !== product._id);
+				return { user: { ...state.user, favorites: newFavorites } };
+			});
+
+			toast.success(`Product ${newIsFavorited ? "added to" : "removed from"} favorites.`);
+			return { previousUser };
 		},
 		onError: (err, variables, context) => {
-			// Revert to the previous state on error
-			setIsFavorited(context.previousIsFavorited);
+			useUserStore.setState({ user: context.previousUser });
 			toast.error("Failed to update favorites. Please try again.");
 		},
 		onSettled: () => {
-			// Ensure eventual consistency with the backend
-			refreshUser();
 			queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
+			refreshUser();
 		},
 	});
 
