@@ -26,7 +26,6 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import MyReviewsPage from "./pages/MyReviewsPage";
-import MyFavoritesPage from "./pages/MyFavoritesPage";
 import AdminProfilePage from "./pages/AdminProfilePage";
 import CustomerProfilePage from "./pages/CustomerProfilePage";
 import OrderDetailPage from "./pages/OrderDetailPage";
@@ -161,7 +160,6 @@ function App() {
 					<Route path='/checkout' element={user ? <CheckoutPage /> : <Navigate to='/login' />} />
 					<Route path='/my-orders' element={user ? <MyOrdersPage /> : <Navigate to='/login' />} />
 					<Route path='/my-reviews' element={user ? <MyReviewsPage /> : <Navigate to='/login' />} />
-					<Route path='/my-favorites' element={user ? <MyFavoritesPage /> : <Navigate to='/login' />} />
 					<Route
 						path='/notifications'
 						element={user ? <NotificationsPage /> : <Navigate to='/login' />}

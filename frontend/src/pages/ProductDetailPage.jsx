@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import ReviewsList from "../components/ReviewsList";
 import AddReviewForm from "../components/AddReviewForm";
 import MostReviewedProducts from "../components/MostReviewedProducts";
-import FavoriteButton from "../components/FavoriteButton";
 
 const ProductDetailPage = () => {
 	const { productId } = useParams();
@@ -119,7 +118,6 @@ const ProductDetailPage = () => {
 								<ShoppingCart size={24} className='mr-3' />
 								Add to Cart
 							</button>
-							<FavoriteButton product={product} standalone={true} />
 						</div>
 					</div>
 				</div>

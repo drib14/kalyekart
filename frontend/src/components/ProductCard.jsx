@@ -3,7 +3,6 @@ import { ShoppingCart, ShoppingBag, Star } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
 import { useCartStore } from "../stores/useCartStore";
 import { useNavigate } from "react-router-dom";
-import FavoriteButton from "./FavoriteButton";
 
 const ProductCard = ({ product, onCardClick }) => {
 	const { user } = useUserStore();
@@ -37,7 +36,6 @@ const ProductCard = ({ product, onCardClick }) => {
 			<div className='relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl'>
 				<img className='object-cover w-full' src={product.image} alt={product.name} />
 				<div className='absolute inset-0 bg-black bg-opacity-20' />
-				<FavoriteButton product={product} />
 			</div>
 
 			<div className='mt-4 px-5 pb-5'>
