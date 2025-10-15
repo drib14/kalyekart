@@ -7,7 +7,6 @@ import { toast } from "sonner";
 const FavoriteButton = ({ product, className, standalone = false }) => {
 	const queryClient = useQueryClient();
 
-	// Selectors for more granular state updates
 	const { user, refreshUser } = useUserStore((state) => ({
 		user: state.user,
 		refreshUser: state.refreshUser,
@@ -18,18 +17,29 @@ const FavoriteButton = ({ product, className, standalone = false }) => {
 
 	const { mutate: toggleFavorite, isLoading } = useMutation({
 		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
-		onSuccess: () => {
-			const wasFavorited = isFavorited; // Capture state before refetch
-			refreshUser().then(() => {
-				// After refetch, the `isFavorited` variable will be updated,
-				// so the toast message needs to use the old value.
-				toast.success(`Product ${!wasFavorited ? "added to" : "removed from"} favorites.`);
-				queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
+		onMutate: async () => {
+			await queryClient.cancelQueries({ queryKey: ["myFavorites"] });
+			const previousUser = useUserStore.getState().user;
+			const currentIsFavorited = previousUser?.favorites?.includes(product?._id);
+
+			useUserStore.setState((state) => {
+				const currentFavorites = state.user?.favorites || [];
+				const newFavorites = !currentIsFavorited
+					? [...currentFavorites, product._id]
+					: currentFavorites.filter((id) => id !== product._id);
+				return { user: { ...state.user, favorites: newFavorites } };
 			});
+
+			toast.success(`Product ${!currentIsFavorited ? "added to" : "removed from"} favorites.`);
+			return { previousUser };
 		},
-		onError: (err) => {
+		onError: (err, variables, context) => {
+			useUserStore.setState({ user: context.previousUser });
 			toast.error("Failed to update favorites. Please try again.");
-			console.error(err);
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
+			refreshUser();
 		},
 	});
 
