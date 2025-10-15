@@ -19,12 +19,11 @@ const FavoriteButton = ({ product, className, standalone = false }) => {
 	const { mutate: toggleFavorite, isLoading } = useMutation({
 		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
 		onSuccess: () => {
-			// The action was successful, so now we get the definitive state from the server.
-			// The toast message will be based on the new state after refetching.
+			const wasFavorited = isFavorited; // Capture state before refetch
 			refreshUser().then(() => {
-				const updatedUser = useUserStore.getState().user;
-				const wasFavorited = updatedUser?.favorites?.includes(product?._id);
-				toast.success(`Product ${wasFavorited ? "added to" : "removed from"} favorites.`);
+				// After refetch, the `isFavorited` variable will be updated,
+				// so the toast message needs to use the old value.
+				toast.success(`Product ${!wasFavorited ? "added to" : "removed from"} favorites.`);
 				queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
 			});
 		},
