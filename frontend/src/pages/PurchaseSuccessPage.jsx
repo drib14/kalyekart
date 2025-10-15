@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowRight, CheckCircle, HandHeart } from "lucide-react";
+import { ArrowRight, CheckCircle, HandHeart, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCartStore } from "../stores/useCartStore";
@@ -7,6 +7,7 @@ import axios from "../lib/axios";
 import Confetti from "react-confetti";
 import { toast } from "sonner";
 import LoadingSpinner from "../components/LoadingSpinner";
+import ReviewPromptModal from "../components/ReviewPromptModal";
 
 const PurchaseSuccessPage = () => {
 	const { clearCart } = useCartStore();
@@ -15,6 +16,7 @@ const PurchaseSuccessPage = () => {
 	const isCod = location.state?.cod;
 	const [orderId, setOrderId] = useState(location.state?.orderId || null);
 	const [isVerifying, setIsVerifying] = useState(true);
+	const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
 	const { mutate: verifyPayment, isPending: isVerifyPending } = useMutation({
 		mutationFn: (sessionId) => axios.post("/payments/verify-paymongo-payment", { sessionId }),
@@ -54,6 +56,13 @@ const PurchaseSuccessPage = () => {
 			return res.data;
 		},
 		enabled: !!orderId,
+		onSuccess: () => {
+			// Automatically open the review modal after a short delay
+			const timer = setTimeout(() => {
+				setIsReviewModalOpen(true);
+			}, 2000); // 2-second delay
+			return () => clearTimeout(timer);
+		},
 	});
 
 	const getEstimatedDeliveryTime = (distance) => {
@@ -126,9 +135,12 @@ const PurchaseSuccessPage = () => {
 					)}
 
 					<div className='space-y-4'>
-						<button className='w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center'>
-							<HandHeart className='mr-2' size={18} />
-							Thanks for trusting us!
+						<button
+							onClick={() => setIsReviewModalOpen(true)}
+							className='w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center'
+						>
+							<Star className='mr-2' size={18} />
+							Leave a Review
 						</button>
 						<Link
 							to={"/"}
@@ -140,6 +152,7 @@ const PurchaseSuccessPage = () => {
 					</div>
 				</div>
 			</div>
+			<ReviewPromptModal isOpen={isReviewModalOpen} onClose={() => setIsReviewModalOpen(false)} order={order} />
 		</div>
 	);
 };
