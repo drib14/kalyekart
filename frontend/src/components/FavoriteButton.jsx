@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "../lib/axios";
@@ -7,35 +8,31 @@ import { toast } from "sonner";
 const FavoriteButton = ({ product, className, standalone = false }) => {
 	const { user, refreshUser } = useUserStore();
 	const queryClient = useQueryClient();
+	const [isFavorited, setIsFavorited] = useState(false);
 
-	// Derive `isFavorited` directly from the user store. No local state needed.
-	const isFavorited = user?.favorites?.includes(product?._id);
+	// Sync local state with global state
+	useEffect(() => {
+		setIsFavorited(user?.favorites?.includes(product?._id) || false);
+	}, [user, product]);
 
 	const { mutate: toggleFavorite, isLoading } = useMutation({
 		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
 		onMutate: async () => {
-			await queryClient.cancelQueries({ queryKey: ["myFavorites"] });
-			const previousUser = useUserStore.getState().user;
-			const newIsFavorited = !isFavorited;
-
-			useUserStore.setState((state) => {
-				const currentFavorites = state.user?.favorites || [];
-				const newFavorites = newIsFavorited
-					? [...currentFavorites, product._id]
-					: currentFavorites.filter((id) => id !== product._id);
-				return { user: { ...state.user, favorites: newFavorites } };
-			});
-
-			toast.success(`Product ${newIsFavorited ? "added to" : "removed from"} favorites.`);
-			return { previousUser };
+			// Optimistically update the local state for instant feedback
+			const previousIsFavorited = isFavorited;
+			setIsFavorited(!previousIsFavorited);
+			toast.success(`Product ${!previousIsFavorited ? "added to" : "removed from"} favorites.`);
+			return { previousIsFavorited };
 		},
 		onError: (err, variables, context) => {
-			useUserStore.setState({ user: context.previousUser });
+			// Revert to the previous state on error
+			setIsFavorited(context.previousIsFavorited);
 			toast.error("Failed to update favorites. Please try again.");
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
+			// Ensure eventual consistency with the backend
 			refreshUser();
+			queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
 		},
 	});
 
