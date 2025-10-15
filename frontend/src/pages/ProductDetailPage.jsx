@@ -1,20 +1,20 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "react-router-dom";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { ShoppingCart, Star, ArrowLeft, Heart } from "lucide-react";
+import { ShoppingCart, Star, ArrowLeft } from "lucide-react";
 import { useCartStore } from "../stores/useCartStore";
 import { useUserStore } from "../stores/useUserStore";
 import { toast } from "sonner";
 import ReviewsList from "../components/ReviewsList";
 import AddReviewForm from "../components/AddReviewForm";
 import MostReviewedProducts from "../components/MostReviewedProducts";
+import FavoriteButton from "../components/FavoriteButton";
 
 const ProductDetailPage = () => {
 	const { productId } = useParams();
 	const { addToCart } = useCartStore();
-	const { user, checkAuth } = useUserStore();
-	const queryClient = useQueryClient();
+	const { user } = useUserStore();
 
 	const {
 		data: product,
@@ -42,19 +42,7 @@ const ProductDetailPage = () => {
 		enabled: !!productId,
 	});
 
-	const toggleFavoriteMutation = useMutation({
-		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
-		onSuccess: () => {
-			toast.success("Favorites updated!");
-			checkAuth();
-		},
-		onError: (error) => {
-			toast.error(error.response?.data?.message || "Failed to update favorites.");
-		},
-	});
-
 	const userHasReviewed = reviews?.some((review) => review.user._id === user?._id);
-	const isFavorited = user?.favorites?.includes(product?._id);
 
 	if (isLoadingProduct) {
 		return <LoadingSpinner fullScreen={true} />;
@@ -131,15 +119,7 @@ const ProductDetailPage = () => {
 								<ShoppingCart size={24} className='mr-3' />
 								Add to Cart
 							</button>
-							<button
-								type="button"
-								onClick={handleFavoriteClick}
-								disabled={toggleFavoriteMutation.isPending}
-								className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50"
-								title="Add to Favorites"
-							>
-								<Heart size={24} className={isFavorited ? "fill-red-500 text-red-500" : ""} />
-							</button>
+							<FavoriteButton product={product} />
 						</div>
 					</div>
 				</div>

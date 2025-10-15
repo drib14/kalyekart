@@ -184,7 +184,7 @@ function App() {
 				</Routes>
 			</main>
 			<Footer />
-			<Toaster theme='dark' />
+			<Toaster theme='dark' position='top-center' richColors />
 			{user && <BottomNav />}
 			{user && <FloatingFeedbackButton onClick={() => setIsFeedbackModalOpen(true)} />}
 			<FeedbackModal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} />
