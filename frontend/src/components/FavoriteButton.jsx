@@ -21,15 +21,45 @@ const FavoriteButton = ({ product, className, standalone = false }) => {
 
 	const { mutate: toggleFavorite, isLoading } = useMutation({
 		mutationFn: () => axios.post(`/favorites/toggle/${product._id}`),
-		onSuccess: () => {
+		onMutate: async () => {
+			// Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+			await queryClient.cancelQueries({ queryKey: ["user"] });
+			await queryClient.cancelQueries({ queryKey: ["myFavorites"] });
+
+			// Snapshot the previous value
+			const previousUser = useUserStore.getState().user;
+
+			// Optimistically update to the new value
 			const newIsFavorited = !isFavorited;
+			setIsFavorited(newIsFavorited);
+
+			// Update the user store optimistically
+			useUserStore.setState((state) => {
+				const currentFavorites = state.user.favorites || [];
+				const newFavorites = newIsFavorited
+					? [...currentFavorites, product._id]
+					: currentFavorites.filter((id) => id !== product._id);
+				return { user: { ...state.user, favorites: newFavorites } };
+			});
+
 			toast.success(`Product ${newIsFavorited ? "added to" : "removed from"} favorites.`);
-			refreshUser(); // Silently refetch user data
-			queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
+
+			// Return a context object with the snapshotted value
+			return { previousUser };
 		},
-		onError: (error) => {
-			console.error("Error toggling favorite:", error);
-			toast.error("Could not update favorite status.");
+		onError: (err, newTodo, context) => {
+			// Rollback to the previous value
+			useUserStore.setState({ user: context.previousUser });
+			setIsFavorited(
+				context.previousUser?.favorites?.includes(product._id) || false
+			);
+			toast.error("Failed to update favorites. Please try again.");
+		},
+		// Always refetch after error or success:
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ["user"] });
+			queryClient.invalidateQueries({ queryKey: ["myFavorites"] });
+			refreshUser();
 		},
 	});
 
