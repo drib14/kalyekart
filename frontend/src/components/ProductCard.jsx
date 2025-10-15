@@ -79,9 +79,9 @@ const ProductCard = ({ product, onCardClick }) => {
 						))}
 					</div>
 					<span className='bg-gray-700 text-gray-200 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded ml-3'>
-						{product.averageRating.toFixed(1)}
+						{(product.averageRating || 0).toFixed(1)}
 					</span>
-					<span className='text-sm text-gray-400'>({product.numReviews} reviews)</span>
+					<span className='text-sm text-gray-400'>({product.numReviews || 0} reviews)</span>
 				</div>
 				<div className='mt-2 mb-5 flex items-center justify-between'>
 					<p>

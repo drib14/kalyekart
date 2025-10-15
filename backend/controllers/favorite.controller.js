@@ -23,17 +23,15 @@ export const addFavorite = async (req, res) => {
 			return res.status(404).json({ message: "Product not found" });
 		}
 
-		const user = await User.findById(userId);
+		const user = await User.findByIdAndUpdate(
+			userId,
+			{ $addToSet: { favorites: productId } },
+			{ new: true }
+		).populate("favorites");
+
 		if (!user) {
 			return res.status(404).json({ message: "User not found" });
 		}
-
-		if (user.favorites.includes(productId)) {
-			return res.status(400).json({ message: "Product already in favorites" });
-		}
-
-		user.favorites.push(productId);
-		await user.save();
 
 		res.status(200).json({ message: "Product added to favorites", favorites: user.favorites });
 	} catch (error) {
@@ -46,13 +44,15 @@ export const removeFavorite = async (req, res) => {
 		const { productId } = req.params;
 		const userId = req.user._id;
 
-		const user = await User.findById(userId);
+		const user = await User.findByIdAndUpdate(
+			userId,
+			{ $pull: { favorites: productId } },
+			{ new: true }
+		).populate("favorites");
+
 		if (!user) {
 			return res.status(404).json({ message: "User not found" });
 		}
-
-		user.favorites.pull(productId);
-		await user.save();
 
 		res.status(200).json({ message: "Product removed from favorites", favorites: user.favorites });
 	} catch (error) {
