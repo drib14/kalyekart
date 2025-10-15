@@ -40,6 +40,7 @@ import LegalPage from "./pages/LegalPage";
 import DriverPanelPage from "./pages/DriverPanelPage";
 import DriverOrderHistory from "./pages/DriverOrderHistory";
 import DriverProfilePage from "./pages/DriverProfilePage";
+import FavoritesPage from "./pages/FavoritesPage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -178,6 +179,7 @@ function App() {
 					<Route path='/driver/panel' element={<DriverPanelPage />} />
 					<Route path='/driver/history' element={<DriverOrderHistory />} />
 					<Route path='/driver/profile' element={<DriverProfilePage />} />
+					<Route path='/favorites' element={user ? <FavoritesPage /> : <Navigate to='/login' />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
 			</main>

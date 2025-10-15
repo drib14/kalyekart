@@ -1,4 +1,14 @@
-import { ShoppingCart, UserPlus, LogIn, LogOut, Lock, User, Settings, MessageSquare } from "lucide-react";
+import {
+	ShoppingCart,
+	UserPlus,
+	LogIn,
+	LogOut,
+	Lock,
+	User,
+	Settings,
+	MessageSquare,
+	Heart,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserStore } from "../stores/useUserStore";
 import Searchbar from "./Searchbar";
@@ -144,6 +154,13 @@ const Navbar = () => {
 												onClick={() => setIsDropdownOpen(false)}
 											>
 												<MessageSquare className='mr-2' size={16} /> My Reviews
+											</Link>
+											<Link
+												to='/favorites'
+												className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
+												onClick={() => setIsDropdownOpen(false)}
+											>
+												<Heart className='mr-2' size={16} /> Favorites
 											</Link>
 											{isAdmin && (
 												<Link

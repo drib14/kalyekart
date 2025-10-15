@@ -1,13 +1,48 @@
 import { create } from "zustand";
 import axios from "../lib/axios";
 import { toast } from "sonner";
+import {
+	getFavorites as getFavoritesApi,
+	addFavorite as addFavoriteApi,
+	removeFavorite as removeFavoriteApi,
+} from "../api/favorite.api";
 
 export const useUserStore = create((set, get) => ({
 	user: null,
 	loading: false,
 	checkingAuth: true,
+	favorites: [],
 
 	setUser: (user) => set({ user }),
+
+	getFavorites: async () => {
+		try {
+			const favorites = await getFavoritesApi();
+			set({ favorites });
+		} catch (error) {
+			toast.error("Failed to fetch favorites");
+		}
+	},
+
+	addFavorite: async (productId) => {
+		try {
+			const { favorites } = await addFavoriteApi(productId);
+			set({ favorites });
+			toast.success("Product added to favorites");
+		} catch (error) {
+			toast.error("Failed to add to favorites");
+		}
+	},
+
+	removeFavorite: async (productId) => {
+		try {
+			const { favorites } = await removeFavoriteApi(productId);
+			set({ favorites });
+			toast.success("Product removed from favorites");
+		} catch (error) {
+			toast.error("Failed to remove from favorites");
+		}
+	},
 
 	signup: async ({ name, email, password, confirmPassword }) => {
 		set({ loading: true });
@@ -65,6 +100,9 @@ export const useUserStore = create((set, get) => ({
 		try {
 			const response = await axios.get("/auth/profile");
 			set({ user: response.data, checkingAuth: false });
+			if (response.data) {
+				get().getFavorites();
+			}
 		} catch (error) {
 			console.log(error.message);
 			set({ checkingAuth: false, user: null });

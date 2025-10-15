@@ -1,13 +1,28 @@
 import { toast } from "sonner";
-import { ShoppingCart, ShoppingBag, Star } from "lucide-react";
+import { ShoppingCart, ShoppingBag, Star, Heart } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
 import { useCartStore } from "../stores/useCartStore";
 import { useNavigate } from "react-router-dom";
 
 const ProductCard = ({ product, onCardClick }) => {
-	const { user } = useUserStore();
+	const { user, favorites, addFavorite, removeFavorite } = useUserStore();
 	const { addToCart } = useCartStore();
 	const navigate = useNavigate();
+
+	const isFavorite = favorites.some((fav) => fav._id === product._id);
+
+	const handleFavoriteClick = (e) => {
+		e.stopPropagation();
+		if (!user) {
+			toast.error("Please login to manage your favorites", { id: "login" });
+			return;
+		}
+		if (isFavorite) {
+			removeFavorite(product._id);
+		} else {
+			addFavorite(product._id);
+		}
+	};
 
 	const handleAddToCart = (e) => {
 		e.stopPropagation();
@@ -36,6 +51,17 @@ const ProductCard = ({ product, onCardClick }) => {
 			<div className='relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl'>
 				<img className='object-cover w-full' src={product.image} alt={product.name} />
 				<div className='absolute inset-0 bg-black bg-opacity-20' />
+				<button
+					className='absolute top-2 right-2 rounded-full p-2 bg-white/80 hover:bg-white'
+					onClick={handleFavoriteClick}
+				>
+					<Heart
+						size={24}
+						className={`transition-colors ${
+							isFavorite ? "text-red-500 fill-current" : "text-gray-600"
+						}`}
+					/>
+				</button>
 			</div>
 
 			<div className='mt-4 px-5 pb-5'>
