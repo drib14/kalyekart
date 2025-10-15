@@ -5,14 +5,17 @@ import axios from "../lib/axios";
 import { useUserStore } from "../stores/useUserStore";
 import { toast } from "sonner";
 
-const FavoriteButton = ({ product, className }) => {
+const FavoriteButton = ({ product, className, standalone = false }) => {
 	const { user } = useUserStore();
 	const queryClient = useQueryClient();
 	const [isFavorited, setIsFavorited] = useState(false);
 
 	useEffect(() => {
 		if (user && product) {
-			setIsFavorited(user.favorites?.includes(product._id));
+			// Ensure we are checking against a valid array
+			setIsFavorited(Array.isArray(user.favorites) && user.favorites.includes(product._id));
+		} else {
+			setIsFavorited(false);
 		}
 	}, [user, product]);
 
@@ -49,21 +52,30 @@ const FavoriteButton = ({ product, className }) => {
 
 	if (!product) return null;
 
+	const buttonClasses = standalone
+		? `p-3 rounded-full transition-colors duration-200 ${
+				isFavorited
+					? "bg-red-500 text-white"
+					: "bg-gray-700 text-gray-300 hover:bg-red-500 hover:text-white"
+		  }`
+		: `absolute top-2 right-2 p-1.5 rounded-full transition-colors duration-200 ${
+				isFavorited
+					? "bg-red-500/80 text-white"
+					: "bg-black/50 text-gray-300 hover:bg-red-500/80 hover:text-white"
+		  }`;
+
 	return (
 		<button
 			onClick={handleFavoriteClick}
 			disabled={isLoading}
-			className={`absolute top-2 right-2 p-1.5 rounded-full transition-colors duration-200 ${
-				isFavorited
-					? "bg-red-500/80 text-white"
-					: "bg-black/50 text-gray-300 hover:bg-red-500/80 hover:text-white"
-			} ${className}`}
+			className={`${buttonClasses} ${className}`}
 			aria-label='Toggle Favorite'
+			title='Add to Favorites'
 		>
 			<Heart
-				size={20}
+				size={standalone ? 24 : 20}
 				className={`transition-transform duration-200 ${
-					isFavorited ? "fill-current scale-110" : ""
+					isFavorited ? "fill-current scale-110" : "group-hover:fill-red-500/50"
 				}`}
 			/>
 		</button>

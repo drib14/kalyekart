@@ -119,7 +119,7 @@ const ProductDetailPage = () => {
 								<ShoppingCart size={24} className='mr-3' />
 								Add to Cart
 							</button>
-							<FavoriteButton product={product} />
+							<FavoriteButton product={product} standalone={true} />
 						</div>
 					</div>
 				</div>
