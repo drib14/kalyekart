@@ -26,11 +26,21 @@ const sendTransactionalEmail = async (emailDetails) => {
 const loadTemplate = (templateName, data) => {
 	const templatePath = path.resolve(__dirname, `../email-templates/${templateName}.html`);
 	let template = fs.readFileSync(templatePath, "utf-8");
-	for (const key in data) {
-		const regex = new RegExp(`{{${key}}}`, "g");
-		template = template.replace(regex, data[key]);
-	}
-	return template;
+
+	const replacePlaceholders = (template, data, prefix = "") => {
+		for (const key in data) {
+			const value = data[key];
+			if (typeof value === "object" && value !== null) {
+				template = replacePlaceholders(template, value, `${prefix}${key}.`);
+			} else {
+				const regex = new RegExp(`{{${prefix}${key}}}`, "g");
+				template = template.replace(regex, value);
+			}
+		}
+		return template;
+	};
+
+	return replacePlaceholders(template, data);
 };
 
 const EmailService = {
@@ -56,6 +66,7 @@ const EmailService = {
 			customerName: user.name,
 			orderDate: new Date(order.createdAt).toLocaleDateString(),
 			totalAmount: `₱${order.totalAmount.toFixed(2)}`,
+			deliveryAddress: order.shippingAddress,
 			domain: "kalyekart.app",
 		};
 
