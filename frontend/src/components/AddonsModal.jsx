@@ -3,6 +3,7 @@ import axios from "../lib/axios";
 import LoadingSpinner from "./LoadingSpinner";
 import { useCartStore } from "../stores/useCartStore";
 import { toast } from "sonner";
+import { createPortal } from "react-dom";
 
 const AddonsModal = ({ onClose }) => {
 	const {
@@ -27,7 +28,7 @@ const AddonsModal = ({ onClose }) => {
 	if (isLoading) return <LoadingSpinner />;
 	if (isError) return <div>Error loading products</div>;
 
-	return (
+	return createPortal(
 		<div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
 			<div className='bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm sm:max-w-md md:max-w-lg w-full'>
 				<h2 className='text-xl sm:text-2xl font-bold text-white mb-4'>You might also like</h2>
@@ -58,7 +59,8 @@ const AddonsModal = ({ onClose }) => {
 					Close
 				</button>
 			</div>
-		</div>
+		</div>,
+		document.body
 	);
 };
 

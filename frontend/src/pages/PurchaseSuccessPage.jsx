@@ -56,14 +56,16 @@ const PurchaseSuccessPage = () => {
 			return res.data;
 		},
 		enabled: !!orderId,
-		onSuccess: () => {
-			// Automatically open the review modal after a short delay
+	});
+
+	useEffect(() => {
+		if (order) {
 			const timer = setTimeout(() => {
 				setIsReviewModalOpen(true);
 			}, 2000); // 2-second delay
 			return () => clearTimeout(timer);
-		},
-	});
+		}
+	}, [order]);
 
 	const getEstimatedDeliveryTime = (distance) => {
 		if (distance === undefined) return "30-45 minutes";
