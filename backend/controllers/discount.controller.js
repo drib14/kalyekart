@@ -1,5 +1,6 @@
 import Discount from "../models/discount.model.js";
 import UserDiscount from "../models/userDiscount.model.js";
+import Order from "../models/order.model.js";
 
 // @desc    Create a new discount
 // @route   POST /api/discounts
@@ -16,6 +17,8 @@ export const createDiscount = async (req, res) => {
 			validFrom,
 			validUntil,
 			usageLimit,
+			eligibility,
+			usageLimitPerUser,
 		} = req.body;
 
 		// Basic validation
@@ -40,6 +43,8 @@ export const createDiscount = async (req, res) => {
 			validFrom,
 			validUntil,
 			usageLimit,
+			eligibility,
+			usageLimitPerUser,
 		});
 
 		await newDiscount.save();
@@ -117,6 +122,8 @@ export const updateDiscount = async (req, res) => {
 			discount.validUntil = req.body.validUntil || discount.validUntil;
 			discount.usageLimit = req.body.usageLimit || discount.usageLimit;
 			discount.status = req.body.status || discount.status;
+			discount.eligibility = req.body.eligibility || discount.eligibility;
+			discount.usageLimitPerUser = req.body.usageLimitPerUser || discount.usageLimitPerUser;
 
 			const updatedDiscount = await discount.save();
 			res.json(updatedDiscount);
@@ -183,9 +190,23 @@ export const applyDiscount = async (req, res) => {
 				});
 		}
 
+		if (discount.eligibility === "new") {
+			const userOrders = await Order.find({ user: userId });
+			if (userOrders.length > 0) {
+				return res.status(400).json({ message: "This discount is for new users only" });
+			}
+		}
+
+		const userDiscount = await UserDiscount.findOne({ userId, discountId: discount._id });
+		if (userDiscount && userDiscount.timesUsed >= discount.usageLimitPerUser) {
+			return res.status(400).json({ message: "You have reached the usage limit for this discount" });
+		}
+
 		let discountAmount = 0;
 		if (discount.type === "percentage") {
 			discountAmount = ((subtotal + deliveryFee) * discount.value) / 100;
+		} else if (discount.type === "delivery") {
+			discountAmount = deliveryFee;
 		} else {
 			discountAmount = discount.value;
 		}

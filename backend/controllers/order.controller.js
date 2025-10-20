@@ -62,6 +62,8 @@ export const createCodOrder = async (req, res) => {
 
 		if (discount.type === "percentage") {
 			discountAmount = ((subtotal + deliveryFee) * discount.value) / 100;
+		} else if (discount.type === "delivery") {
+			discountAmount = deliveryFee;
 		}
 
 		const totalAmount = subtotal - discountAmount + deliveryFee;

@@ -16,6 +16,8 @@ const DiscountForm = ({ discount, closeModal }) => {
 		validFrom: "",
 		validUntil: "",
 		usageLimit: null,
+		eligibility: "all",
+		usageLimitPerUser: 1,
 	});
 
 	useEffect(() => {
@@ -109,6 +111,7 @@ const DiscountForm = ({ discount, closeModal }) => {
 							>
 								<option value='percentage'>Percentage (%)</option>
 								<option value='fixed'>Fixed Amount (₱)</option>
+								<option value='delivery'>Free Delivery</option>
 							</select>
 						</div>
 						<InputField
@@ -119,6 +122,30 @@ const DiscountForm = ({ discount, closeModal }) => {
 							onChange={handleChange}
 							required
 						/>
+					</div>
+					<div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+						<InputField
+							label='Usage Limit Per User'
+							name='usageLimitPerUser'
+							type='number'
+							value={formData.usageLimitPerUser}
+							onChange={handleChange}
+						/>
+						<div>
+							<label htmlFor='eligibility' className='block text-sm font-medium text-gray-300 mb-1'>
+								Eligibility
+							</label>
+							<select
+								name='eligibility'
+								id='eligibility'
+								value={formData.eligibility}
+								onChange={handleChange}
+								className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 transition'
+							>
+								<option value='all'>All Users</option>
+								<option value='new'>New Users Only</option>
+							</select>
+						</div>
 					</div>
 					<div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 						<InputField
