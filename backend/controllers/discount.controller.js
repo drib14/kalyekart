@@ -1,6 +1,7 @@
 import Discount from "../models/discount.model.js";
 import UserDiscount from "../models/userDiscount.model.js";
 import Order from "../models/order.model.js";
+import User from "../models/user.model.js";
 
 // @desc    Create a new discount
 // @route   POST /api/discounts
@@ -191,8 +192,10 @@ export const applyDiscount = async (req, res) => {
 		}
 
 		if (discount.eligibility === "new") {
-			const userOrders = await Order.find({ user: userId });
-			if (userOrders.length > 0) {
+			const user = await User.findById(userId);
+			const sevenDaysAgo = new Date();
+			sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+			if (user.createdAt > sevenDaysAgo) {
 				return res.status(400).json({ message: "This discount is for new users only" });
 			}
 		}

@@ -59,8 +59,9 @@ export const createPaymongoCheckoutSession = async (req, res) => {
 
 				if (isValid) {
 					if (discount.eligibility === "new") {
-						const userOrders = await Order.find({ user: req.user._id });
-						if (userOrders.length > 0) {
+						const sevenDaysAgo = new Date();
+						sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+						if (user.createdAt > sevenDaysAgo) {
 							return res.status(400).json({ message: "This discount is for new users only" });
 						}
 					}

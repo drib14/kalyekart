@@ -26,15 +26,25 @@ export const createCodOrder = async (req, res) => {
 		if (discountCode) {
 			const discount = await Discount.findOne({ code: discountCode });
 			if (discount) {
+				const userDiscount = await UserDiscount.findOne({ userId, discountId: discount._id });
 				// All validation should be done on the apply discount route, but we do a final check here
 				const isValid =
 					discount.status === "active" &&
 					new Date() >= discount.validFrom &&
 					new Date() <= discount.validUntil &&
 					subtotal >= discount.minimumOrderValue &&
-					(!discount.usageLimit || discount.timesUsed < discount.usageLimit);
+					(!discount.usageLimit || discount.timesUsed < discount.usageLimit) &&
+					(!userDiscount || userDiscount.timesUsed < discount.usageLimitPerUser);
 
 				if (isValid) {
+					if (discount.eligibility === "new") {
+						const sevenDaysAgo = new Date();
+						sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+						if (user.createdAt > sevenDaysAgo) {
+							return res.status(400).json({ message: "This discount is for new users only" });
+						}
+					}
+
 					discountId = discount._id;
 					if (discount.type === "percentage") {
 						discountAmount = (subtotal * discount.value) / 100;
