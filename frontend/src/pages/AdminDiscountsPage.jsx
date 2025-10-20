@@ -140,7 +140,7 @@ const AdminDiscountsPage = () => {
 					isOpen={isDeleteModalOpen}
 					message={`Are you sure you want to delete the discount "${discountToDelete?.code}"?`}
 					onConfirm={() => deleteDiscount(discountToDelete?._id)}
-					onCancel={closeDeleteModal}
+					onClose={closeDeleteModal}
 				/>
 			)}
 		</main>
