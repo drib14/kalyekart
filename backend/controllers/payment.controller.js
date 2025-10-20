@@ -3,6 +3,7 @@ import { Buffer } from "buffer";
 import Discount from "../models/discount.model.js";
 import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
+import UserDiscount from "../models/userDiscount.model.js";
 import Notification from "../models/notification.model.js";
 import NotificationService from "../services/notification.service.js";
 
@@ -47,14 +48,23 @@ export const createPaymongoCheckoutSession = async (req, res) => {
 		if (discountCode) {
 			const discount = await Discount.findOne({ code: discountCode });
 			if (discount) {
+				const userDiscount = await UserDiscount.findOne({ userId: req.user._id, discountId: discount._id });
 				const isValid =
 					discount.status === "active" &&
 					new Date() >= discount.validFrom &&
 					new Date() <= discount.validUntil &&
 					subtotal / 100 >= discount.minimumOrderValue &&
-					(!discount.usageLimit || discount.timesUsed < discount.usageLimit);
+					(!discount.usageLimit || discount.timesUsed < discount.usageLimit) &&
+					(!userDiscount || userDiscount.timesUsed < discount.usageLimitPerUser);
 
 				if (isValid) {
+					if (discount.eligibility === "new") {
+						const userOrders = await Order.find({ user: req.user._id });
+						if (userOrders.length > 0) {
+							return res.status(400).json({ message: "This discount is for new users only" });
+						}
+					}
+
 					if (discount.type === "percentage") {
 						discountAmount = Math.round(((subtotal + deliveryFee * 100) * discount.value) / 100);
 					} else if (discount.type === "delivery") {

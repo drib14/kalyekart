@@ -60,10 +60,13 @@ export const createCodOrder = async (req, res) => {
 		const feePerKm = 5;
 		const deliveryFee = Math.round(baseFee + distance * feePerKm);
 
-		if (discount.type === "percentage") {
-			discountAmount = ((subtotal + deliveryFee) * discount.value) / 100;
-		} else if (discount.type === "delivery") {
-			discountAmount = deliveryFee;
+		if (discountId) {
+			const discount = await Discount.findById(discountId);
+			if (discount.type === "percentage") {
+				discountAmount = ((subtotal + deliveryFee) * discount.value) / 100;
+			} else if (discount.type === "delivery") {
+				discountAmount = deliveryFee;
+			}
 		}
 
 		const totalAmount = subtotal - discountAmount + deliveryFee;
