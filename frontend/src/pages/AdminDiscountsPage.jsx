@@ -16,11 +16,11 @@ const AdminDiscountsPage = () => {
 
 	const { data: discounts, isLoading } = useQuery({
 		queryKey: ["discounts"],
-		queryFn: () => axios.get("/discounts").then((res) => res.data),
+		queryFn: () => axios.get("/admin/discounts").then((res) => res.data),
 	});
 
 	const { mutate: deleteDiscount } = useMutation({
-		mutationFn: (id) => axios.delete(`/discounts/${id}`),
+		mutationFn: (id) => axios.delete(`/admin/discounts/${id}`),
 		onSuccess: () => {
 			queryClient.invalidateQueries("discounts");
 			toast.success("Discount deleted successfully");
