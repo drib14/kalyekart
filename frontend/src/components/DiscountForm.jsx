@@ -191,7 +191,3 @@ const InputField = ({ label, name, ...props }) => (
 );
 
 export default DiscountForm;
-	);
-};
-
-export default DiscountForm;
