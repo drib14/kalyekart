@@ -48,9 +48,16 @@ const orderSchema = new mongoose.Schema(
 			required: true,
 			min: 0,
 		},
-		coupon: {
+		discountAmount: {
+			type: Number,
+			default: 0,
+		},
+		discount: {
+			discountId: {
+				type: mongoose.Schema.Types.ObjectId,
+				ref: "Discount",
+			},
 			code: String,
-			discountPercentage: Number,
 		},
 		shippingAddress: {
 			fullName: { type: String, required: true },

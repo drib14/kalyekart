@@ -4,33 +4,30 @@ import { toast } from "sonner";
 
 export const useCartStore = create((set, get) => ({
 	cart: [],
-	coupon: null,
+	appliedDiscount: null,
+	discountAmount: 0,
 	total: 0,
 	subtotal: 0,
-	isCouponApplied: false,
 
-	getMyCoupon: async () => {
+	applyDiscount: async (code) => {
 		try {
-			const response = await axios.get("/coupons");
-			set({ coupon: response.data });
-		} catch (error) {
-			console.error("Error fetching coupon:", error);
-		}
-	},
-	applyCoupon: async (code) => {
-		try {
-			const response = await axios.post("/coupons/validate", { code });
-			set({ coupon: response.data, isCouponApplied: true });
+			const { subtotal } = get();
+			const response = await axios.post("/discounts/apply", { code, subtotal });
+			set({
+				appliedDiscount: { code: response.data.code },
+				discountAmount: response.data.discountAmount,
+			});
 			get().calculateTotals();
-			toast.success("Coupon applied successfully");
+			toast.success("Discount applied successfully");
 		} catch (error) {
-			toast.error(error.response?.data?.message || "Failed to apply coupon");
+			toast.error(error.response?.data?.message || "Failed to apply discount");
 		}
 	},
-	removeCoupon: () => {
-		set({ coupon: null, isCouponApplied: false });
+
+	removeDiscount: () => {
+		set({ appliedDiscount: null, discountAmount: 0 });
 		get().calculateTotals();
-		toast.success("Coupon removed");
+		toast.success("Discount removed");
 	},
 
 	getCartItems: async () => {
@@ -45,8 +42,8 @@ export const useCartStore = create((set, get) => ({
 	},
 	clearCart: async () => {
 		try {
-			const res = await axios.delete("/cart/all/clear");
-			set({ cart: res.data, coupon: null, total: 0, subtotal: 0 });
+			await axios.delete("/cart/all/clear");
+			set({ cart: [], appliedDiscount: null, discountAmount: 0, total: 0, subtotal: 0 });
 		} catch (error) {
 			console.error("Failed to clear cart:", error);
 		}
@@ -85,14 +82,9 @@ export const useCartStore = create((set, get) => ({
 		}
 	},
 	calculateTotals: () => {
-		const { cart, coupon } = get();
+		const { cart, discountAmount } = get();
 		const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-		let total = subtotal;
-
-		if (coupon) {
-			const discount = subtotal * (coupon.discountPercentage / 100);
-			total = subtotal - discount;
-		}
+		let total = subtotal - discountAmount;
 
 		set({ subtotal, total });
 	},

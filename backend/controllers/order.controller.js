@@ -1,5 +1,7 @@
 import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
+import Discount from "../models/discount.model.js";
+import UserDiscount from "../models/userDiscount.model.js";
 import { v4 as uuidv4 } from "uuid";
 import { uploadOnCloudinary } from "../lib/cloudinary.js";
 import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
@@ -10,12 +12,37 @@ const WAREHOUSE_COORDINATES = { lat: 10.2983, lon: 123.8991 };
 
 export const createCodOrder = async (req, res) => {
 	try {
-		const { products, shippingAddress, contactNumber, couponCode, subtotal } = req.body;
+		const { products, shippingAddress, contactNumber, discountCode, subtotal } = req.body;
 		const userId = req.user._id;
 		const user = await User.findById(userId);
 
 		if (!user) {
 			return res.status(404).json({ message: "User not found" });
+		}
+
+		let discountAmount = 0;
+		let discountId = null;
+
+		if (discountCode) {
+			const discount = await Discount.findOne({ code: discountCode });
+			if (discount) {
+				// All validation should be done on the apply discount route, but we do a final check here
+				const isValid =
+					discount.status === "active" &&
+					new Date() >= discount.validFrom &&
+					new Date() <= discount.validUntil &&
+					subtotal >= discount.minimumOrderValue &&
+					(!discount.usageLimit || discount.timesUsed < discount.usageLimit);
+
+				if (isValid) {
+					discountId = discount._id;
+					if (discount.type === "percentage") {
+						discountAmount = (subtotal * discount.value) / 100;
+					} else {
+						discountAmount = discount.value;
+					}
+				}
+			}
 		}
 
 		const fullAddress = `${shippingAddress.barangay}, ${shippingAddress.city}, Cebu, Philippines`;
@@ -32,7 +59,7 @@ export const createCodOrder = async (req, res) => {
 		const baseFee = 15;
 		const feePerKm = 5;
 		const deliveryFee = Math.round(baseFee + distance * feePerKm);
-		const totalAmount = subtotal + deliveryFee;
+		const totalAmount = subtotal - discountAmount + deliveryFee;
 
 		const newOrder = new Order({
 			user: userId,
@@ -46,15 +73,29 @@ export const createCodOrder = async (req, res) => {
 			contactNumber,
 			paymentMethod: "cod",
 			paymentStatus: "pending",
-			couponCode,
 			subtotal,
 			deliveryFee,
 			distance,
+			discountAmount,
+			discount: {
+				discountId,
+				code: discountCode,
+			},
 			totalAmount,
 			paymongoSessionId: `cod_${uuidv4()}`,
 		});
 
 		await newOrder.save();
+
+		if (discountId) {
+			await Discount.updateOne({ _id: discountId }, { $inc: { timesUsed: 1 } });
+			await UserDiscount.findOneAndUpdate(
+				{ userId, discountId },
+				{ $inc: { timesUsed: 1 } },
+				{ upsert: true }
+			);
+		}
+
 		user.cartItems = [];
 		await user.save();
 

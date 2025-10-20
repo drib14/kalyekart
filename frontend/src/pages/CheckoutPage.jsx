@@ -8,9 +8,10 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, CreditCard, Truck } from "lucide-react";
+import DiscountCodeInput from "../components/DiscountCodeInput";
 
 const CheckoutPage = () => {
-	const { cart, subtotal, total, coupon } = useCartStore();
+	const { cart, subtotal, total, appliedDiscount, discountAmount } = useCartStore();
 	const { user } = useUserStore();
 	const navigate = useNavigate();
 
@@ -206,7 +207,7 @@ const CheckoutPage = () => {
 			})),
 			shippingAddress: deliveryInfo,
 			contactNumber: deliveryInfo.contactNumber,
-			couponCode: coupon?.code,
+			discountCode: appliedDiscount?.code,
 			distance: distance,
 			deliveryFee: deliveryFee,
 			subtotal: subtotal,
@@ -480,10 +481,10 @@ const CheckoutPage = () => {
 								<span>Subtotal</span>
 								<span>₱{subtotal.toFixed(2)}</span>
 							</div>
-							{coupon && (
+							{appliedDiscount && (
 								<div className='flex justify-between text-emerald-400'>
-									<span>Discount ({coupon.code})</span>
-									<span>-{coupon.discountPercentage}%</span>
+									<span>Discount ({appliedDiscount.code})</span>
+									<span>-₱{discountAmount.toFixed(2)}</span>
 								</div>
 							)}
 							<div className='flex justify-between text-gray-300'>
@@ -495,6 +496,7 @@ const CheckoutPage = () => {
 								<span>₱{finalTotal.toFixed(2)}</span>
 							</div>
 						</div>
+						<DiscountCodeInput />
 					</div>
 				</div>
 			</motion.div>

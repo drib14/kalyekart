@@ -8,6 +8,7 @@ import {
 	Settings,
 	MessageSquare,
 	Heart,
+	Ticket,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserStore } from "../stores/useUserStore";
@@ -161,6 +162,13 @@ const Navbar = () => {
 												onClick={() => setIsDropdownOpen(false)}
 											>
 												<Heart className='mr-2' size={16} /> Favorites
+											</Link>
+											<Link
+												to='/my-discounts'
+												className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
+												onClick={() => setIsDropdownOpen(false)}
+											>
+												<Ticket className='mr-2' size={16} /> My Discounts
 											</Link>
 											{isAdmin && (
 												<Link
