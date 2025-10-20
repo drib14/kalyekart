@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, CreditCard, Truck } from "lucide-react";
 import DiscountCodeInput from "../components/DiscountCodeInput";
-import AvailableDiscounts from "../components/AvailableDiscounts";
+import AvailableDiscounts from "../../components/AvailableDiscounts";
 
 const CheckoutPage = () => {
 	const { cart, subtotal, total, appliedDiscount, discountAmount } = useCartStore();
