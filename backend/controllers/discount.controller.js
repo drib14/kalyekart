@@ -195,7 +195,7 @@ export const applyDiscount = async (req, res) => {
 			const user = await User.findById(userId);
 			const sevenDaysAgo = new Date();
 			sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-			if (user.createdAt > sevenDaysAgo) {
+			if (user.createdAt < sevenDaysAgo) {
 				return res.status(400).json({ message: "This discount is for new users only" });
 			}
 		}

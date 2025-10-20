@@ -40,7 +40,7 @@ export const createCodOrder = async (req, res) => {
 					if (discount.eligibility === "new") {
 						const sevenDaysAgo = new Date();
 						sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-						if (user.createdAt > sevenDaysAgo) {
+						if (user.createdAt < sevenDaysAgo) {
 							return res.status(400).json({ message: "This discount is for new users only" });
 						}
 					}

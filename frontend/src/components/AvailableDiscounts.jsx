@@ -20,7 +20,6 @@ const AvailableDiscounts = ({ deliveryFee }) => {
 
 	const handleApplyDiscount = (code) => {
 		applyDiscount(code, deliveryFee);
-		toast.success(`Discount ${code} applied!`);
 	};
 
 	return (
