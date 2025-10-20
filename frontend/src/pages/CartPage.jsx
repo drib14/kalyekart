@@ -5,7 +5,6 @@ import { ShoppingCart } from "lucide-react";
 import CartItem from "../components/CartItem";
 import { useState, useEffect, useRef } from "react";
 import OrderSummary from "../components/OrderSummary";
-import GiftCouponCard from "../components/GiftCouponCard";
 import AddonsModal from "../components/AddonsModal";
 
 const CartPage = () => {
@@ -52,7 +51,6 @@ const CartPage = () => {
 								transition={{ duration: 0.5, delay: 0.4 }}
 							>
 								<OrderSummary />
-								<GiftCouponCard />
 							</motion.div>
 						)}
 					</div>

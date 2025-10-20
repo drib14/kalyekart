@@ -496,7 +496,7 @@ const CheckoutPage = () => {
 								<span>₱{finalTotal.toFixed(2)}</span>
 							</div>
 						</div>
-						<DiscountCodeInput />
+						<DiscountCodeInput deliveryFee={deliveryFee} />
 					</div>
 				</div>
 			</motion.div>

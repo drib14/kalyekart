@@ -9,10 +9,10 @@ export const useCartStore = create((set, get) => ({
 	total: 0,
 	subtotal: 0,
 
-	applyDiscount: async (code) => {
+	applyDiscount: async (code, deliveryFee) => {
 		try {
 			const { subtotal } = get();
-			const response = await axios.post("/discounts/apply", { code, subtotal });
+			const response = await axios.post("/discounts/apply", { code, subtotal, deliveryFee });
 			set({
 				appliedDiscount: { code: response.data.code },
 				discountAmount: response.data.discountAmount,

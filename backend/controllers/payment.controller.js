@@ -56,7 +56,7 @@ export const createPaymongoCheckoutSession = async (req, res) => {
 
 				if (isValid) {
 					if (discount.type === "percentage") {
-						discountAmount = Math.round((totalAmount * discount.value) / 100);
+						discountAmount = Math.round(((subtotal + deliveryFee * 100) * discount.value) / 100);
 					} else {
 						discountAmount = Math.round(discount.value * 100);
 					}

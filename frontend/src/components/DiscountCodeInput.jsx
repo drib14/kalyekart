@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useCartStore } from "../stores/useCartStore";
 import { toast } from "sonner";
 
-const DiscountCodeInput = () => {
+const DiscountCodeInput = ({ deliveryFee }) => {
 	const { applyDiscount, removeDiscount, appliedDiscount } = useCartStore();
 	const [code, setCode] = useState("");
 
@@ -11,7 +11,7 @@ const DiscountCodeInput = () => {
 			toast.error("Please enter a discount code.");
 			return;
 		}
-		applyDiscount(code);
+		applyDiscount(code, deliveryFee);
 		setCode("");
 	};
 

@@ -24,7 +24,7 @@ const MyDiscountsPage = () => {
 				<h1 className='text-3xl font-extrabold text-emerald-400 mb-8 text-center'>My Discounts</h1>
 				{isLoading ? (
 					<LoadingSpinner />
-				) : (
+				) : Array.isArray(discounts) ? (
 					<div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
 						{discounts.map((discount) => (
 							<div key={discount._id} className='bg-gray-800 p-6 rounded-lg shadow-lg'>
@@ -42,6 +42,8 @@ const MyDiscountsPage = () => {
 							</div>
 						))}
 					</div>
+				) : (
+					<p className='text-center text-gray-400'>Could not load your discounts at this time.</p>
 				)}
 			</motion.div>
 		</main>

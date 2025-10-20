@@ -153,7 +153,7 @@ export const deleteDiscount = async (req, res) => {
 // @access  Private
 export const applyDiscount = async (req, res) => {
 	try {
-		const { code, subtotal } = req.body;
+		const { code, subtotal, deliveryFee } = req.body;
 		const userId = req.user._id;
 
 		const discount = await Discount.findOne({ code });
@@ -185,7 +185,7 @@ export const applyDiscount = async (req, res) => {
 
 		let discountAmount = 0;
 		if (discount.type === "percentage") {
-			discountAmount = (subtotal * discount.value) / 100;
+			discountAmount = ((subtotal + deliveryFee) * discount.value) / 100;
 		} else {
 			discountAmount = discount.value;
 		}
