@@ -65,7 +65,9 @@ export const getMyDiscounts = async (req, res) => {
 		const discounts = await Discount.find({
 			status: "active",
 			validUntil: { $gte: new Date() },
-		});
+		})
+			.sort({ createdAt: -1 })
+			.limit(3);
 		res.json(discounts);
 	} catch (error) {
 		console.error(error);
