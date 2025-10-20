@@ -141,7 +141,7 @@ function App() {
 
 			<Navbar />
 			<main className='flex-grow relative pt-20 pb-20'>
-				<Routes>
+				<Routes future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
 					<Route path='/' element={<HomePage />} />
 					<Route path='/signup' element={!user ? <SignUpPage /> : <Navigate to='/' />} />
 					<Route path='/login' element={!user ? <LoginPage /> : <Navigate to='/' />} />
