@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Buffer } from "buffer";
-import Coupon from "../models/coupon.model.js";
+import Discount from "../models/discount.model.js";
 import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
@@ -17,7 +17,8 @@ const paymongoApi = axios.create({
 
 export const createPaymongoCheckoutSession = async (req, res) => {
 	try {
-		const { products, couponCode, shippingAddress, distance, deliveryFee, contactNumber, paymentMethod } = req.body;
+		const { products, discountCode, shippingAddress, distance, deliveryFee, contactNumber, paymentMethod } =
+			req.body;
 		const user = await User.findById(req.user._id);
 
 		if (!user) {
@@ -40,18 +41,32 @@ export const createPaymongoCheckoutSession = async (req, res) => {
 		});
 
 		let totalAmount = subtotal + Math.round(deliveryFee * 100);
-		let coupon = null;
-		let couponDetails = {};
+		let discountAmount = 0;
+		let discountDetails = {};
 
-		if (couponCode) {
-			coupon = await Coupon.findOne({ code: couponCode, userId: req.user._id, isActive: true });
-			if (coupon) {
-				const discount = Math.round(totalAmount * (coupon.discountPercentage / 100));
-				totalAmount -= discount;
-				couponDetails = {
-					code: coupon.code,
-					discountPercentage: coupon.discountPercentage,
-				};
+		if (discountCode) {
+			const discount = await Discount.findOne({ code: discountCode });
+			if (discount) {
+				const isValid =
+					discount.status === "active" &&
+					new Date() >= discount.validFrom &&
+					new Date() <= discount.validUntil &&
+					subtotal / 100 >= discount.minimumOrderValue &&
+					(!discount.usageLimit || discount.timesUsed < discount.usageLimit);
+
+				if (isValid) {
+					if (discount.type === "percentage") {
+						discountAmount = Math.round((totalAmount * discount.value) / 100);
+					} else {
+						discountAmount = Math.round(discount.value * 100);
+					}
+					totalAmount -= discountAmount;
+					discountDetails = {
+						discountId: discount._id,
+						code: discount.code,
+						discountAmount: discountAmount / 100,
+					};
+				}
 			}
 		}
 
@@ -96,7 +111,7 @@ export const createPaymongoCheckoutSession = async (req, res) => {
 						distance: String(distance),
 						deliveryFee: String(deliveryFee),
 						contactNumber: contactNumber,
-						coupon: JSON.stringify(couponDetails),
+						discount: JSON.stringify(discountDetails),
 						subtotal: String(subtotal / 100),
 						totalAmount: String(totalAmount / 100),
 						paymentMethod: paymentMethod,
@@ -127,7 +142,7 @@ export const verifyPaymongoPayment = async (req, res) => {
 			const metadata = session.data.attributes.metadata;
 			const {
 				userId,
-				coupon: couponString,
+				discount: discountString,
 				products: productsString,
 				shippingAddress: shippingAddressString,
 				distance,
@@ -151,9 +166,9 @@ export const verifyPaymongoPayment = async (req, res) => {
 				}
 			}
 
-			const coupon = JSON.parse(couponString);
-			if (coupon && coupon.code) {
-				await Coupon.findOneAndUpdate({ code: coupon.code, userId: userId }, { isActive: false });
+			const discount = JSON.parse(discountString);
+			if (discount && discount.discountId) {
+				await Discount.updateOne({ _id: discount.discountId }, { $inc: { timesUsed: 1 } });
 			}
 
 			const user = await User.findById(userId);
@@ -176,7 +191,11 @@ export const verifyPaymongoPayment = async (req, res) => {
 				})),
 				subtotal: parseFloat(subtotal),
 				totalAmount: parseFloat(totalAmount),
-				coupon: coupon,
+				discountAmount: discount.discountAmount,
+				discount: {
+					discountId: discount.discountId,
+					code: discount.code,
+				},
 				paymongoSessionId: sessionId,
 				shippingAddress,
 				distance: parseFloat(distance),
@@ -195,10 +214,6 @@ export const verifyPaymongoPayment = async (req, res) => {
 					order: newOrder,
 					products: products,
 				});
-
-				if (newOrder.totalAmount >= 2000) {
-					await createNewCoupon(user._id);
-				}
 
 				res.status(201).json({
 					success: true,
@@ -225,17 +240,3 @@ export const verifyPaymongoPayment = async (req, res) => {
 		res.status(500).json({ message: "Error verifying PayMongo payment", error: error.message });
 	}
 };
-
-async function createNewCoupon(userId) {
-	await Coupon.findOneAndDelete({ userId, code: /GIFT/ });
-
-	const newCoupon = new Coupon({
-		code: "GIFT" + Math.random().toString(36).substring(2, 8).toUpperCase(),
-		discountPercentage: 10,
-		expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-		userId: userId,
-	});
-
-	await newCoupon.save();
-	return newCoupon;
-}
