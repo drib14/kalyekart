@@ -26,7 +26,7 @@ export const createDiscount = async (req, res) => {
 			!code ||
 			!title ||
 			!type ||
-			!value ||
+			(type !== "delivery" && !value) ||
 			!validFrom ||
 			!validUntil
 		) {

@@ -15,7 +15,7 @@ const DiscountForm = ({ discount, closeModal }) => {
 		minimumOrderValue: 0,
 		validFrom: "",
 		validUntil: "",
-		usageLimit: null,
+		usageLimit: 0,
 		eligibility: "all",
 		usageLimitPerUser: 1,
 	});
@@ -114,14 +114,16 @@ const DiscountForm = ({ discount, closeModal }) => {
 								<option value='delivery'>Free Delivery</option>
 							</select>
 						</div>
-						<InputField
-							label='Value'
-							name='value'
-							type='number'
-							value={formData.value}
-							onChange={handleChange}
-							required
-						/>
+						{formData.type !== "delivery" && (
+							<InputField
+								label='Value'
+								name='value'
+								type='number'
+								value={formData.value}
+								onChange={handleChange}
+								required
+							/>
+						)}
 					</div>
 					<div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 						<InputField
