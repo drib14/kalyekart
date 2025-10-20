@@ -22,6 +22,8 @@ router.get("/my-discounts", protectRoute, getMyDiscounts);
 // Admin routes
 router.post("/", protectRoute, adminRoute, createDiscount);
 router.get("/", protectRoute, adminRoute, getDiscounts);
+
+// Admin routes cont.
 router.get("/:id", protectRoute, adminRoute, getDiscountById);
 router.put("/:id", protectRoute, adminRoute, updateDiscount);
 router.delete("/:id", protectRoute, adminRoute, deleteDiscount);
