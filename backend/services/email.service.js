@@ -56,6 +56,10 @@ const EmailService = {
 				.join(""),
 			subtotal: `₱${order.subtotal.toFixed(2)}`,
 			deliveryFee: `₱${order.deliveryFee.toFixed(2)}`,
+			discount:
+				order.discount && order.discount.code
+					? `<p><strong>Discount (${order.discount.code}):</strong> -₱${order.discountAmount.toFixed(2)}</p>`
+					: "",
 			total: `₱${order.totalAmount.toFixed(2)}`,
 			domain: "kalyekart.app",
 		};
@@ -67,6 +71,12 @@ const EmailService = {
 			orderDate: new Date(order.createdAt).toLocaleDateString(),
 			totalAmount: `₱${order.totalAmount.toFixed(2)}`,
 			deliveryAddress: order.shippingAddress,
+			discount:
+				order.discount && order.discount.code
+					? `<li><span>Discount (${order.discount.code}):</span><strong>-₱${order.discountAmount.toFixed(
+							2
+					  )}</strong></li>`
+					: "",
 			domain: "kalyekart.app",
 		};
 

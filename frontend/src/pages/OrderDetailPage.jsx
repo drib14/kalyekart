@@ -221,9 +221,10 @@ const OrderDetailPage = () => {
 								<p>
 									<strong>Subtotal:</strong> ₱{order.subtotal.toFixed(2)}
 								</p>
-								{order.coupon && (
+								{order.discount && order.discount.code && (
 									<p>
-										<strong>Discount:</strong> -{order.coupon.discountPercentage}%
+										<strong>Discount ({order.discount.code}):</strong> -₱
+										{order.discountAmount.toFixed(2)}
 									</p>
 								)}
 								<p>
