@@ -29,7 +29,7 @@ const DiscountForm = ({ discount, closeModal }) => {
 	}, [discount]);
 
 	const { mutate: createDiscount, isPending: isCreating } = useMutation({
-		mutationFn: (data) => axios.post("/discounts", data),
+		mutationFn: (data) => axios.post("/admin/discounts", data),
 		onSuccess: () => {
 			queryClient.invalidateQueries("discounts");
 			toast.success("Discount created successfully");
@@ -41,7 +41,7 @@ const DiscountForm = ({ discount, closeModal }) => {
 	});
 
 	const { mutate: updateDiscount, isPending: isUpdating } = useMutation({
-		mutationFn: (data) => axios.put(`/discounts/${discount._id}`, data),
+		mutationFn: (data) => axios.put(`/admin/discounts/${discount._id}`, data),
 		onSuccess: () => {
 			queryClient.invalidateQueries("discounts");
 			toast.success("Discount updated successfully");
