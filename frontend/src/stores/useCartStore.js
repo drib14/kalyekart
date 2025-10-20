@@ -10,6 +10,9 @@ export const useCartStore = create((set, get) => ({
 	subtotal: 0,
 
 	applyDiscount: async (code, deliveryFee) => {
+		if (get().appliedDiscount?.code === code) {
+			return; // Don't re-apply the same discount
+		}
 		try {
 			const { subtotal } = get();
 			const response = await axios.post("/discounts/apply", { code, subtotal, deliveryFee });

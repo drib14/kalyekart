@@ -182,6 +182,11 @@ export const verifyPaymongoPayment = async (req, res) => {
 			const discount = JSON.parse(discountString);
 			if (discount && discount.discountId) {
 				await Discount.updateOne({ _id: discount.discountId }, { $inc: { timesUsed: 1 } });
+				await UserDiscount.findOneAndUpdate(
+					{ userId, discountId: discount.discountId },
+					{ $inc: { timesUsed: 1 } },
+					{ upsert: true }
+				);
 			}
 
 			const user = await User.findById(userId);
