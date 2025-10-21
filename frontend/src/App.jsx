@@ -37,9 +37,6 @@ import useOfflineStatus from "./hooks/useOfflineStatus";
 import OfflinePage from "./pages/OfflinePage";
 import Footer from "./components/Footer";
 import LegalPage from "./pages/LegalPage";
-import DriverPanelPage from "./pages/DriverPanelPage";
-import DriverOrderHistory from "./pages/DriverOrderHistory";
-import DriverProfilePage from "./pages/DriverProfilePage";
 import FavoritesPage from "./pages/FavoritesPage";
 import MyDiscountsPage from "./pages/MyDiscountsPage";
 
