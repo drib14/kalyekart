@@ -174,9 +174,6 @@ function App() {
 					<Route path='/order/:orderId' element={user ? <OrderDetailPage /> : <Navigate to='/login' />} />
 					<Route path='/product/:productId' element={<ProductDetailPage />} />
 					<Route path='/legal' element={<LegalPage />} />
-					<Route path='/driver/panel' element={<DriverPanelPage />} />
-					<Route path='/driver/history' element={<DriverOrderHistory />} />
-					<Route path='/driver/profile' element={<DriverProfilePage />} />
 					<Route path='/favorites' element={user ? <FavoritesPage /> : <Navigate to='/login' />} />
 					<Route path='/my-discounts' element={user ? <MyDiscountsPage /> : <Navigate to='/login' />} />
 					<Route path='*' element={<NotFoundPage />} />
