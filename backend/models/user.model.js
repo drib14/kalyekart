@@ -70,6 +70,9 @@ const userSchema = new mongoose.Schema(
 		passwordResetExpires: {
 			type: Date,
 		},
+		refreshToken: {
+			type: String,
+		},
 		deliveryAddresses: [addressSchema],
 		fcmToken: {
 			type: String,

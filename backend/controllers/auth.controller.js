@@ -1,9 +1,9 @@
-import { redis } from "../lib/redis.js";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { prepareUserResponse } from "../lib/prepareUserResponse.js";
 import NotificationService from "../services/notification.service.js";
+import { sendEmail } from "../lib/email.js";
 
 const generateTokens = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -18,7 +18,7 @@ const generateTokens = (userId) => {
 };
 
 const storeRefreshToken = async (userId, refreshToken) => {
-	await redis.set(`refresh_token:${userId}`, refreshToken, "EX", 7 * 24 * 60 * 60); // 7days
+	await User.findByIdAndUpdate(userId, { refreshToken });
 };
 
 const setCookies = (res, accessToken, refreshToken) => {
@@ -90,7 +90,7 @@ export const logout = async (req, res) => {
 		const refreshToken = req.cookies.refreshToken;
 		if (refreshToken) {
 			const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-			await redis.del(`refresh_token:${decoded.userId}`);
+			await User.findByIdAndUpdate(decoded.userId, { refreshToken: "" });
 		}
 
 		res.clearCookie("accessToken");
@@ -149,11 +149,13 @@ export const forgotPassword = async (req, res) => {
 		user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 		await user.save();
 
-		// This could also be moved to NotificationService, but leaving for now.
-		await sendEmail(user.email, "Your Password Reset Code", "passwordReset", {
-			NAME: user.name,
-			CODE: resetCode,
-		});
+		const htmlMessage = `
+			<h3>Password Reset</h3>
+			<p>Hello ${user.name},</p>
+			<p>Your password reset code is: <strong>${resetCode}</strong></p>
+			<p>This code will expire in 10 minutes.</p>
+		`;
+		await sendEmail(user.email, "Your Password Reset Code", htmlMessage);
 
 		res.status(200).json({ message: "A password reset code has been sent to your email." });
 	} catch (error) {
@@ -195,9 +197,9 @@ export const refreshToken = async (req, res) => {
 		}
 
 		const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-		const storedToken = await redis.get(`refresh_token:${decoded.userId}`);
+		const user = await User.findById(decoded.userId);
 
-		if (storedToken !== refreshToken) {
+		if (!user || user.refreshToken !== refreshToken) {
 			return res.status(401).json({ message: "Invalid refresh token" });
 		}
 
