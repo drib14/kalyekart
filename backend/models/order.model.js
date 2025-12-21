@@ -35,6 +35,10 @@ const orderSchema = new mongoose.Schema(
 			type: String,
 			unique: true,
 		},
+		deliveryAddress: {
+			type: String,
+			required: true, // Making it required for now as our flow depends on it
+		},
 	},
 	{ timestamps: true }
 );
