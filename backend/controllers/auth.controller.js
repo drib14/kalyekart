@@ -203,17 +203,9 @@ export const refreshToken = async (req, res) => {
 			return res.status(401).json({ message: "Invalid refresh token" });
 		}
 
-		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, {
-			expiresIn: "15m",
-		});
-
-		const isProduction = process.env.NODE_ENV === "production";
-		res.cookie("accessToken", accessToken, {
-			httpOnly: true,
-			secure: isProduction,
-			sameSite: isProduction ? "none" : "strict",
-			maxAge: 15 * 60 * 1000,
-		});
+		const { accessToken, refreshToken: newRefreshToken } = generateTokens(user._id);
+		await storeRefreshToken(user._id, newRefreshToken);
+		setCookies(res, accessToken, newRefreshToken);
 
 		res.json({ message: "Token refreshed successfully" });
 	} catch (error) {

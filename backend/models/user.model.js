@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
 const addressSchema = new mongoose.Schema({
+	label: { type: String }, // e.g., "Home", "Work"
+	type: { type: String }, // e.g., "home", "work", "other"
 	fullName: { type: String, required: true },
 	contactNumber: { type: String, required: true },
 	sitio: { type: String },
@@ -10,6 +12,12 @@ const addressSchema = new mongoose.Schema({
 	province: { type: String, required: true, default: "Cebu" },
 	postalCode: { type: String, required: true },
 	isDefault: { type: Boolean, default: false },
+});
+
+const cancellationSchema = new mongoose.Schema({
+	orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
+	reason: { type: String },
+	date: { type: Date, default: Date.now },
 });
 
 const userSchema = new mongoose.Schema(
@@ -27,8 +35,15 @@ const userSchema = new mongoose.Schema(
 		},
 		password: {
 			type: String,
-			required: [true, "Password is required"],
+			required: function () {
+				return this.authProvider === "email";
+			},
 			minlength: [6, "Password must be at least 6 characters long"],
+		},
+		authProvider: {
+			type: String,
+			enum: ["email", "google"],
+			default: "email",
 		},
 		profilePicture: {
 			type: String,
@@ -37,7 +52,7 @@ const userSchema = new mongoose.Schema(
 		phoneNumber: {
 			type: String,
 		},
-		// Admin-specific fields
+		// Admin/Restaurant/Driver fields
 		storeName: {
 			type: String,
 		},
@@ -61,8 +76,19 @@ const userSchema = new mongoose.Schema(
 		],
 		role: {
 			type: String,
-			enum: ["customer", "admin"],
+			enum: ["customer", "admin", "restaurant_owner", "driver"],
 			default: "customer",
+		},
+		status: {
+			type: String,
+			enum: ["active", "suspended", "banned"],
+			default: "active",
+		},
+		suspensionEndDate: {
+			type: Date,
+		},
+		statusReason: {
+			type: String,
 		},
 		passwordResetCode: {
 			type: String,
@@ -83,6 +109,7 @@ const userSchema = new mongoose.Schema(
 				ref: "Product",
 			},
 		],
+		cancellationHistory: [cancellationSchema],
 	},
 	{
 		timestamps: true,
@@ -91,7 +118,7 @@ const userSchema = new mongoose.Schema(
 
 // Pre-save hook to hash password before saving to database
 userSchema.pre("save", async function (next) {
-	if (this.isModified("password")) {
+	if (this.isModified("password") && this.password) {
 		try {
 			const salt = await bcrypt.genSalt(10);
 			this.password = await bcrypt.hash(this.password, salt);
