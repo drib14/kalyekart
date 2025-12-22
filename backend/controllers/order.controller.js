@@ -60,13 +60,15 @@ export const createCodOrder = async (req, res) => {
 		if (!coordinates) {
 			return res.status(400).json({ message: "Could not determine coordinates for the provided address." });
 		}
+		// OpenCage returns lng, but our function expects lon (or just a number). map lng to lon.
+		const lon = coordinates.lng || coordinates.lon;
 		const distance = calculateHaversineDistance(
 			WAREHOUSE_COORDINATES.lat,
 			WAREHOUSE_COORDINATES.lon,
 			coordinates.lat,
-			coordinates.lon
+			lon
 		);
-		const baseFee = 15;
+		const baseFee = 20;
 		const feePerKm = 5;
 		const deliveryFee = Math.round(baseFee + distance * feePerKm);
 

@@ -123,25 +123,26 @@ export const updateDeliveryAddress = async (req, res) => {
 export const deleteDeliveryAddress = async (req, res) => {
 	const { addressId } = req.params;
 	try {
-		const user = await User.findById(req.user._id);
+		const user = await User.findOneAndUpdate(
+			{ _id: req.user._id },
+			{ $pull: { deliveryAddresses: { _id: addressId } } },
+			{ new: true }
+		);
+
 		if (!user) {
 			return res.status(404).json({ message: "User not found" });
 		}
 
-		const address = user.deliveryAddresses.id(addressId);
-		if (!address) {
-			return res.status(404).json({ message: "Address not found" });
+		// Ensure there's a default address if the deleted one was default
+		// Since we used atomic pull, we check the state after the operation
+		if (user.deliveryAddresses.length > 0) {
+			const hasDefault = user.deliveryAddresses.some((addr) => addr.isDefault);
+			if (!hasDefault) {
+				user.deliveryAddresses[0].isDefault = true;
+				await user.save();
+			}
 		}
 
-		const wasDefault = address.isDefault;
-		address.remove();
-
-		// If the deleted address was the default, set a new default if possible
-		if (wasDefault && user.deliveryAddresses.length > 0) {
-			user.deliveryAddresses[0].isDefault = true;
-		}
-
-		await user.save();
 		res.status(200).json(user.deliveryAddresses);
 	} catch (error) {
 		res.status(500).json({ message: "Server error", error: error.message });

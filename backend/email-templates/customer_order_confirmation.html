@@ -1,59 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Confirmation</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
-        .header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #ddd; }
-        .header h1 { margin: 0; color: #0056b3; }
-        .content { padding: 20px 0; }
-        .content h2 { color: #333; }
-        .order-details, .shipping-info { margin-bottom: 20px; }
-        .order-details ul { list-style: none; padding: 0; }
-        .order-details li { padding: 5px 0; border-bottom: 1px solid #eee; }
-        .totals { text-align: right; }
-        .button-container { text-align: center; margin-top: 20px; }
-        .button { background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px; }
-        .footer { text-align: center; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #888; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmation</title>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; }
+  .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+  .header { background-color: #10B981; padding: 24px; text-align: center; }
+  .header h1 { color: white; margin: 0; font-size: 24px; font-weight: bold; }
+  .content { padding: 32px; color: #374151; line-height: 1.6; }
+  .button { display: inline-block; background-color: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 24px; }
+  .order-summary { background-color: #f9fafb; padding: 20px; border-radius: 6px; margin-top: 20px; }
+  .order-summary ul { padding-left: 20px; margin: 0; }
+  .order-summary li { margin-bottom: 8px; }
+  .totals { text-align: right; margin-top: 16px; border-top: 1px solid #e5e7eb; pt: 16px; }
+  .footer { background-color: #f9fafb; padding: 24px; text-align: center; color: #9ca3af; font-size: 14px; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>KalyeKart</h1>
-            <p>Your Order is Confirmed!</p>
-        </div>
-        <div class="content">
-            <h2>Hi {{customerName}},</h2>
-            <p>Thank you for your purchase! We're getting your order ready. We'll notify you once it has been shipped.</p>
-
-            <div class="order-details">
-                <h3>Order Summary (ID: #{{orderIdShort}})</h3>
-                <ul>{{items}}</ul>
-                <div class="totals">
-                    <p><strong>Subtotal:</strong> {{subtotal}}</p>
-                    <p><strong>Delivery Fee:</strong> {{deliveryFee}}</p>
-                    {{discount}}
-                    <p><strong>Total:</strong> {{total}}</p>
-                </div>
-            </div>
-
-            <div class="shipping-info">
-                <h3>Shipping to:</h3>
-                <p>{{shippingAddress}}</p>
-            </div>
-
-            <div class="button-container">
-                <a href="https://{{domain}}/order/{{orderId}}" class="button">View Your Order</a>
-            </div>
-        </div>
-        <div class="footer">
-            <p>If you have any questions, reply to this email.</p>
-            <p>&copy; 2024 KalyeKart. All rights reserved.</p>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>KalyeKart</h1>
     </div>
+    <div class="content">
+       <h2>Order Confirmed!</h2>
+       <p>Hi {{customerName}},</p>
+       <p>Thank you for your purchase! We're getting your order ready. We'll notify you once it has been shipped.</p>
+
+       <div class="order-summary">
+           <h3>Order Summary <span style="font-weight:normal; font-size: 0.9em; color:#6b7280;">(#{{orderIdShort}})</span></h3>
+           <ul>{{items}}</ul>
+           <div class="totals">
+               <p>Subtotal: <strong>{{subtotal}}</strong></p>
+               <p>Delivery Fee: <strong>{{deliveryFee}}</strong></p>
+               {{discount}}
+               <p style="font-size: 1.1em; color: #10B981;">Total: <strong>{{total}}</strong></p>
+           </div>
+       </div>
+
+       <div style="margin-top: 24px;">
+           <h3>Shipping to:</h3>
+           <p style="background: #f3f4f6; padding: 12px; border-radius: 4px;">{{shippingAddress}}</p>
+       </div>
+
+       <div style="text-align: center;">
+           <a href="https://{{domain}}/order/{{orderId}}" class="button">View Your Order</a>
+       </div>
+    </div>
+    <div class="footer">
+      <p>If you have any questions, simply reply to this email.</p>
+      <p>&copy; {{currentYear}} KalyeKart. All rights reserved.</p>
+    </div>
+  </div>
 </body>
 </html>

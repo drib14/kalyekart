@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { prepareUserResponse } from "../lib/prepareUserResponse.js";
 import NotificationService from "../services/notification.service.js";
-import { sendEmail } from "../lib/email.js";
+import EmailService from "../services/email.service.js";
 
 const generateTokens = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -149,13 +149,7 @@ export const forgotPassword = async (req, res) => {
 		user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 		await user.save();
 
-		const htmlMessage = `
-			<h3>Password Reset</h3>
-			<p>Hello ${user.name},</p>
-			<p>Your password reset code is: <strong>${resetCode}</strong></p>
-			<p>This code will expire in 10 minutes.</p>
-		`;
-		await sendEmail(user.email, "Your Password Reset Code", htmlMessage);
+		await EmailService.sendPasswordResetEmail(user.email, user.name, resetCode);
 
 		res.status(200).json({ message: "A password reset code has been sent to your email." });
 	} catch (error) {
@@ -203,17 +197,9 @@ export const refreshToken = async (req, res) => {
 			return res.status(401).json({ message: "Invalid refresh token" });
 		}
 
-		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, {
-			expiresIn: "15m",
-		});
-
-		const isProduction = process.env.NODE_ENV === "production";
-		res.cookie("accessToken", accessToken, {
-			httpOnly: true,
-			secure: isProduction,
-			sameSite: isProduction ? "none" : "strict",
-			maxAge: 15 * 60 * 1000,
-		});
+		const { accessToken, refreshToken: newRefreshToken } = generateTokens(user._id);
+		await storeRefreshToken(user._id, newRefreshToken);
+		setCookies(res, accessToken, newRefreshToken);
 
 		res.json({ message: "Token refreshed successfully" });
 	} catch (error) {

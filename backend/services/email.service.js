@@ -1,4 +1,4 @@
-import brevo from "@getbrevo/brevo";
+import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -6,19 +6,22 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const apiInstance = new brevo.TransactionalEmailsApi();
+// Initialize Nodemailer Transporter
+const transporter = nodemailer.createTransport({
+	service: "gmail",
+	auth: {
+		user: process.env.EMAIL_USER,
+		pass: process.env.EMAIL_PASS,
+	},
+});
 
-apiInstance.authentications["apiKey"].apiKey = process.env.BREVO_KEY;
-
-const sendTransactionalEmail = async (emailDetails) => {
+const sendTransactionalEmail = async (emailOptions) => {
 	try {
-		const sendSmtpEmail = new brevo.SendSmtpEmail();
-		Object.assign(sendSmtpEmail, emailDetails);
-		const { response, body } = await apiInstance.sendTransacEmail(sendSmtpEmail);
-		console.log("Email sent successfully. Response: ", body);
-		return { response, body };
+		const info = await transporter.sendMail(emailOptions);
+		console.log("Email sent successfully. MessageId: ", info.messageId);
+		return info;
 	} catch (error) {
-		console.error("Error sending transactional email:", error.response ? error.response.body : error.message);
+		console.error("Error sending transactional email:", error.message);
 		// Do not throw error to prevent crashing main flows
 		return null;
 	}
@@ -26,22 +29,31 @@ const sendTransactionalEmail = async (emailDetails) => {
 
 const loadTemplate = (templateName, data) => {
 	const templatePath = path.resolve(__dirname, `../email-templates/${templateName}.html`);
-	let template = fs.readFileSync(templatePath, "utf-8");
+	try {
+		let template = fs.readFileSync(templatePath, "utf-8");
 
-	const replacePlaceholders = (template, data, prefix = "") => {
-		for (const key in data) {
-			const value = data[key];
-			if (typeof value === "object" && value !== null) {
-				template = replacePlaceholders(template, value, `${prefix}${key}.`);
-			} else {
-				const regex = new RegExp(`{{${prefix}${key}}}`, "g");
-				template = template.replace(regex, value);
+		// Inject current year automatically
+		const currentYear = new Date().getFullYear();
+		const mergedData = { ...data, currentYear };
+
+		const replacePlaceholders = (template, data, prefix = "") => {
+			for (const key in data) {
+				const value = data[key];
+				if (typeof value === "object" && value !== null) {
+					template = replacePlaceholders(template, value, `${prefix}${key}.`);
+				} else {
+					const regex = new RegExp(`{{${prefix}${key}}}`, "g");
+					template = template.replace(regex, value);
+				}
 			}
-		}
-		return template;
-	};
+			return template;
+		};
 
-	return replacePlaceholders(template, data);
+		return replacePlaceholders(template, mergedData);
+	} catch (error) {
+		console.error(`Error loading template ${templateName}:`, error.message);
+		return "";
+	}
 };
 
 const EmailService = {
@@ -82,17 +94,17 @@ const EmailService = {
 		};
 
 		const customerEmail = {
-			to: [{ email: user.email, name: user.name }],
-			sender: { email: process.env.EMAIL_USER, name: "KalyeKart" },
+			from: `"KalyeKart" <${process.env.EMAIL_USER}>`,
+			to: user.email,
 			subject: `Your KalyeKart Order #${customerTemplateData.orderIdShort} is Confirmed!`,
-			htmlContent: loadTemplate("customer_order_confirmation", customerTemplateData),
+			html: loadTemplate("customer_order_confirmation", customerTemplateData),
 		};
 
 		const adminEmail = {
-			to: [{ email: process.env.EMAIL_USER, name: "KalyeKart Admin" }],
-			sender: { email: process.env.EMAIL_USER, name: "KalyeKart System" },
+			from: `"KalyeKart System" <${process.env.EMAIL_USER}>`,
+			to: process.env.EMAIL_USER,
 			subject: `New Order Received #${adminTemplateData.orderIdShort}`,
-			htmlContent: loadTemplate("admin_new_order", adminTemplateData),
+			html: loadTemplate("admin_new_order", adminTemplateData),
 		};
 
 		await sendTransactionalEmail(customerEmail);
@@ -109,10 +121,10 @@ const EmailService = {
 		};
 
 		const email = {
-			to: [{ email: user.email, name: user.name }],
-			sender: { email: process.env.EMAIL_USER, name: "KalyeKart" },
+			from: `"KalyeKart" <${process.env.EMAIL_USER}>`,
+			to: user.email,
 			subject: `Your KalyeKart Order #${templateData.orderIdShort} has been updated`,
-			htmlContent: loadTemplate("customer_order_status_update", templateData),
+			html: loadTemplate("customer_order_status_update", templateData),
 		};
 
 		await sendTransactionalEmail(email);
@@ -132,17 +144,17 @@ const EmailService = {
 		};
 
 		const customerEmail = {
-			to: [{ email: user.email, name: user.name }],
-			sender: { email: process.env.EMAIL_USER, name: "KalyeKart" },
+			from: `"KalyeKart" <${process.env.EMAIL_USER}>`,
+			to: user.email,
 			subject: "We've Received Your Feedback!",
-			htmlContent: loadTemplate("customer_feedback_confirmation", customerTemplateData),
+			html: loadTemplate("customer_feedback_confirmation", customerTemplateData),
 		};
 
 		const adminEmail = {
-			to: [{ email: process.env.EMAIL_USER, name: "KalyeKart Admin" }],
-			sender: { email: process.env.EMAIL_USER, name: "KalyeKart System" },
+			from: `"KalyeKart System" <${process.env.EMAIL_USER}>`,
+			to: process.env.EMAIL_USER,
 			subject: "New Customer Feedback Received",
-			htmlContent: loadTemplate("admin_new_feedback", adminTemplateData),
+			html: loadTemplate("admin_new_feedback", adminTemplateData),
 		};
 
 		await sendTransactionalEmail(customerEmail);
@@ -159,13 +171,30 @@ const EmailService = {
 		};
 
 		const adminEmail = {
-			to: [{ email: process.env.EMAIL_USER, name: "KalyeKart Admin" }],
-			sender: { email: process.env.EMAIL_USER, name: "KalyeKart System" },
+			from: `"KalyeKart System" <${process.env.EMAIL_USER}>`,
+			to: process.env.EMAIL_USER,
 			subject: `New Refund Request for Order #${adminTemplateData.orderIdShort}`,
-			htmlContent: loadTemplate("admin_refund_request", adminTemplateData),
+			html: loadTemplate("admin_refund_request", adminTemplateData),
 		};
 
 		await sendTransactionalEmail(adminEmail);
+	},
+
+	sendPasswordResetEmail: async (email, name, resetCode) => {
+		const templateData = {
+			customerName: name,
+			resetCode: resetCode,
+			domain: "kalyekart.app",
+		};
+
+		const mailOptions = {
+			from: `"KalyeKart" <${process.env.EMAIL_USER}>`,
+			to: email,
+			subject: "Password Reset Request",
+			html: loadTemplate("password_reset", templateData),
+		};
+
+		await sendTransactionalEmail(mailOptions);
 	},
 };
 

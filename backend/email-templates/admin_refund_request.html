@@ -1,44 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Refund Request</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; }
-        .container { width: 100%; max-width: 600px; margin: 20px auto; padding: 20px; border-radius: 5px; background-color: #ffffff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .header { text-align: center; padding-bottom: 15px; border-bottom: 2px solid #dc3545; }
-        .header h1 { margin: 0; color: #dc3545; font-size: 24px; }
-        .content { padding: 20px 0; }
-        .request-box { background-color: #f8f9fa; padding: 15px; border-left: 4px solid #dc3545; margin-bottom: 20px; }
-        .request-box p { margin: 5px 0; }
-        .button-container { text-align: center; margin-top: 25px; }
-        .button { background-color: #dc3545; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; }
-        .footer { text-align: center; padding-top: 20px; font-size: 12px; color: #888; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Refund Request</title>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; }
+  .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+  .header { background-color: #ef4444; padding: 24px; text-align: center; } /* Red for Refund/Alert */
+  .header h1 { color: white; margin: 0; font-size: 24px; font-weight: bold; }
+  .content { padding: 32px; color: #374151; line-height: 1.6; }
+  .info-box { background-color: #fef2f2; padding: 20px; border-radius: 6px; margin-top: 20px; border: 1px solid #fee2e2; }
+  .button { display: inline-block; background-color: #ef4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 24px; }
+  .footer { background-color: #f9fafb; padding: 24px; text-align: center; color: #9ca3af; font-size: 14px; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Action Required: New Refund Request</h1>
-        </div>
-        <div class="content">
-            <p>A customer has submitted a new refund request for an order. Please review it promptly.</p>
-
-            <div class="request-box">
-                <p><strong>Order ID:</strong> #{{orderIdShort}}</p>
-                <p><strong>Customer:</strong> {{customerName}}</p>
-                <p><strong>Reason for Refund:</strong></p>
-                <p><i>"{{reason}}"</i></p>
-            </div>
-
-            <div class="button-container">
-                <a href="https://{{domain}}/secret-dashboard/refunds" class="button">Manage Refund Requests</a>
-            </div>
-        </div>
-        <div class="footer">
-            <p>This is an automated notification from the KalyeKart System.</p>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>KalyeKart Admin</h1>
     </div>
+    <div class="content">
+       <h2>New Refund Request</h2>
+       <p><strong>{{customerName}}</strong> has requested a refund for Order <strong>#{{orderIdShort}}</strong>.</p>
+
+       <div class="info-box">
+           <p><strong>Reason provided:</strong></p>
+           <p>{{reason}}</p>
+       </div>
+
+       <p>Please review the request details and attached proof in the admin dashboard.</p>
+
+       <div style="text-align: center;">
+           <a href="https://{{domain}}/admin/orders" class="button">Review Request</a>
+       </div>
+    </div>
+    <div class="footer">
+      <p>&copy; {{currentYear}} KalyeKart System.</p>
+    </div>
+  </div>
 </body>
 </html>

@@ -96,44 +96,58 @@ export const createPaymongoCheckoutSession = async (req, res) => {
 			});
 		}
 
-		const response = await paymongoApi.post("/checkout_sessions", {
-			data: {
-				attributes: {
-					billing: {
-						name: user.name,
-						email: user.email,
-						phone: contactNumber,
-					},
-					payment_method_types: [paymentMethod],
-					success_url: `${process.env.CLIENT_URL}/purchase-success`,
-					cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
-					line_items: lineItems,
-					description: "KalyeKart Order",
-					send_email_receipt: true,
-					metadata: {
-						userId: req.user._id.toString(),
-						products: JSON.stringify(
-							products.map((p) => ({
-								product: p._id,
-								quantity: p.quantity,
-								price: p.price,
-								name: p.name,
-							}))
-						),
-						shippingAddress: JSON.stringify(shippingAddress),
-						distance: String(distance),
-						deliveryFee: String(deliveryFee),
-						contactNumber: contactNumber,
-						discount: JSON.stringify(discountDetails),
-						subtotal: String(subtotal / 100),
-						totalAmount: String(totalAmount / 100),
-						paymentMethod: paymentMethod,
+		let session;
+		// Mock for dummy/test environment
+		if (process.env.PAYMONGO_SECRET_KEY && process.env.PAYMONGO_SECRET_KEY.startsWith("dummy")) {
+			console.warn("Using dummy PayMongo key, returning mock session.");
+			session = {
+				data: {
+					id: `mock_session_${Date.now()}`,
+					attributes: {
+						checkout_url: `${process.env.CLIENT_URL}/purchase-success?session_id=mock_session_${Date.now()}`,
 					},
 				},
-			},
-		});
+			};
+		} else {
+			const response = await paymongoApi.post("/checkout_sessions", {
+				data: {
+					attributes: {
+						billing: {
+							name: user.name,
+							email: user.email,
+							phone: contactNumber,
+						},
+						payment_method_types: [paymentMethod],
+						success_url: `${process.env.CLIENT_URL}/purchase-success`,
+						cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
+						line_items: lineItems,
+						description: "KalyeKart Order",
+						send_email_receipt: true,
+						metadata: {
+							userId: req.user._id.toString(),
+							products: JSON.stringify(
+								products.map((p) => ({
+									product: p._id,
+									quantity: p.quantity,
+									price: p.price,
+									name: p.name,
+								}))
+							),
+							shippingAddress: JSON.stringify(shippingAddress),
+							distance: String(distance),
+							deliveryFee: String(deliveryFee),
+							contactNumber: contactNumber,
+							discount: JSON.stringify(discountDetails),
+							subtotal: String(subtotal / 100),
+							totalAmount: String(totalAmount / 100),
+							paymentMethod: paymentMethod,
+						},
+					},
+				},
+			});
+			session = response.data;
+		}
 
-		const session = response.data;
 		res.status(200).json({ id: session.data.id, url: session.data.attributes.checkout_url });
 	} catch (error) {
 		console.error("Error creating PayMongo checkout session:", error.response ? error.response.data : error.message);
