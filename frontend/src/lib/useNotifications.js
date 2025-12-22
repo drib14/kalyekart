@@ -47,5 +47,10 @@ export const useNotifications = () => {
 
 	const unreadCount = notifications.filter((n) => !n.isRead).length;
 
+	// Debug log to trace unread count updates
+	useEffect(() => {
+		console.log(`[useNotifications] Notifications updated. Total: ${notifications.length}, Unread: ${unreadCount}`);
+	}, [notifications, unreadCount]);
+
 	return { notifications, unreadCount };
 };

@@ -39,8 +39,8 @@ const Navbar = () => {
 		mutationFn: () => axios.put("/notifications/read-all"),
 		onSuccess: () => {
 			// Invalidate queries to refetch notifications and update the count
-			// Note: useNotifications uses ["notifications", user._id] as the key
-			queryClient.invalidateQueries({ queryKey: ["notifications"] });
+			// useNotifications uses ["notifications", user._id] as the key
+			queryClient.invalidateQueries({ queryKey: ["notifications", user?._id] });
 			console.log("All notifications marked as read successfully.");
 		},
 		onError: (error) => {
