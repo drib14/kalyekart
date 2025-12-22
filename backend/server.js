@@ -24,7 +24,7 @@ import favoriteRoutes from "./routes/favorite.route.js";
 import { connectDB } from "./lib/db.js";
 
 // Import the worker and Firebase Admin SDK
-import "./lib/firebase.js";
+// import "./lib/firebase.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
