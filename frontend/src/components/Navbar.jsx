@@ -57,15 +57,14 @@ const Navbar = () => {
 		};
 	}, []);
 
-	// Effect to mark notifications as read when the panel is closed
-	useEffect(() => {
-		if (prevIsNotificationsOpenRef.current && !isNotificationsOpen) {
-			if (unreadCount > 0) {
-				markAllAsReadMutation.mutate();
-			}
+	const handleNotificationClick = () => {
+		const isOpen = !isNotificationsOpen;
+		setIsNotificationsOpen(isOpen);
+
+		if (isOpen && unreadCount > 0) {
+			markAllAsReadMutation.mutate();
 		}
-		prevIsNotificationsOpenRef.current = isNotificationsOpen;
-	}, [isNotificationsOpen, unreadCount, markAllAsReadMutation]);
+	};
 
 	const handleNotImplemented = () => {
 		toast.info("This feature is not yet implemented.");
@@ -120,7 +119,7 @@ const Navbar = () => {
 						{user ? (
 							<>
 								<div className='relative' ref={notificationRef}>
-									<NotificationBell onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} />
+									<NotificationBell onClick={handleNotificationClick} />
 									{isNotificationsOpen && (
 										<NotificationPanel onClose={() => setIsNotificationsOpen(false)} />
 									)}
