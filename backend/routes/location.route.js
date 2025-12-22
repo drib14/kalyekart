@@ -45,15 +45,18 @@ router.post("/calculate-fee", async (req, res) => {
             return res.status(404).json({ message: "Could not determine coordinates for the provided address." });
         }
 
+        // OpenCage returns lng, but our function expects lon. Map it.
+        const lon = coordinates.lng || coordinates.lon;
+
         const distance = calculateHaversineDistance(
             WAREHOUSE_COORDINATES.lat,
             WAREHOUSE_COORDINATES.lon,
             coordinates.lat,
-            coordinates.lon
+            lon
         );
 
         // Updated fee model
-        const baseFee = 15; // Base fare
+        const baseFee = 20; // Base fare
         const feePerKm = 5;  // Per-km charge
         const deliveryFee = Math.round(baseFee + (distance * feePerKm));
 
