@@ -32,6 +32,10 @@ const loadTemplate = (templateName, data) => {
 	try {
 		let template = fs.readFileSync(templatePath, "utf-8");
 
+		// Inject current year automatically
+		const currentYear = new Date().getFullYear();
+		const mergedData = { ...data, currentYear };
+
 		const replacePlaceholders = (template, data, prefix = "") => {
 			for (const key in data) {
 				const value = data[key];
@@ -45,7 +49,7 @@ const loadTemplate = (templateName, data) => {
 			return template;
 		};
 
-		return replacePlaceholders(template, data);
+		return replacePlaceholders(template, mergedData);
 	} catch (error) {
 		console.error(`Error loading template ${templateName}:`, error.message);
 		return "";
@@ -98,7 +102,7 @@ const EmailService = {
 
 		const adminEmail = {
 			from: `"KalyeKart System" <${process.env.EMAIL_USER}>`,
-			to: process.env.EMAIL_USER, // Send to admin (which is often the same email in simple setups)
+			to: process.env.EMAIL_USER,
 			subject: `New Order Received #${adminTemplateData.orderIdShort}`,
 			html: loadTemplate("admin_new_order", adminTemplateData),
 		};
@@ -174,6 +178,23 @@ const EmailService = {
 		};
 
 		await sendTransactionalEmail(adminEmail);
+	},
+
+	sendPasswordResetEmail: async (email, name, resetCode) => {
+		const templateData = {
+			customerName: name,
+			resetCode: resetCode,
+			domain: "kalyekart.app",
+		};
+
+		const mailOptions = {
+			from: `"KalyeKart" <${process.env.EMAIL_USER}>`,
+			to: email,
+			subject: "Password Reset Request",
+			html: loadTemplate("password_reset", templateData),
+		};
+
+		await sendTransactionalEmail(mailOptions);
 	},
 };
 
