@@ -480,21 +480,21 @@ const CheckoutPage = () => {
 						<div className='space-y-2'>
 							<div className='flex justify-between text-gray-300'>
 								<span>Subtotal</span>
-								<span>₱{subtotal.toFixed(2)}</span>
+								<span>₱{(subtotal || 0).toFixed(2)}</span>
 							</div>
 							{appliedDiscount && (
 								<div className='flex justify-between text-emerald-400'>
 									<span>Discount ({appliedDiscount.code})</span>
-									<span>-₱{discountAmount.toFixed(2)}</span>
+									<span>-₱{(discountAmount || 0).toFixed(2)}</span>
 								</div>
 							)}
 							<div className='flex justify-between text-gray-300'>
 								<span>Delivery Fee</span>
-								<span>₱{deliveryFee.toFixed(2)}</span>
+								<span>₱{(deliveryFee || 0).toFixed(2)}</span>
 							</div>
 							<div className='flex justify-between font-bold text-xl text-white pt-2'>
 								<span>Total</span>
-								<span>₱{finalTotal.toFixed(2)}</span>
+								<span>₱{(finalTotal || 0).toFixed(2)}</span>
 							</div>
 						</div>
 						<DiscountCodeInput deliveryFee={deliveryFee} />
