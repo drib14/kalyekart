@@ -8,9 +8,9 @@ const OrderSummary = () => {
 	const navigate = useNavigate();
 
 	const savings = subtotal - total;
-	const formattedSubtotal = subtotal.toFixed(2);
-	const formattedTotal = total.toFixed(2);
-	const formattedSavings = savings.toFixed(2);
+	const formattedSubtotal = (subtotal || 0).toFixed(2);
+	const formattedTotal = (total || 0).toFixed(2);
+	const formattedSavings = (savings || 0).toFixed(2);
 
 	const handleCheckout = () => {
 		navigate("/checkout");

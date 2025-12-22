@@ -85,7 +85,7 @@ const ProductCard = ({ product, onCardClick }) => {
 				</div>
 				<div className='mt-2 mb-5 flex items-center justify-between'>
 					<p>
-						<span className='text-3xl font-bold text-emerald-400'>₱{product.price}</span>
+						<span className='text-3xl font-bold text-emerald-400'>₱{(product.price || 0).toFixed(2)}</span>
 					</p>
 				</div>
 				<div className='flex items-center gap-2'>

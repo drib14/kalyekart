@@ -468,11 +468,11 @@ const CheckoutPage = () => {
 											<div>
 												<p className='font-medium text-white'>{item.product.name}</p>
 												<p className='text-sm text-gray-400'>
-													{item.quantity} x ₱{item.product.price.toFixed(2)}
+													{item.quantity} x ₱{(item.product.price || 0).toFixed(2)}
 												</p>
 											</div>
 										</div>
-										<p className='font-medium text-white'>₱{(item.quantity * item.product.price).toFixed(2)}</p>
+										<p className='font-medium text-white'>₱{(item.quantity * (item.product.price || 0)).toFixed(2)}</p>
 									</div>
 								))}
 						</div>
