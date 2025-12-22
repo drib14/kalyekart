@@ -40,7 +40,8 @@ const Navbar = () => {
 		onSuccess: () => {
 			// Invalidate queries to refetch notifications and update the count
 			// useNotifications uses ["notifications", user._id] as the key
-			queryClient.invalidateQueries({ queryKey: ["notifications", user?._id] });
+			// We use a broad match ["notifications"] to ensure we catch it even if user._id is slightly different (e.g. string vs object)
+			queryClient.invalidateQueries({ queryKey: ["notifications"] });
 			console.log("All notifications marked as read successfully.");
 		},
 		onError: (error) => {

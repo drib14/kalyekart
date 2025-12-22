@@ -73,8 +73,12 @@ export const markAsRead = async (req, res) => {
 export const markAllAsRead = async (req, res) => {
 	try {
 		const userId = req.user._id;
-		await Notification.updateMany({ recipient: userId, isRead: false }, { isRead: true });
-		res.status(200).json({ message: "All notifications marked as read" });
+		const result = await Notification.updateMany(
+			{ recipient: userId, isRead: false },
+			{ $set: { isRead: true } }
+		);
+		console.log(`[markAllAsRead] User: ${userId}, Matched: ${result.matchedCount}, Modified: ${result.modifiedCount}`);
+		res.status(200).json({ message: "All notifications marked as read", result });
 	} catch (error) {
 		console.error("Error in markAllAsRead controller:", error);
 		res.status(500).json({ message: "Server error" });
