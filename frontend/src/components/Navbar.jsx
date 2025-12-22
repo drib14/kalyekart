@@ -198,6 +198,8 @@ const Navbar = () => {
 											<button
 												onClick={() => {
 													logout();
+													// Ensure Google Auth state is also cleared if they used it
+													import("@react-oauth/google").then(({ googleLogout }) => googleLogout());
 													toast.success("Logged out successfully");
 													setIsDropdownOpen(false);
 												}}

@@ -1,8 +1,8 @@
 import fetch from "node-fetch";
 
 const PSGC_API_BASE_URL = "https://psgc.cloud/api";
-const LOCATIONIQ_API_BASE_URL = "https://us1.locationiq.com/v1";
-const LOCATIONIQ_ACCESS_TOKEN = process.env.LOCATIONIQ_ACCESS_TOKEN;
+const OPENCAGE_API_BASE_URL = "https://api.opencagedata.com/geocode/v1";
+const OPENCAGE_API_KEY = process.env.OPENCAGE_API_KEY;
 
 const CEBU_PROVINCE_CODE = "07022";
 // Manually include HUCs since they are not under the provincial code
@@ -53,22 +53,26 @@ export async function getBarangays(cityOrMunCode) {
  * Gets coordinates for a given address string.
  */
 export async function getCoordinates(address) {
-    if (!LOCATIONIQ_ACCESS_TOKEN) {
-        console.error("LocationIQ Access Token is not configured.");
-        throw new Error("Server configuration error: Missing LocationIQ token.");
+    if (!OPENCAGE_API_KEY) {
+        console.error("OpenCage API Key is not configured.");
+        throw new Error("Server configuration error: Missing OpenCage key.");
     }
     try {
         const response = await fetch(
-            `${LOCATIONIQ_API_BASE_URL}/search?key=${LOCATIONIQ_ACCESS_TOKEN}&q=${encodeURIComponent(address)}&format=json`
+            `${OPENCAGE_API_BASE_URL}/json?key=${OPENCAGE_API_KEY}&q=${encodeURIComponent(address)}`
         );
         const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        if (data && data.length > 0) {
-            return { lat: data[0].lat, lon: data[0].lon };
+
+        if (data.status && data.status.code !== 200) {
+             throw new Error(data.status.message);
+        }
+
+        if (data && data.results && data.results.length > 0) {
+            return data.results[0].geometry; // Returns { lat: ..., lng: ... }
         }
         return null;
     } catch (error) {
-        console.error("Error fetching coordinates from LocationIQ:", error);
+        console.error("Error fetching coordinates from OpenCage:", error);
         throw new Error("Could not fetch coordinates.");
     }
 }
@@ -91,19 +95,26 @@ export function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
  * Gets address details for given coordinates using reverse geocoding.
  */
 export async function reverseGeocode(lat, lon) {
-    if (!LOCATIONIQ_ACCESS_TOKEN) {
-        console.error("LocationIQ Access Token is not configured.");
-        throw new Error("Server configuration error: Missing LocationIQ token.");
+    if (!OPENCAGE_API_KEY) {
+        console.error("OpenCage API Key is not configured.");
+        throw new Error("Server configuration error: Missing OpenCage key.");
     }
     try {
         const response = await fetch(
-            `${LOCATIONIQ_API_BASE_URL}/reverse?key=${LOCATIONIQ_ACCESS_TOKEN}&lat=${lat}&lon=${lon}&format=json`
+            `${OPENCAGE_API_BASE_URL}/json?key=${OPENCAGE_API_KEY}&q=${lat}+${lon}`
         );
         const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        return data.address;
+        if (data.status && data.status.code !== 200) {
+             throw new Error(data.status.message);
+        }
+
+        if (data.results && data.results.length > 0) {
+             // OpenCage components can be accessed via data.results[0].components
+             return data.results[0].components;
+        }
+        return null;
     } catch (error) {
-        console.error("Error reverse geocoding from LocationIQ:", error);
+        console.error("Error reverse geocoding from OpenCage:", error);
         throw new Error("Could not perform reverse geocoding.");
     }
 }
