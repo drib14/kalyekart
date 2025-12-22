@@ -98,6 +98,13 @@ function App() {
 		}
 	}, [isOffline]);
 
+	// Force redirect to www domain to match Google OAuth configuration
+	useEffect(() => {
+		if (window.location.hostname === "kalyekart.app") {
+			window.location.replace("https://www.kalyekart.app" + window.location.pathname + window.location.search);
+		}
+	}, []);
+
 	// useEffect(() => {
 	// 	const requestPermission = async () => {
 	// 		if (!user) return;
