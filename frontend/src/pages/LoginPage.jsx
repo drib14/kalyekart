@@ -56,6 +56,7 @@ const LoginPage = () => {
 			console.log("Login Failed");
 			toast.error("Google login failed. Please try again.");
 		},
+		flow: "implicit",
 	});
 
 	return (

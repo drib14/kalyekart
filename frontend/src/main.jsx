@@ -11,6 +11,12 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 const queryClient = new QueryClient();
 const googleClientId = import.meta.env.VITE_GOOGLE_AUTH_CLIENT_ID;
 
+if (!googleClientId) {
+	console.error("VITE_GOOGLE_AUTH_CLIENT_ID is missing!");
+} else {
+	console.log("Google Auth initialized for origin:", window.location.origin);
+}
+
 createRoot(document.getElementById("root")).render(
 	<StrictMode>
 		<GoogleOAuthProvider clientId={googleClientId}>
