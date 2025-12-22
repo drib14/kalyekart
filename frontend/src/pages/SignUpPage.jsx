@@ -60,7 +60,6 @@ const SignUpPage = () => {
 			console.log("Login Failed");
 			toast.error("Google signup failed. Please try again.");
 		},
-		flow: "implicit",
 	});
 
 	return (
