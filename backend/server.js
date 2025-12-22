@@ -1,4 +1,6 @@
-import "dotenv/config";
+// Import environment configuration first to ensure variables are loaded
+import "./lib/env.js";
+
 import path from "path";
 import { fileURLToPath } from "url";
 import express from "express";
