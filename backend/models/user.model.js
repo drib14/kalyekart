@@ -20,6 +20,15 @@ const cancellationSchema = new mongoose.Schema({
 	date: { type: Date, default: Date.now },
 });
 
+const pointsHistorySchema = new mongoose.Schema({
+	type: { type: String, enum: ["earned", "redeemed", "adjustment"], required: true },
+	amount: { type: Number, required: true },
+	description: { type: String },
+	orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
+	rewardId: { type: mongoose.Schema.Types.ObjectId, ref: "Reward" },
+	date: { type: Date, default: Date.now },
+});
+
 const userSchema = new mongoose.Schema(
 	{
 		name: {
@@ -110,6 +119,11 @@ const userSchema = new mongoose.Schema(
 			},
 		],
 		cancellationHistory: [cancellationSchema],
+		loyaltyPoints: {
+			type: Number,
+			default: 0,
+		},
+		pointsHistory: [pointsHistorySchema],
 	},
 	{
 		timestamps: true,

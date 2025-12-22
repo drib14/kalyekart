@@ -2,6 +2,7 @@ import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
 import Discount from "../models/discount.model.js";
 import UserDiscount from "../models/userDiscount.model.js";
+import Settings from "../models/settings.model.js";
 import { v4 as uuidv4 } from "uuid";
 import { uploadOnCloudinary } from "../lib/cloudinary.js";
 import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
@@ -237,6 +238,26 @@ export const updateOrderStatus = async (req, res) => {
 
 		order.status = status;
 		await order.save();
+
+		if (status === "Delivered") {
+			const settings = await Settings.findOne();
+			if (settings && settings.loyalty.isEnabled) {
+				const pointsEarned = Math.floor(order.totalAmount * settings.loyalty.pointsPerPeso);
+				if (pointsEarned > 0) {
+					await User.findByIdAndUpdate(order.user._id, {
+						$inc: { loyaltyPoints: pointsEarned },
+						$push: {
+							pointsHistory: {
+								type: "earned",
+								amount: pointsEarned,
+								description: `Order #${order._id.toString().slice(-6)}`,
+								orderId: order._id,
+							},
+						},
+					});
+				}
+			}
+		}
 
 		await NotificationService.createNotification("order_status_update", {
 			recipient: order.user,

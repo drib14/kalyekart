@@ -21,6 +21,8 @@ import locationRoutes from "./routes/location.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import favoriteRoutes from "./routes/favorite.route.js";
+import settingsRoutes from "./routes/settings.route.js";
+import rewardRoutes from "./routes/reward.route.js";
 import { connectDB } from "./lib/db.js";
 
 // Import the worker and Firebase Admin SDK
@@ -57,6 +59,8 @@ app.use("/api/locations", locationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/settings", settingsRoutes);
+app.use("/api/rewards", rewardRoutes);
 
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(projectRoot, "frontend/dist")));
