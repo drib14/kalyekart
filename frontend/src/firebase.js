@@ -13,8 +13,24 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
+let app = null;
+let messaging = null;
+
+try {
+  // Check if critical config is present to avoid crashing immediately
+  if (!firebaseConfig.projectId) {
+    console.warn("VITE_FIREBASE_PROJECT_ID is missing. Firebase features will be disabled.");
+  } else if (!firebaseConfig.apiKey) {
+    console.warn("VITE_FIREBASE_API_KEY is missing. Firebase features will be disabled.");
+  } else {
+    // Initialize Firebase
+    app = initializeApp(firebaseConfig);
+    messaging = getMessaging(app);
+    console.log("Firebase initialized successfully");
+  }
+} catch (error) {
+  console.error("Firebase initialization failed:", error);
+  // App continues without Firebase
+}
 
 export { messaging };
