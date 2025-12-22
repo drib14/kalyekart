@@ -26,6 +26,12 @@ const NotificationService = {
 
 	async sendPushNotification(userId, title, body, link) {
 		try {
+			// Check if Firebase is initialized
+			if (!admin.apps.length) {
+				console.log("Firebase Admin not initialized. Skipping push notification.");
+				return;
+			}
+
 			const user = await User.findById(userId);
 			if (!user || !user.fcmToken) {
 				return;

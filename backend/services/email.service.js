@@ -19,7 +19,8 @@ const sendTransactionalEmail = async (emailDetails) => {
 		return { response, body };
 	} catch (error) {
 		console.error("Error sending transactional email:", error.response ? error.response.body : error.message);
-		throw error;
+		// Do not throw error to prevent crashing main flows
+		return null;
 	}
 };
 
