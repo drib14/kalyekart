@@ -57,6 +57,12 @@ export async function getCoordinates(address) {
         console.error("OpenCage API Key is not configured.");
         throw new Error("Server configuration error: Missing OpenCage key.");
     }
+    // Mock for testing/dummy keys
+    if (OPENCAGE_API_KEY.startsWith("dummy")) {
+        console.warn("Using dummy OpenCage key, returning mock coordinates.");
+        return { lat: 10.3157, lng: 123.8854 }; // Cebu City coordinates
+    }
+
     try {
         const response = await fetch(
             `${OPENCAGE_API_BASE_URL}/json?key=${OPENCAGE_API_KEY}&q=${encodeURIComponent(address)}`

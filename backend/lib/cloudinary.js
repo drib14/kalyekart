@@ -22,6 +22,15 @@ const uploadOnCloudinary = async (file, folder = "kalyekart_uploads") => {
 			return null;
 		}
 
+		// Mock for dummy/test environment
+		if (process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_KEY.startsWith("dummy")) {
+			console.warn("Using dummy Cloudinary key, returning mock URL.");
+			return {
+				secure_url: "https://via.placeholder.com/300?text=Mock+Image",
+				public_id: `mock_id_${Date.now()}`,
+			};
+		}
+
 		// Convert buffer to data URI
 		const b64 = Buffer.from(file.buffer).toString("base64");
 		let dataURI = "data:" + file.mimetype + ";base64," + b64;
