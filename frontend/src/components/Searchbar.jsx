@@ -103,7 +103,7 @@ const Searchbar = () => {
 										/>
 										<div>
 											<p className='font-medium'>{product.name}</p>
-											<p className='text-sm text-gray-400'>₱{product.price.toFixed(2)}</p>
+											<p className='text-sm text-gray-400'>₱{(product.price || 0).toFixed(2)}</p>
 										</div>
 									</li>
 								))}

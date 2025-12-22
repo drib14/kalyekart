@@ -87,7 +87,7 @@ const OrderDetailPage = () => {
 					</div>
 					<div className='text-right'>
 						<h2 className='text-xl font-semibold'>Total Amount</h2>
-						<p className='text-3xl font-bold text-emerald-400'>₱{order.totalAmount.toFixed(2)}</p>
+						<p className='text-3xl font-bold text-emerald-400'>₱{(order.totalAmount || 0).toFixed(2)}</p>
 						<div className='flex items-center justify-end mt-2'>
 							{getStatusIcon(order.status)}
 							<p className='ml-2 text-lg'>{order.status}</p>
@@ -164,12 +164,12 @@ const OrderDetailPage = () => {
 											<div>
 												<p className='font-bold text-white'>{item.product.name}</p>
 												<p className='text-sm text-gray-400'>
-													{item.quantity} x ₱{item.price.toFixed(2)}
+													{item.quantity} x ₱{(item.price || 0).toFixed(2)}
 												</p>
 											</div>
 										</div>
 										<p className='font-semibold text-white'>
-											₱{(item.quantity * item.price).toFixed(2)}
+											₱{(item.quantity * (item.price || 0)).toFixed(2)}
 										</p>
 									</div>
 								);
@@ -219,19 +219,19 @@ const OrderDetailPage = () => {
 								</p>
 								<div className='border-t border-gray-600 my-2' />
 								<p>
-									<strong>Subtotal:</strong> ₱{order.subtotal.toFixed(2)}
+									<strong>Subtotal:</strong> ₱{(order.subtotal || 0).toFixed(2)}
 								</p>
 								{order.discount && order.discount.code && (
 									<p>
 										<strong>Discount ({order.discount.code}):</strong> -₱
-										{order.discountAmount.toFixed(2)}
+										{(order.discountAmount || 0).toFixed(2)}
 									</p>
 								)}
 								<p>
-									<strong>Delivery Fee:</strong> ₱{order.deliveryFee.toFixed(2)}
+									<strong>Delivery Fee:</strong> ₱{(order.deliveryFee || 0).toFixed(2)}
 								</p>
 								<p className='font-bold text-lg'>
-									<strong>Total:</strong> ₱{order.totalAmount.toFixed(2)}
+									<strong>Total:</strong> ₱{(order.totalAmount || 0).toFixed(2)}
 								</p>
 							</div>
 						</section>

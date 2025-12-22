@@ -104,11 +104,11 @@ const ProductDetailPage = () => {
 								))}
 							</div>
 							<span className='ml-3 text-gray-300'>
-								{product.averageRating?.toFixed(1) || "No ratings"} ({product.numReviews} reviews)
+								{(product.averageRating || 0).toFixed(1)} ({product.numReviews} reviews)
 							</span>
 						</div>
 						<div className='text-4xl font-bold text-emerald-400 mb-8'>
-							₱{product.price.toFixed(2)}
+							₱{(product.price || 0).toFixed(2)}
 						</div>
 						<div className="flex items-center gap-4">
 							<button

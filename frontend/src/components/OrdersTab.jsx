@@ -108,7 +108,7 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 									<div className='space-y-2 mt-4'>
 										<dl className='flex items-center justify-between gap-4 text-sm'>
 											<dt className='font-normal text-gray-400'>Subtotal</dt>
-											<dd className='font-medium text-white'>₱{order.subtotal.toFixed(2)}</dd>
+											<dd className='font-medium text-white'>₱{(order.subtotal || 0).toFixed(2)}</dd>
 										</dl>
 										{order.coupon && (
 											<dl className='flex items-center justify-between gap-4 text-sm'>
@@ -118,7 +118,7 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 										)}
 										<dl className='flex items-center justify-between gap-4 text-sm'>
 											<dt className='font-normal text-gray-400'>Delivery Fee</dt>
-											<dd className='font-medium text-white'>₱{order.deliveryFee.toFixed(2)}</dd>
+											<dd className='font-medium text-white'>₱{(order.deliveryFee || 0).toFixed(2)}</dd>
 										</dl>
 										<dl className='flex items-center justify-between gap-4 text-sm'>
 											<dt className='font-normal text-gray-400'>Payment Status</dt>
@@ -126,7 +126,7 @@ const OrdersTab = ({ orders, openCancelModal, openRefundModal }) => {
 										</dl>
 										<dl className='flex items-center justify-between gap-4 text-base font-bold text-white pt-2 border-t border-gray-700 mt-2'>
 											<dt>Total</dt>
-											<dd>₱{order.totalAmount.toFixed(2)}</dd>
+											<dd>₱{(order.totalAmount || 0).toFixed(2)}</dd>
 										</dl>
 									</div>
 									<div className='flex justify-end gap-4 mt-4 flex-wrap'>

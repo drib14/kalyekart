@@ -95,9 +95,9 @@ const AdminDiscountsPage = () => {
 										<td className='p-4'>
 											{discount.type === "percentage"
 												? `${discount.value}%`
-												: `₱${discount.value.toFixed(2)}`}
+												: `₱${(discount.value || 0).toFixed(2)}`}
 										</td>
-										<td className='p-4'>₱{discount.minimumOrderValue.toFixed(2)}</td>
+										<td className='p-4'>₱{(discount.minimumOrderValue || 0).toFixed(2)}</td>
 										<td className='p-4'>
 											{discount.timesUsed} / {discount.usageLimit || "∞"}
 										</td>

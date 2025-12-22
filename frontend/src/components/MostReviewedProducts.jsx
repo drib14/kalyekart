@@ -28,7 +28,7 @@ const MostReviewedProducts = () => {
 					/>
 					<div className='p-4'>
 						<h4 className='font-bold text-white truncate'>{product.name}</h4>
-						<p className='text-emerald-400'>₱{product.price.toFixed(2)}</p>
+						<p className='text-emerald-400'>₱{(product.price || 0).toFixed(2)}</p>
 					</div>
 				</Link>
 			))}

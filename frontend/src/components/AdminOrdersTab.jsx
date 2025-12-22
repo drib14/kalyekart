@@ -180,11 +180,11 @@ const AdminOrdersTab = () => {
 											<div>
 												<p className='font-medium text-white'>{item.product?.name || "Product not found"}</p>
 												<p className='text-sm text-gray-400'>
-													{item.quantity} x ₱{item.price.toFixed(2)}
+													{item.quantity} x ₱{(item.price || 0).toFixed(2)}
 												</p>
 											</div>
 											<p className='font-medium text-white'>
-												₱{(item.quantity * item.price).toFixed(2)}
+												₱{(item.quantity * (item.price || 0)).toFixed(2)}
 											</p>
 										</div>
 									))}
@@ -193,15 +193,15 @@ const AdminOrdersTab = () => {
 								<div className='space-y-2 text-right'>
 									<div className='flex justify-between items-center text-sm text-gray-300'>
 										<p>Subtotal</p>
-										<p>₱{order.subtotal.toFixed(2)}</p>
+										<p>₱{(order.subtotal || 0).toFixed(2)}</p>
 									</div>
 									<div className='flex justify-between items-center text-sm text-gray-300'>
 										<p>Delivery Fee</p>
-										<p>₱{order.deliveryFee.toFixed(2)}</p>
+										<p>₱{(order.deliveryFee || 0).toFixed(2)}</p>
 									</div>
 									<div className='flex justify-between items-center font-bold text-white text-lg'>
 										<p>Total</p>
-										<p>₱{order.totalAmount.toFixed(2)}</p>
+										<p>₱{(order.totalAmount || 0).toFixed(2)}</p>
 									</div>
 								</div>
 
@@ -224,7 +224,7 @@ const AdminOrdersTab = () => {
 												<h3 className='text-lg font-bold text-white mb-2'>Payment Details</h3>
 												<div className='text-sm text-gray-300 space-y-1'>
 													<p>
-														<strong>Subtotal:</strong> ₱{order.subtotal.toFixed(2)}
+														<strong>Subtotal:</strong> ₱{(order.subtotal || 0).toFixed(2)}
 													</p>
 													{order.coupon && (
 														<p>
@@ -232,10 +232,10 @@ const AdminOrdersTab = () => {
 														</p>
 													)}
 													<p>
-														<strong>Delivery Fee:</strong> ₱{order.deliveryFee.toFixed(2)}
+														<strong>Delivery Fee:</strong> ₱{(order.deliveryFee || 0).toFixed(2)}
 													</p>
 													<p>
-														<strong>Total:</strong> ₱{order.totalAmount.toFixed(2)}
+														<strong>Total:</strong> ₱{(order.totalAmount || 0).toFixed(2)}
 													</p>
 												</div>
 											</div>

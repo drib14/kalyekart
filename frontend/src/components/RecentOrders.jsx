@@ -74,15 +74,15 @@ const RecentOrders = () => {
 								<dl className='space-y-2 text-sm'>
 									<div className='flex justify-between'>
 										<dt className='text-gray-400'>Subtotal</dt>
-										<dd className='text-white font-medium'>₱{order.subtotal.toFixed(2)}</dd>
+										<dd className='text-white font-medium'>₱{(order.subtotal || 0).toFixed(2)}</dd>
 									</div>
 									<div className='flex justify-between'>
 										<dt className='text-gray-400'>Delivery Fee</dt>
-										<dd className='text-white font-medium'>₱{order.deliveryFee.toFixed(2)}</dd>
+										<dd className='text-white font-medium'>₱{(order.deliveryFee || 0).toFixed(2)}</dd>
 									</div>
 									<div className='flex justify-between text-base font-bold'>
 										<dt className='text-emerald-400'>Total</dt>
-										<dd className='text-emerald-400'>₱{order.totalAmount.toFixed(2)}</dd>
+										<dd className='text-emerald-400'>₱{(order.totalAmount || 0).toFixed(2)}</dd>
 									</div>
 								</dl>
 							</div>
