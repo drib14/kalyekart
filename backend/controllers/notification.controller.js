@@ -30,7 +30,16 @@ export const streamNotifications = (req, res) => {
 
 	NotificationService.addClient(userId, res);
 
+	// Send initial connection confirmation
+	res.write(": connected\n\n");
+
+	// Keep-alive heartbeat
+	const intervalId = setInterval(() => {
+		res.write(": keepalive\n\n");
+	}, 30000);
+
 	req.on("close", () => {
+		clearInterval(intervalId);
 		NotificationService.removeClient(userId);
 		res.end();
 	});

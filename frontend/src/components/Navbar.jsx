@@ -38,7 +38,13 @@ const Navbar = () => {
 	const markAllAsReadMutation = useMutation({
 		mutationFn: () => axios.put("/notifications/read-all"),
 		onSuccess: () => {
+			// Invalidate queries to refetch notifications and update the count
+			// Note: useNotifications uses ["notifications", user._id] as the key
 			queryClient.invalidateQueries({ queryKey: ["notifications"] });
+			console.log("All notifications marked as read successfully.");
+		},
+		onError: (error) => {
+			console.error("Failed to mark notifications as read:", error);
 		},
 	});
 
