@@ -63,6 +63,15 @@ const DriverDashboard = () => {
 	});
 
 	useEffect(() => {
+		if (socket && activeOrders?.length > 0) {
+            // Join active order rooms
+			activeOrders.forEach((order) => {
+                socket.emit("join_order", order._id);
+            });
+        }
+    }, [socket, activeOrders]);
+
+	useEffect(() => {
 		if (socket && location && activeOrders?.length > 0) {
 			activeOrders.forEach((order) => {
 				if (order.status === "Out for Delivery" || order.status === "Picked Up") {

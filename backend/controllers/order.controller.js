@@ -163,7 +163,7 @@ export const getDriverOrders = async (req, res) => {
 	try {
 		const orders = await Order.find({
 			driver: req.user._id,
-			status: { $in: ["Picked Up", "Out for Delivery", "Ready", "Preparing"] }, // Active statuses
+			status: { $in: ["Picked Up", "Out for Delivery", "Ready", "Preparing", "Pending"] }, // Include Pending/Preparing/Ready
 		})
 			.populate("user", "name phoneNumber")
 			.sort({ createdAt: -1 });
