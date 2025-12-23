@@ -42,6 +42,7 @@ import MyDiscountsPage from "./pages/MyDiscountsPage";
 import AdminSettingsPage from "./pages/AdminSettingsPage";
 import AdminRewardsPage from "./pages/AdminRewardsPage";
 import MyRewardsPage from "./pages/MyRewardsPage";
+import UserSettingsPage from "./pages/UserSettingsPage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -195,6 +196,7 @@ function App() {
 					<Route path='/favorites' element={user ? <FavoritesPage /> : <Navigate to='/login' />} />
 					<Route path='/my-discounts' element={user ? <MyDiscountsPage /> : <Navigate to='/login' />} />
 					<Route path='/my-rewards' element={user ? <MyRewardsPage /> : <Navigate to='/login' />} />
+					<Route path='/settings' element={user ? <UserSettingsPage /> : <Navigate to='/login' />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
 			</main>

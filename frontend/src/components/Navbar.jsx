@@ -177,13 +177,15 @@ const Navbar = () => {
 											>
 												<Ticket className='mr-2' size={16} /> My Discounts
 											</Link>
-											<Link
-												to='/my-rewards'
-												className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
-												onClick={() => setIsDropdownOpen(false)}
-											>
-												<Gift className='mr-2' size={16} /> My Rewards
-											</Link>
+											{!isAdmin && (
+												<Link
+													to='/my-rewards'
+													className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
+													onClick={() => setIsDropdownOpen(false)}
+												>
+													<Gift className='mr-2' size={16} /> My Rewards
+												</Link>
+											)}
 											{isAdmin && (
 												<Link
 													className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
@@ -194,15 +196,13 @@ const Navbar = () => {
 													Dashboard
 												</Link>
 											)}
-											<button
-												onClick={() => {
-													handleNotImplemented();
-													setIsDropdownOpen(false);
-												}}
+											<Link
+												to={isAdmin ? "/admin/settings" : "/settings"}
 												className='flex items-center w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
+												onClick={() => setIsDropdownOpen(false)}
 											>
 												<Settings className='mr-2' size={16} /> Settings
-											</button>
+											</Link>
 											<button
 												onClick={() => {
 													logout();
