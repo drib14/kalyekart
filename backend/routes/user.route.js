@@ -1,5 +1,5 @@
 import express from "express";
-import { protectRoute } from "../middleware/auth.middleware.js";
+import { protectRoute, adminRoute } from "../middleware/auth.middleware.js";
 import {
 	updateUserProfile,
 	getDeliveryAddresses,
@@ -12,7 +12,6 @@ import {
 	updateUserStatus,
 	updatePassword,
 } from "../controllers/user.controller.js";
-import { protectRoute, adminRoute } from "../middleware/auth.middleware.js";
 import upload from "../middleware/multer.middleware.js";
 
 const router = express.Router();

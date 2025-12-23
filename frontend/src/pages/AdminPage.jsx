@@ -1,13 +1,3 @@
-import { BarChart, PlusCircle, ShoppingBasket, ClipboardList, MessageSquare, Ticket, Settings, Gift } from "lucide-react";
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-
-import AnalyticsTab from "../components/AnalyticsTab";
-import CreateProductForm from "../components/CreateProductForm";
-import ProductsList from "../components/ProductsList";
-import { useProductStore } from "../stores/useProductStore";
-import AdminOrdersTab from "../components/AdminOrdersTab";
-import ManageReviewsTab from "../components/ManageReviewsTab";
 import { BarChart, PlusCircle, ShoppingBasket, ClipboardList, MessageSquare, Ticket, Settings, Gift, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
