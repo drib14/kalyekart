@@ -102,7 +102,7 @@ const Navbar = () => {
 							>
 								Home
 							</Link>
-							{user && (
+							{(!user || isCustomer) && (
 								<Link
 									to={"/cart"}
 									className='relative group text-gray-300 hover:text-emerald-400 transition duration-300 ease-in-out'
@@ -116,7 +116,7 @@ const Navbar = () => {
 									)}
 								</Link>
 							)}
-							{user && (
+							{user && isCustomer && (
 								<Link
 									to='/my-orders'
 									className='text-gray-300 hover:text-emerald-400 transition duration-300 ease-in-out'
