@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "../lib/axios";
 import { toast } from "sonner";
-import { MapPin, Check, Navigation, Package, MessageSquare } from "lucide-react";
+import { MapPin, Check, Navigation, Package, MessageSquare, History, Clock } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import useSocket from "../hooks/useSocket";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
@@ -144,6 +144,16 @@ const DriverDashboard = () => {
 				>
 					My Active Tasks
 				</button>
+				<button
+					onClick={() => setActiveTab("history")}
+					className={`px-6 py-3 font-medium transition-colors ${
+						activeTab === "history"
+							? "text-emerald-400 border-b-2 border-emerald-400"
+							: "text-gray-400 hover:text-white"
+					}`}
+				>
+					History
+				</button>
 			</div>
 
 			{activeTab === "available" ? (
@@ -243,8 +253,125 @@ const DriverDashboard = () => {
 						</div>
 					))}
 				</div>
+			) : activeTab === "active" ? (
+				<div className='space-y-8'>
+					{activeOrders?.length === 0 && <p className='text-gray-400'>No active tasks.</p>}
+					{activeOrders?.map((order) => (
+						<div key={order._id} className='bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-lg'>
+							<div className='p-6 grid md:grid-cols-2 gap-6'>
+								<div>
+									<h3 className='text-2xl font-bold text-white mb-2'>Order #{order._id.slice(-6)}</h3>
+									<div className='flex items-center space-x-2 mb-4'>
+										<span className='bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-xs font-bold uppercase'>
+											{order.status}
+										</span>
+									</div>
+
+									<div className='space-y-3 text-gray-300'>
+										<p><strong className='text-white'>Customer:</strong> {order.user?.name}</p>
+										<p><strong className='text-white'>Phone:</strong> {order.contactNumber}</p>
+										<p><strong className='text-white'>Address:</strong> {order.shippingAddress.sitio}, {order.shippingAddress.barangay}, {order.shippingAddress.city}</p>
+										<p><strong className='text-white'>Total to Collect:</strong> ₱{order.paymentMethod === 'cod' ? order.totalAmount.toFixed(2) : '0.00 (Paid)'}</p>
+									</div>
+
+									<div className='mt-6 flex flex-wrap gap-3'>
+										<button
+											onClick={() => setActiveChatOrderId(order._id)}
+											className='py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold flex items-center justify-center'
+											title="Chat with Customer"
+										>
+											<MessageSquare size={20} />
+										</button>
+										{/* Navigation Button */}
+										{order.deliveryCoordinates && (
+											<a
+												href={`https://www.google.com/maps/dir/?api=1&destination=${order.deliveryCoordinates.lat},${order.deliveryCoordinates.lng}`}
+												target="_blank"
+												rel="noopener noreferrer"
+												className='py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold flex items-center justify-center'
+												title="Navigate"
+											>
+												<Navigation size={20} />
+											</a>
+										)}
+
+										{order.status === "Preparing" || order.status === "Ready" ? (
+											<button
+												onClick={() => updateStatus({ orderId: order._id, status: "Picked Up" })}
+												className='flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold'
+											>
+												Confirm Pickup
+											</button>
+										) : order.status === "Picked Up" ? (
+											<button
+												onClick={() => updateStatus({ orderId: order._id, status: "Out for Delivery" })}
+												className='flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold'
+											>
+												Start Delivery
+											</button>
+										) : order.status === "Out for Delivery" ? (
+											<button
+												onClick={() => updateStatus({ orderId: order._id, status: "Delivered" })}
+												className='flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold'
+											>
+												Mark Delivered
+											</button>
+										) : null}
+									</div>
+								</div>
+                                {/* Map */}
+								<div className='h-64 md:h-auto bg-gray-900 rounded-lg overflow-hidden relative'>
+                                    {location && (
+                                        <MapContainer center={[location.lat, location.lng]} zoom={15} style={{ height: "100%", width: "100%" }}>
+                                            <TileLayer
+                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                            />
+                                            <Marker position={[location.lat, location.lng]} icon={driverIcon}>
+                                                <Popup>You are here</Popup>
+                                            </Marker>
+                                        </MapContainer>
+                                    )}
+                                    {!location && <div className="absolute inset-0 flex items-center justify-center text-gray-500">Getting Location...</div>}
+								</div>
+							</div>
+						</div>
+					))}
+				</div>
+			) : (
+				<DriverHistory />
 			)}
 			<ChatModal isOpen={!!activeChatOrderId} onClose={() => setActiveChatOrderId(null)} orderId={activeChatOrderId} />
+		</div>
+	);
+};
+
+const DriverHistory = () => {
+	const { data: history, isLoading } = useQuery({
+		queryKey: ["driverHistory"],
+		queryFn: () => axios.get("/orders/history").then((res) => res.data),
+	});
+
+	if (isLoading) return <LoadingSpinner />;
+
+	return (
+		<div className='space-y-4'>
+			{history?.length === 0 && <p className='text-gray-400'>No delivery history yet.</p>}
+			{history?.map((order) => (
+				<div key={order._id} className='bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg flex justify-between items-center'>
+					<div>
+						<h3 className='text-lg font-bold text-white mb-1'>Order #{order._id.slice(-6)}</h3>
+						<p className='text-gray-400 text-sm mb-1'>{new Date(order.updatedAt).toLocaleDateString()}</p>
+						<p className='text-gray-300'>{order.shippingAddress.barangay}, {order.shippingAddress.city}</p>
+					</div>
+					<div className='text-right'>
+						<p className='text-xl font-bold text-emerald-400'>+₱{order.deliveryFee.toFixed(2)}</p>
+						<span className='bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-bold uppercase'>
+							Delivered
+						</span>
+					</div>
+				</div>
+			))}
 		</div>
 	);
 };

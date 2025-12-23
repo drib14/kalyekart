@@ -229,6 +229,20 @@ export const updateDriverLocation = async (req, res) => {
 	}
 };
 
+export const getDriverHistory = async (req, res) => {
+	try {
+		const orders = await Order.find({
+			driver: req.user._id,
+			status: "Delivered",
+		})
+			.populate("user", "name phoneNumber")
+			.sort({ createdAt: -1 });
+		res.json(orders);
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const getAllOrders = async (req, res) => {
 	try {
 		const orders = await Order.find()

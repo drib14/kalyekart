@@ -14,6 +14,7 @@ import {
 	getDriverOrders,
 	acceptOrder,
 	updateDriverLocation,
+	getDriverHistory,
 } from "../controllers/order.controller.js";
 import { protectRoute, adminRoute, driverRoute } from "../middleware/auth.middleware.js";
 import upload from "../middleware/multer.middleware.js";
@@ -24,6 +25,7 @@ router.get("/", protectRoute, getOrders);
 router.get("/all", protectRoute, adminRoute, getAllOrders);
 router.get("/available", protectRoute, driverRoute, getAvailableOrders);
 router.get("/active", protectRoute, driverRoute, getDriverOrders);
+router.get("/history", protectRoute, driverRoute, getDriverHistory);
 
 router.get("/:orderId", protectRoute, getOrderById);
 router.post("/cod", protectRoute, createCodOrder);
