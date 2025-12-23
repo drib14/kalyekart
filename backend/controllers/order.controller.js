@@ -13,7 +13,7 @@ const WAREHOUSE_COORDINATES = { lat: 10.2983, lon: 123.8991 };
 
 export const createCodOrder = async (req, res) => {
 	try {
-		const { products, shippingAddress, contactNumber, discountCode, subtotal } = req.body;
+		const { products, shippingAddress, contactNumber, discountCode, subtotal, deliveryOption, tipAmount } = req.body;
 		const userId = req.user._id;
 		const user = await User.findById(userId);
 
@@ -71,7 +71,12 @@ export const createCodOrder = async (req, res) => {
 		);
 
 		const settings = await Settings.findOne();
-		const baseFee = settings?.delivery?.baseFee || 20;
+		// Use dynamic base fee based on delivery option if provided, else fallback to settings
+		let baseFee = settings?.delivery?.baseFee || 20;
+		if (deliveryOption === "saver") baseFee = 15;
+		if (deliveryOption === "rush") baseFee = 30;
+		if (deliveryOption === "standard") baseFee = 20;
+
 		const feePerKm = settings?.delivery?.feePerKm || 5;
 		const deliveryFee = Math.round(baseFee + distance * feePerKm);
 
@@ -84,7 +89,15 @@ export const createCodOrder = async (req, res) => {
 			}
 		}
 
-		const totalAmount = subtotal - discountAmount + deliveryFee;
+		const tip = Number(tipAmount) || 0;
+		const totalAmount = subtotal - discountAmount + deliveryFee + tip;
+
+		// Calculate ETA based on option
+		const now = new Date();
+		let minutesToAdd = 30; // standard
+		if (deliveryOption === "saver") minutesToAdd = 45;
+		if (deliveryOption === "rush") minutesToAdd = 15;
+		const statusETA = new Date(now.getTime() + minutesToAdd * 60000);
 
 		const newOrder = new Order({
 			user: userId,
@@ -102,6 +115,9 @@ export const createCodOrder = async (req, res) => {
 			deliveryFee,
 			distance,
 			discountAmount,
+			deliveryOption: deliveryOption || "standard",
+			tipAmount: tip,
+			statusETA,
 			discount: {
 				discountId,
 				code: discountCode,
@@ -131,6 +147,8 @@ export const createCodOrder = async (req, res) => {
 		});
 
 		await EmailService.sendOrderConfirmationEmail(user, newOrder, products);
+		// Notify drivers
+		await EmailService.sendNewOrderAvailableEmail(newOrder, fullAddress);
 
 		res.status(201).json({ message: "Order created successfully", orderId: newOrder._id });
 	} catch (error) {

@@ -4,7 +4,7 @@ import { prepareUserResponse } from "../lib/prepareUserResponse.js";
 
 export const updateUserProfile = async (req, res) => {
 	try {
-		const { name, email, phoneNumber, storeName, storeAddress, operatingHours, notificationPreferences } = req.body;
+		const { name, email, phoneNumber, storeName, storeAddress, operatingHours, notificationPreferences, vehicleModel, plateNumber } = req.body;
 		const userId = req.user._id;
 
 		const user = await User.findById(userId);
@@ -17,6 +17,12 @@ export const updateUserProfile = async (req, res) => {
 		user.name = name || user.name;
 		user.email = email || user.email;
 		user.phoneNumber = phoneNumber || user.phoneNumber;
+
+		// Update driver fields
+		if (user.role === "driver") {
+			user.vehicleModel = vehicleModel || user.vehicleModel;
+			user.plateNumber = plateNumber || user.plateNumber;
+		}
 
 		if (notificationPreferences) {
 			// Handle JSON string or object (multipart/form-data sends JSON as string sometimes)
