@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Settings, User, Shield, Bell, Gift, ChevronRight } from "lucide-react";
 import SettingsModal from "../components/SettingsModal";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "../lib/axios";
 import { toast } from "sonner";
+import { useUserStore } from "../stores/useUserStore";
 
 const UserSettingsPage = () => {
 	const navigate = useNavigate();
+	const { user } = useUserStore();
+	const queryClient = useQueryClient();
 	const [activeModal, setActiveModal] = useState(null);
 	const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+	const [notifications, setNotifications] = useState({ email: true, push: true });
+
+	useEffect(() => {
+		if (user?.notificationPreferences) {
+			setNotifications(user.notificationPreferences);
+		}
+	}, [user]);
 
 	const { mutate: updatePassword, isPending: isUpdatingPassword } = useMutation({
 		mutationFn: (data) => axios.put("/users/password", data),
@@ -19,6 +29,21 @@ const UserSettingsPage = () => {
 			setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
 		},
 		onError: (error) => toast.error(error.response?.data?.message || "Failed to update password"),
+	});
+
+	const { mutate: updateNotifications, isPending: isUpdatingNotifications } = useMutation({
+		mutationFn: (data) => axios.put("/users/profile", { notificationPreferences: JSON.stringify(data) }),
+		onSuccess: () => {
+			toast.success("Notification preferences updated");
+			// Refresh user data (if useUserStore doesn't auto-update, we might need to refetch profile)
+			// But checkAuth might handle it on reload.
+			// Ideally we update the store.
+			setActiveModal(null);
+            // Force a reload or update context if needed, but for now assuming backend save is enough.
+            // Actually, we should update the local user object or invalidate queries if we used react-query for user.
+            // The navbar uses useUserStore.
+		},
+		onError: (error) => toast.error(error.response?.data?.message || "Failed to update notifications"),
 	});
 
 	const handlePasswordSubmit = () => {
@@ -34,6 +59,10 @@ const UserSettingsPage = () => {
 			currentPassword: passwords.currentPassword,
 			newPassword: passwords.newPassword,
 		});
+	};
+
+	const handleNotificationsSubmit = () => {
+		updateNotifications(notifications);
 	};
 
 	const tools = [
@@ -136,22 +165,32 @@ const UserSettingsPage = () => {
                 </div>
             </SettingsModal>
 
-             {/* Notifications Modal Placeholder */}
+             {/* Notifications Modal */}
              <SettingsModal
                 isOpen={activeModal === "notifications"}
                 onClose={() => setActiveModal(null)}
                 title="Notification Preferences"
-                onSave={() => setActiveModal(null)}
-                isSaving={false}
+                onSave={handleNotificationsSubmit}
+                isSaving={isUpdatingNotifications}
             >
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <label className="text-gray-300">Email Notifications</label>
-                        <input type="checkbox" defaultChecked className="w-5 h-5 accent-emerald-500" />
+                        <input
+                            type="checkbox"
+                            checked={notifications.email}
+                            onChange={(e) => setNotifications({...notifications, email: e.target.checked})}
+                            className="w-5 h-5 accent-emerald-500"
+                        />
                     </div>
                     <div className="flex items-center justify-between">
                         <label className="text-gray-300">Push Notifications</label>
-                        <input type="checkbox" defaultChecked className="w-5 h-5 accent-emerald-500" />
+                        <input
+                            type="checkbox"
+                            checked={notifications.push}
+                            onChange={(e) => setNotifications({...notifications, push: e.target.checked})}
+                            className="w-5 h-5 accent-emerald-500"
+                        />
                     </div>
                 </div>
             </SettingsModal>

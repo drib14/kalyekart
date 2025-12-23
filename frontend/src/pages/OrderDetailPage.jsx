@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { CheckCircle, Clock, Package, ShoppingCart, User, Home, CreditCard, RefreshCw } from "lucide-react";
+import { CheckCircle, Clock, Package, ShoppingCart, User, Home, CreditCard, RefreshCw, MessageSquare } from "lucide-react";
 import CountdownTimer from "../components/CountdownTimer";
 import ProgressBar from "../components/ProgressBar";
 import RefundModal from "../components/RefundModal";
+import ChatModal from "../components/ChatModal";
 import { useCartStore } from "../stores/useCartStore";
 import { useUserStore } from "../stores/useUserStore";
 import { toast } from "sonner";
@@ -36,6 +37,7 @@ const OrderDetailPage = () => {
 	const { addToCart } = useCartStore();
 	const { user } = useUserStore();
 	const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+	const [isChatOpen, setIsChatOpen] = useState(false);
 	const socket = useSocket();
 	const [driverLocation, setDriverLocation] = useState(null);
 
@@ -141,6 +143,12 @@ const OrderDetailPage = () => {
 									<RefreshCw className='mr-2 h-4 w-4' /> Reorder
 								</button>
 							)}
+							<button
+								className='px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 flex items-center'
+								onClick={() => setIsChatOpen(true)}
+							>
+								<MessageSquare className='mr-2 h-4 w-4' /> Chat with Driver
+							</button>
 							<button
 								className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-500'
 								disabled={order.status !== "Delivered" || order.refundRequest}
@@ -299,6 +307,7 @@ const OrderDetailPage = () => {
 				</main>
 			</div>
 			{isRefundModalOpen && <RefundModal orderId={order._id} onClose={() => setIsRefundModalOpen(false)} />}
+			<ChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} orderId={order._id} />
 		</div>
 	);
 };

@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "../lib/axios";
 import { toast } from "sonner";
-import { MapPin, Check, Navigation, Package } from "lucide-react";
+import { MapPin, Check, Navigation, Package, MessageSquare } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import useSocket from "../hooks/useSocket";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import ChatModal from "../components/ChatModal";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -27,6 +28,7 @@ const driverIcon = new L.Icon({
 const DriverDashboard = () => {
 	const queryClient = useQueryClient();
 	const [activeTab, setActiveTab] = useState("available");
+	const [activeChatOrderId, setActiveChatOrderId] = useState(null);
 	const socket = useSocket();
 	const [location, setLocation] = useState(null);
 	const watchIdRef = useRef(null);
@@ -190,6 +192,13 @@ const DriverDashboard = () => {
 									</div>
 
 									<div className='mt-6 flex space-x-3'>
+										<button
+											onClick={() => setActiveChatOrderId(order._id)}
+											className='py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold flex items-center justify-center'
+											title="Chat with Customer"
+										>
+											<MessageSquare size={20} />
+										</button>
 										{order.status === "Preparing" || order.status === "Ready" ? (
 											<button
 												onClick={() => updateStatus({ orderId: order._id, status: "Picked Up" })}
@@ -235,6 +244,7 @@ const DriverDashboard = () => {
 					))}
 				</div>
 			)}
+			<ChatModal isOpen={!!activeChatOrderId} onClose={() => setActiveChatOrderId(null)} orderId={activeChatOrderId} />
 		</div>
 	);
 };

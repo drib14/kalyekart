@@ -4,7 +4,7 @@ import { prepareUserResponse } from "../lib/prepareUserResponse.js";
 
 export const updateUserProfile = async (req, res) => {
 	try {
-		const { name, email, phoneNumber, storeName, storeAddress, operatingHours } = req.body;
+		const { name, email, phoneNumber, storeName, storeAddress, operatingHours, notificationPreferences } = req.body;
 		const userId = req.user._id;
 
 		const user = await User.findById(userId);
@@ -17,6 +17,19 @@ export const updateUserProfile = async (req, res) => {
 		user.name = name || user.name;
 		user.email = email || user.email;
 		user.phoneNumber = phoneNumber || user.phoneNumber;
+
+		if (notificationPreferences) {
+			// Handle JSON string or object (multipart/form-data sends JSON as string sometimes)
+			try {
+				const prefs = typeof notificationPreferences === 'string'
+					? JSON.parse(notificationPreferences)
+					: notificationPreferences;
+
+				user.notificationPreferences = { ...user.notificationPreferences, ...prefs };
+			} catch (e) {
+				console.error("Failed to parse notificationPreferences", e);
+			}
+		}
 
 		// Update admin-specific fields only if the user is an admin
 		if (user.role === "admin") {

@@ -112,6 +112,10 @@ const userSchema = new mongoose.Schema(
 		fcmToken: {
 			type: String,
 		},
+		notificationPreferences: {
+			email: { type: Boolean, default: true },
+			push: { type: Boolean, default: true },
+		},
 		favorites: [
 			{
 				type: mongoose.Schema.Types.ObjectId,

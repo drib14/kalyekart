@@ -22,7 +22,6 @@ const tabs = [
 	{ id: "reviews", label: "Reviews", icon: MessageSquare },
 	{ id: "discounts", label: "Discounts", icon: Ticket },
 	{ id: "rewards", label: "Rewards", icon: Gift },
-	{ id: "settings", label: "Settings", icon: Settings },
 ];
 
 const AdminPage = () => {
@@ -70,7 +69,6 @@ const AdminPage = () => {
 				{activeTab === "reviews" && <ManageReviewsTab />}
 				{activeTab === "discounts" && <AdminDiscountsPage />}
 				{activeTab === "rewards" && <AdminRewardsPage />}
-				{activeTab === "settings" && <AdminSettingsPage />}
 			</div>
 		</div>
 	);
