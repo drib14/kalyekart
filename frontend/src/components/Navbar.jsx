@@ -174,7 +174,7 @@ const Navbar = () => {
 											)}
 
 											<Link
-												to={isAdmin ? "/profile/admin" : "/profile/customer"}
+												to={isAdmin ? "/profile/admin" : isDriver ? "/profile/driver" : "/profile/customer"}
 												className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
 												onClick={() => setIsDropdownOpen(false)}
 											>

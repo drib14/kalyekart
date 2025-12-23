@@ -44,6 +44,7 @@ import AdminRewardsPage from "./pages/AdminRewardsPage";
 import MyRewardsPage from "./pages/MyRewardsPage";
 import UserSettingsPage from "./pages/UserSettingsPage";
 import DriverDashboard from "./pages/DriverDashboard";
+import DriverProfilePage from "./pages/DriverProfilePage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -190,6 +191,10 @@ function App() {
 					<Route
 						path='/profile/customer'
 						element={user?.role === "customer" ? <CustomerProfilePage /> : <Navigate to='/login' />}
+					/>
+					<Route
+						path='/profile/driver'
+						element={user?.role === "driver" ? <DriverProfilePage /> : <Navigate to='/login' />}
 					/>
 					<Route
 						path='/driver/dashboard'

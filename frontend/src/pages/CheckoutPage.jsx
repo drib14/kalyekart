@@ -16,6 +16,14 @@ const CheckoutPage = () => {
 	const { user } = useUserStore();
 	const navigate = useNavigate();
 
+	useEffect(() => {
+		if (user && user.role !== "customer") {
+			toast.error("Only customers can place orders.");
+			if (user.role === "admin") navigate("/secret-dashboard");
+			if (user.role === "driver") navigate("/driver/dashboard");
+		}
+	}, [user, navigate]);
+
 	const [paymentMethod, setPaymentMethod] = useState("cod");
 	const [distance, setDistance] = useState(0);
 	const [deliveryInfo, setDeliveryInfo] = useState({

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCartStore } from "../stores/useCartStore";
 import { motion } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
@@ -6,9 +6,21 @@ import CartItem from "../components/CartItem";
 import { useState, useEffect, useRef } from "react";
 import OrderSummary from "../components/OrderSummary";
 import AddonsModal from "../components/AddonsModal";
+import { useUserStore } from "../stores/useUserStore";
+import { toast } from "sonner";
 
 const CartPage = () => {
 	const { cart } = useCartStore();
+	const { user } = useUserStore();
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (user && user.role !== "customer") {
+			toast.error("Only customers can place orders.");
+			if (user.role === "admin") navigate("/secret-dashboard");
+			if (user.role === "driver") navigate("/driver/dashboard");
+		}
+	}, [user, navigate]);
 	const [isAddonsModalOpen, setIsAddonsModalOpen] = useState(false);
 	const hasOpenedModal = useRef(false);
 

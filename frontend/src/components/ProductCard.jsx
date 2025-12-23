@@ -30,6 +30,10 @@ const ProductCard = ({ product, onCardClick }) => {
 			toast.error("Please login to add products to cart", { id: "login" });
 			return;
 		}
+		if (user.role !== "customer") {
+			toast.error("Only customers can place orders.");
+			return;
+		}
 		addToCart(product);
 	};
 
@@ -37,6 +41,10 @@ const ProductCard = ({ product, onCardClick }) => {
 		e.stopPropagation();
 		if (!user) {
 			toast.error("Please login to checkout", { id: "login" });
+			return;
+		}
+		if (user.role !== "customer") {
+			toast.error("Only customers can place orders.");
 			return;
 		}
 		addToCart(product);
@@ -90,16 +98,27 @@ const ProductCard = ({ product, onCardClick }) => {
 				</div>
 				<div className='flex items-center gap-2'>
 					<button
-						className='flex-grow flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-center text-sm font-medium
-					 text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300'
+						className={`flex-grow flex items-center justify-center rounded-lg px-4 py-2.5 text-center text-sm font-medium text-white focus:outline-none focus:ring-4 ${
+							user && user.role !== "customer"
+								? "bg-gray-600 cursor-not-allowed"
+								: "bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-300"
+						}`}
 						onClick={handleAddToCart}
+						disabled={user && user.role !== "customer"}
+						title={user && user.role !== "customer" ? "Only customers can order" : "Add to cart"}
 					>
 						<ShoppingCart size={20} className='mr-2' />
 						Add to cart
 					</button>
 					<button
-						className='rounded-lg bg-gray-600 p-2.5 text-white hover:bg-gray-500'
+						className={`rounded-lg p-2.5 text-white ${
+							user && user.role !== "customer"
+								? "bg-gray-700 cursor-not-allowed"
+								: "bg-gray-600 hover:bg-gray-500"
+						}`}
 						onClick={handleCheckout}
+						disabled={user && user.role !== "customer"}
+						title={user && user.role !== "customer" ? "Only customers can order" : "Checkout"}
 					>
 						<ShoppingBag size={20} />
 					</button>
