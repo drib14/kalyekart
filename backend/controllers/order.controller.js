@@ -69,8 +69,10 @@ export const createCodOrder = async (req, res) => {
 			coordinates.lat,
 			lon
 		);
-		const baseFee = 20;
-		const feePerKm = 5;
+
+		const settings = await Settings.findOne();
+		const baseFee = settings?.delivery?.baseFee || 20;
+		const feePerKm = settings?.delivery?.feePerKm || 5;
 		const deliveryFee = Math.round(baseFee + distance * feePerKm);
 
 		if (discountId) {

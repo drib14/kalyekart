@@ -55,21 +55,39 @@ const DriverDashboard = () => {
 		refetchInterval: 10000,
 	});
 
+	const { mutate: updateLocation } = useMutation({
+		mutationFn: ({ orderId, lat, lng }) => axios.put(`/orders/${orderId}/location`, { lat, lng }),
+		onError: (err) => console.error("Failed to update location history:", err),
+	});
+
 	useEffect(() => {
 		if (socket && location && activeOrders?.length > 0) {
 			activeOrders.forEach((order) => {
 				if (order.status === "Out for Delivery" || order.status === "Picked Up") {
+					// Emit real-time update
 					socket.emit("send_location", {
 						orderId: order._id,
 						lat: location.lat,
 						lng: location.lng,
 					});
-                    // Also update backend periodically? Maybe not every time to save DB writes.
-                    // Doing it sparingly or relying on socket for real-time.
 				}
 			});
 		}
 	}, [socket, location, activeOrders]);
+
+	// Persist location every 30 seconds
+	useEffect(() => {
+		if (location && activeOrders?.length > 0) {
+			const interval = setInterval(() => {
+				activeOrders.forEach((order) => {
+					if (order.status === "Out for Delivery" || order.status === "Picked Up") {
+						updateLocation({ orderId: order._id, lat: location.lat, lng: location.lng });
+					}
+				});
+			}, 30000);
+			return () => clearInterval(interval);
+		}
+	}, [location, activeOrders, updateLocation]);
 
 	const { data: availableOrders, isLoading: isLoadingAvailable } = useQuery({
 		queryKey: ["driverOrders", "available"],
