@@ -1,12 +1,40 @@
 import { useState } from "react";
 import { Settings, User, Shield, Bell, Gift, ChevronRight } from "lucide-react";
 import SettingsModal from "../components/SettingsModal";
-import MyRewardsPage from "./MyRewardsPage";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import axios from "../lib/axios";
+import { toast } from "sonner";
 
 const UserSettingsPage = () => {
 	const navigate = useNavigate();
 	const [activeModal, setActiveModal] = useState(null);
+	const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+
+	const { mutate: updatePassword, isPending: isUpdatingPassword } = useMutation({
+		mutationFn: (data) => axios.put("/users/password", data),
+		onSuccess: () => {
+			toast.success("Password updated successfully");
+			setActiveModal(null);
+			setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
+		},
+		onError: (error) => toast.error(error.response?.data?.message || "Failed to update password"),
+	});
+
+	const handlePasswordSubmit = () => {
+		if (passwords.newPassword !== passwords.confirmPassword) {
+			toast.error("New passwords do not match");
+			return;
+		}
+		if (passwords.newPassword.length < 6) {
+			toast.error("Password must be at least 6 characters");
+			return;
+		}
+		updatePassword({
+			currentPassword: passwords.currentPassword,
+			newPassword: passwords.newPassword,
+		});
+	};
 
 	const tools = [
 		{
@@ -69,17 +97,42 @@ const UserSettingsPage = () => {
 				))}
 			</div>
 
-            {/* Security Modal Placeholder */}
+            {/* Security Modal */}
             <SettingsModal
                 isOpen={activeModal === "security"}
                 onClose={() => setActiveModal(null)}
-                title="Security Settings"
-                onSave={() => setActiveModal(null)}
-                isSaving={false}
+                title="Change Password"
+                onSave={handlePasswordSubmit}
+                isSaving={isUpdatingPassword}
             >
-                <div className="text-gray-300">
-                    <p>To change your password, please use the <a href="/forgot-password" className="text-emerald-400 underline">Forgot Password</a> flow for now.</p>
-                    <p className="mt-4 text-sm text-gray-500">In-app password change coming soon.</p>
+                <div className="space-y-4">
+					<div>
+						<label className="block text-sm font-medium text-gray-400 mb-1">Current Password</label>
+						<input
+							type="password"
+							value={passwords.currentPassword}
+							onChange={(e) => setPasswords({...passwords, currentPassword: e.target.value})}
+							className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+						/>
+					</div>
+					<div>
+						<label className="block text-sm font-medium text-gray-400 mb-1">New Password</label>
+						<input
+							type="password"
+							value={passwords.newPassword}
+							onChange={(e) => setPasswords({...passwords, newPassword: e.target.value})}
+							className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+						/>
+					</div>
+					<div>
+						<label className="block text-sm font-medium text-gray-400 mb-1">Confirm New Password</label>
+						<input
+							type="password"
+							value={passwords.confirmPassword}
+							onChange={(e) => setPasswords({...passwords, confirmPassword: e.target.value})}
+							className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+						/>
+					</div>
                 </div>
             </SettingsModal>
 

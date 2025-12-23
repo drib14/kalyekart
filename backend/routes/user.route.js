@@ -8,7 +8,11 @@ import {
 	deleteDeliveryAddress,
 	setDefaultDeliveryAddress,
 	saveFcmToken,
+	getAllUsers,
+	updateUserStatus,
+	updatePassword,
 } from "../controllers/user.controller.js";
+import { protectRoute, adminRoute } from "../middleware/auth.middleware.js";
 import upload from "../middleware/multer.middleware.js";
 
 const router = express.Router();
@@ -24,5 +28,12 @@ router.patch("/addresses/:addressId/set-default", protectRoute, setDefaultDelive
 
 // Route for saving FCM token
 router.post("/save-fcm-token", protectRoute, saveFcmToken);
+
+// Admin User Management
+router.get("/", protectRoute, adminRoute, getAllUsers);
+router.put("/:userId/status", protectRoute, adminRoute, updateUserStatus);
+
+// Password Update
+router.put("/password", protectRoute, updatePassword);
 
 export default router;

@@ -8,15 +8,27 @@ import ProductsList from "../components/ProductsList";
 import { useProductStore } from "../stores/useProductStore";
 import AdminOrdersTab from "../components/AdminOrdersTab";
 import ManageReviewsTab from "../components/ManageReviewsTab";
+import { BarChart, PlusCircle, ShoppingBasket, ClipboardList, MessageSquare, Ticket, Settings, Gift, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+
+import AnalyticsTab from "../components/AnalyticsTab";
+import CreateProductForm from "../components/CreateProductForm";
+import ProductsList from "../components/ProductsList";
+import { useProductStore } from "../stores/useProductStore";
+import AdminOrdersTab from "../components/AdminOrdersTab";
+import ManageReviewsTab from "../components/ManageReviewsTab";
 import AdminDiscountsPage from "./AdminDiscountsPage";
 import AdminSettingsPage from "./AdminSettingsPage";
 import AdminRewardsPage from "./AdminRewardsPage";
+import UserManagementPage from "./UserManagementPage";
 
 const tabs = [
 	{ id: "create", label: "Create Product", icon: PlusCircle },
 	{ id: "products", label: "Products", icon: ShoppingBasket },
 	{ id: "analytics", label: "Analytics", icon: BarChart },
 	{ id: "orders", label: "Orders", icon: ClipboardList },
+	{ id: "users", label: "Users", icon: Users },
 	{ id: "reviews", label: "Reviews", icon: MessageSquare },
 	{ id: "discounts", label: "Discounts", icon: Ticket },
 	{ id: "rewards", label: "Rewards", icon: Gift },
@@ -64,6 +76,7 @@ const AdminPage = () => {
 				{activeTab === "products" && <ProductsList />}
 				{activeTab === "analytics" && <AnalyticsTab />}
 				{activeTab === "orders" && <AdminOrdersTab />}
+				{activeTab === "users" && <UserManagementPage />}
 				{activeTab === "reviews" && <ManageReviewsTab />}
 				{activeTab === "discounts" && <AdminDiscountsPage />}
 				{activeTab === "rewards" && <AdminRewardsPage />}

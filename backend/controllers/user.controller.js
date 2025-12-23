@@ -53,6 +53,57 @@ export const updateUserProfile = async (req, res) => {
 	}
 };
 
+export const getAllUsers = async (req, res) => {
+	try {
+		const users = await User.find().select("-password");
+		res.json(users);
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const updateUserStatus = async (req, res) => {
+	try {
+		const { userId } = req.params;
+		const { status, statusReason } = req.body;
+
+		const user = await User.findById(userId);
+		if (!user) return res.status(404).json({ message: "User not found" });
+
+		user.status = status;
+		user.statusReason = statusReason || "";
+		await user.save();
+
+		res.json({ message: `User status updated to ${status}` });
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const updatePassword = async (req, res) => {
+	try {
+		const { currentPassword, newPassword } = req.body;
+		const user = await User.findById(req.user._id);
+
+		if (!user) return res.status(404).json({ message: "User not found" });
+
+		// Check if user has a password (OAuth users might not)
+		if (user.password) {
+			const isMatch = await user.comparePassword(currentPassword);
+			if (!isMatch) {
+				return res.status(400).json({ message: "Incorrect current password" });
+			}
+		}
+
+		user.password = newPassword;
+		await user.save();
+
+		res.json({ message: "Password updated successfully" });
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const getDeliveryAddresses = async (req, res) => {
 	try {
 		const user = await User.findById(req.user._id);
