@@ -243,7 +243,14 @@ export const updateOrderStatus = async (req, res) => {
 			const settings = await Settings.findOne();
 			if (settings && settings.loyalty.isEnabled) {
 				const pointsEarned = Math.floor(order.totalAmount * settings.loyalty.pointsPerPeso);
-				if (pointsEarned > 0) {
+
+				// Check if points already awarded for this order
+				const user = await User.findById(order.user._id);
+				const alreadyAwarded = user.pointsHistory.some(
+					(entry) => entry.orderId && entry.orderId.toString() === order._id.toString()
+				);
+
+				if (pointsEarned > 0 && !alreadyAwarded) {
 					await User.findByIdAndUpdate(order.user._id, {
 						$inc: { loyaltyPoints: pointsEarned },
 						$push: {

@@ -49,12 +49,31 @@ export const deleteReward = async (req, res) => {
 export const redeemReward = async (req, res) => {
 	try {
 		const { id } = req.params;
-		const user = await User.findById(req.user._id);
 		const reward = await Reward.findById(id);
 
 		if (!reward) return res.status(404).json({ message: "Reward not found" });
 		if (!reward.isActive) return res.status(400).json({ message: "Reward is no longer active" });
-		if (user.loyaltyPoints < reward.cost) return res.status(400).json({ message: "Insufficient points" });
+
+		// Atomic update to prevent race conditions
+		const user = await User.findOneAndUpdate(
+			{ _id: req.user._id, loyaltyPoints: { $gte: reward.cost } },
+			{
+				$inc: { loyaltyPoints: -reward.cost },
+				$push: {
+					pointsHistory: {
+						type: "redeemed",
+						amount: reward.cost,
+						description: `Redeemed ${reward.name}`,
+						rewardId: reward._id,
+					},
+				},
+			},
+			{ new: true }
+		);
+
+		if (!user) {
+			return res.status(400).json({ message: "Insufficient points" });
+		}
 
 		// Generate a discount code
 		const code = `REW-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
@@ -65,25 +84,16 @@ export const redeemReward = async (req, res) => {
 		// Create a discount (one-time use)
 		const discount = await Discount.create({
 			code,
+			title: `Reward: ${reward.name}`,
 			value: reward.value,
 			type: discountType,
 			validFrom: new Date(),
 			validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days validity
 			usageLimit: 1,
 			usageLimitPerUser: 1,
-			isActive: true,
+			status: "active",
 			eligibility: "all",
 		});
-
-		// Deduct points
-		user.loyaltyPoints -= reward.cost;
-		user.pointsHistory.push({
-			type: "redeemed",
-			amount: reward.cost,
-			description: `Redeemed ${reward.name}`,
-			rewardId: reward._id,
-		});
-		await user.save();
 
 		res.json({ message: "Reward redeemed successfully", code, discount });
 	} catch (error) {
