@@ -147,7 +147,7 @@ export const getAvailableOrders = async (req, res) => {
 		// Or "Preparing" includes waiting for driver?
 		// Let's fetch orders that are "Ready" and have no driver assigned.
 		const orders = await Order.find({
-			status: { $in: ["Ready", "Preparing"] }, // Allow drivers to see Preparing too? Or just Ready.
+			status: { $in: ["Ready", "Preparing", "Pending"] }, // Added Pending for immediate visibility in simple flows
 			driver: { $exists: false },
 		})
 			.populate("user", "name phoneNumber")
