@@ -6,6 +6,8 @@ import { fileURLToPath } from "url";
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import http from "http";
+import { Server } from "socket.io";
 
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
@@ -29,7 +31,33 @@ import { connectDB } from "./lib/db.js";
 // import "./lib/firebase.js";
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
+
+const io = new Server(server, {
+	cors: {
+		origin: process.env.CLIENT_URL,
+		credentials: true,
+	},
+});
+
+io.on("connection", (socket) => {
+	// console.log("A user connected", socket.id);
+
+	socket.on("join_order", (orderId) => {
+		socket.join(`order_${orderId}`);
+	});
+
+	socket.on("send_location", ({ orderId, lat, lng }) => {
+		io.to(`order_${orderId}`).emit("receive_location", { lat, lng });
+	});
+
+	socket.on("disconnect", () => {
+		// console.log("User disconnected");
+	});
+});
+
+app.set("io", io); // Make io accessible in controllers
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,7 +99,7 @@ if (process.env.NODE_ENV === "production") {
 }
 
 if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
-	app.listen(PORT, () => {
+	server.listen(PORT, () => {
 		console.log("Server is running on http://localhost:" + PORT);
 		connectDB();
 	});

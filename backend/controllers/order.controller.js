@@ -137,6 +137,96 @@ export const createCodOrder = async (req, res) => {
 	}
 };
 
+export const getAvailableOrders = async (req, res) => {
+	try {
+		// "Ready" means restaurant is done. "Preparing" might also be visible?
+		// Usually driver picks up "Ready" orders.
+		// Let's assume "Pending" (Waiting for restaurant) -> "Preparing" (Restaurant accepted) -> "Ready" (Cooked) -> "Picked Up" (Driver)
+		// Or "Preparing" includes waiting for driver?
+		// Let's fetch orders that are "Ready" and have no driver assigned.
+		const orders = await Order.find({
+			status: { $in: ["Ready", "Preparing"] }, // Allow drivers to see Preparing too? Or just Ready.
+			driver: { $exists: false },
+		})
+			.populate("user", "name phoneNumber")
+			.sort({ createdAt: 1 });
+		res.json(orders);
+	} catch (error) {
+		console.log("Error in getAvailableOrders controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const getDriverOrders = async (req, res) => {
+	try {
+		const orders = await Order.find({
+			driver: req.user._id,
+			status: { $in: ["Picked Up", "Out for Delivery", "Ready", "Preparing"] }, // Active statuses
+		})
+			.populate("user", "name phoneNumber")
+			.sort({ createdAt: -1 });
+		res.json(orders);
+	} catch (error) {
+		console.log("Error in getDriverOrders controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const acceptOrder = async (req, res) => {
+	try {
+		const { orderId } = req.params;
+		const order = await Order.findById(orderId);
+
+		if (!order) {
+			return res.status(404).json({ message: "Order not found" });
+		}
+		if (order.driver) {
+			return res.status(400).json({ message: "Order already accepted by another driver" });
+		}
+
+		order.driver = req.user._id;
+		// If status is not yet Preparing/Ready, what to do?
+		// Assuming we only show Ready/Preparing orders.
+		// We don't change status to "Picked Up" yet.
+		await order.save();
+
+		res.json({ message: "Order accepted successfully", order });
+	} catch (error) {
+		console.log("Error in acceptOrder controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const updateDriverLocation = async (req, res) => {
+	try {
+		const { orderId } = req.params;
+		const { lat, lng } = req.body;
+
+		const order = await Order.findById(orderId);
+		if (!order) return res.status(404).json({ message: "Order not found" });
+
+		if (order.driver.toString() !== req.user._id.toString()) {
+			return res.status(403).json({ message: "Not authorized" });
+		}
+
+		// Update history
+		order.driverLocationHistory.push({ lat, lng });
+		await order.save();
+
+		// Real-time emission handled by Socket.IO (passed via req.app.get('io') if set up)
+		// or simpler: client-side socket emission.
+		// If using backend emission:
+		// const io = req.app.get("io");
+		// if (io) {
+		// 	io.to(`order_${orderId}`).emit("driverLocationUpdate", { lat, lng });
+		// }
+
+		res.json({ message: "Location updated" });
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const getAllOrders = async (req, res) => {
 	try {
 		const orders = await Order.find()

@@ -43,6 +43,7 @@ import AdminSettingsPage from "./pages/AdminSettingsPage";
 import AdminRewardsPage from "./pages/AdminRewardsPage";
 import MyRewardsPage from "./pages/MyRewardsPage";
 import UserSettingsPage from "./pages/UserSettingsPage";
+import DriverDashboard from "./pages/DriverDashboard";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -189,6 +190,10 @@ function App() {
 					<Route
 						path='/profile/customer'
 						element={user?.role === "customer" ? <CustomerProfilePage /> : <Navigate to='/login' />}
+					/>
+					<Route
+						path='/driver/dashboard'
+						element={user?.role === "driver" ? <DriverDashboard /> : <Navigate to='/login' />}
 					/>
 					<Route path='/order/:orderId' element={user ? <OrderDetailPage /> : <Navigate to='/login' />} />
 					<Route path='/product/:productId' element={<ProductDetailPage />} />
