@@ -2,6 +2,7 @@ import Order from "../models/order.model.js";
 import User from "../models/user.model.js";
 import Discount from "../models/discount.model.js";
 import UserDiscount from "../models/userDiscount.model.js";
+import Settings from "../models/settings.model.js";
 import { v4 as uuidv4 } from "uuid";
 import { uploadOnCloudinary } from "../lib/cloudinary.js";
 import { getCoordinates, calculateHaversineDistance } from "../services/location.service.js";
@@ -68,8 +69,10 @@ export const createCodOrder = async (req, res) => {
 			coordinates.lat,
 			lon
 		);
-		const baseFee = 20;
-		const feePerKm = 5;
+
+		const settings = await Settings.findOne();
+		const baseFee = settings?.delivery?.baseFee || 20;
+		const feePerKm = settings?.delivery?.feePerKm || 5;
 		const deliveryFee = Math.round(baseFee + distance * feePerKm);
 
 		if (discountId) {
@@ -132,6 +135,110 @@ export const createCodOrder = async (req, res) => {
 		res.status(201).json({ message: "Order created successfully", orderId: newOrder._id });
 	} catch (error) {
 		console.log("Error in createCodOrder controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const getAvailableOrders = async (req, res) => {
+	try {
+		// "Ready" means restaurant is done. "Preparing" might also be visible?
+		// Usually driver picks up "Ready" orders.
+		// Let's assume "Pending" (Waiting for restaurant) -> "Preparing" (Restaurant accepted) -> "Ready" (Cooked) -> "Picked Up" (Driver)
+		// Or "Preparing" includes waiting for driver?
+		// Let's fetch orders that are "Ready" and have no driver assigned.
+		const orders = await Order.find({
+			status: { $in: ["Ready", "Preparing", "Pending"] }, // Added Pending for immediate visibility in simple flows
+			driver: { $exists: false },
+		})
+			.populate("user", "name phoneNumber")
+			.sort({ createdAt: 1 });
+		res.json(orders);
+	} catch (error) {
+		console.log("Error in getAvailableOrders controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const getDriverOrders = async (req, res) => {
+	try {
+		const orders = await Order.find({
+			driver: req.user._id,
+			status: { $in: ["Picked Up", "Out for Delivery", "Ready", "Preparing", "Pending"] }, // Include Pending/Preparing/Ready
+		})
+			.populate("user", "name phoneNumber")
+			.sort({ createdAt: -1 });
+		res.json(orders);
+	} catch (error) {
+		console.log("Error in getDriverOrders controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const acceptOrder = async (req, res) => {
+	try {
+		const { orderId } = req.params;
+		const order = await Order.findById(orderId);
+
+		if (!order) {
+			return res.status(404).json({ message: "Order not found" });
+		}
+		if (order.driver) {
+			return res.status(400).json({ message: "Order already accepted by another driver" });
+		}
+
+		order.driver = req.user._id;
+		// If status is not yet Preparing/Ready, what to do?
+		// Assuming we only show Ready/Preparing orders.
+		// We don't change status to "Picked Up" yet.
+		await order.save();
+
+		res.json({ message: "Order accepted successfully", order });
+	} catch (error) {
+		console.log("Error in acceptOrder controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const updateDriverLocation = async (req, res) => {
+	try {
+		const { orderId } = req.params;
+		const { lat, lng } = req.body;
+
+		const order = await Order.findById(orderId);
+		if (!order) return res.status(404).json({ message: "Order not found" });
+
+		if (order.driver.toString() !== req.user._id.toString()) {
+			return res.status(403).json({ message: "Not authorized" });
+		}
+
+		// Update history
+		order.driverLocationHistory.push({ lat, lng });
+		await order.save();
+
+		// Real-time emission handled by Socket.IO (passed via req.app.get('io') if set up)
+		// or simpler: client-side socket emission.
+		// If using backend emission:
+		// const io = req.app.get("io");
+		// if (io) {
+		// 	io.to(`order_${orderId}`).emit("driverLocationUpdate", { lat, lng });
+		// }
+
+		res.json({ message: "Location updated" });
+	} catch (error) {
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
+export const getDriverHistory = async (req, res) => {
+	try {
+		const orders = await Order.find({
+			driver: req.user._id,
+			status: "Delivered",
+		})
+			.populate("user", "name phoneNumber")
+			.sort({ createdAt: -1 });
+		res.json(orders);
+	} catch (error) {
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
@@ -237,6 +344,33 @@ export const updateOrderStatus = async (req, res) => {
 
 		order.status = status;
 		await order.save();
+
+		if (status === "Delivered") {
+			const settings = await Settings.findOne();
+			if (settings && settings.loyalty.isEnabled) {
+				const pointsEarned = Math.floor(order.totalAmount * settings.loyalty.pointsPerPeso);
+
+				// Check if points already awarded for this order
+				const user = await User.findById(order.user._id);
+				const alreadyAwarded = user.pointsHistory.some(
+					(entry) => entry.orderId && entry.orderId.toString() === order._id.toString()
+				);
+
+				if (pointsEarned > 0 && !alreadyAwarded) {
+					await User.findByIdAndUpdate(order.user._id, {
+						$inc: { loyaltyPoints: pointsEarned },
+						$push: {
+							pointsHistory: {
+								type: "earned",
+								amount: pointsEarned,
+								description: `Order #${order._id.toString().slice(-6)}`,
+								orderId: order._id,
+							},
+						},
+					});
+				}
+			}
+		}
 
 		await NotificationService.createNotification("order_status_update", {
 			recipient: order.user,

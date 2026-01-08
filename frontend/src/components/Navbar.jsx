@@ -9,6 +9,7 @@ import {
 	MessageSquare,
 	Heart,
 	Ticket,
+	Gift,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserStore } from "../stores/useUserStore";
@@ -25,6 +26,8 @@ import { useNotifications } from "../lib/useNotifications";
 const Navbar = () => {
 	const { user, logout } = useUserStore();
 	const isAdmin = user?.role === "admin";
+	const isDriver = user?.role === "driver";
+	const isCustomer = user?.role === "customer";
 	const { cart } = useCartStore();
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -99,7 +102,7 @@ const Navbar = () => {
 							>
 								Home
 							</Link>
-							{user && (
+							{(!user || isCustomer) && (
 								<Link
 									to={"/cart"}
 									className='relative group text-gray-300 hover:text-emerald-400 transition duration-300 ease-in-out'
@@ -113,7 +116,7 @@ const Navbar = () => {
 									)}
 								</Link>
 							)}
-							{user && (
+							{user && isCustomer && (
 								<Link
 									to='/my-orders'
 									className='text-gray-300 hover:text-emerald-400 transition duration-300 ease-in-out'
@@ -148,34 +151,7 @@ const Navbar = () => {
 									</button>
 									{isDropdownOpen && (
 										<div className='absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-1 z-50'>
-											<Link
-												to={isAdmin ? "/profile/admin" : "/profile/customer"}
-												className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
-												onClick={() => setIsDropdownOpen(false)}
-											>
-												<User className='mr-2' size={16} /> Profile
-											</Link>
-											<Link
-												to='/my-reviews'
-												className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
-												onClick={() => setIsDropdownOpen(false)}
-											>
-												<MessageSquare className='mr-2' size={16} /> My Reviews
-											</Link>
-											<Link
-												to='/favorites'
-												className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
-												onClick={() => setIsDropdownOpen(false)}
-											>
-												<Heart className='mr-2' size={16} /> Favorites
-											</Link>
-											<Link
-												to='/my-discounts'
-												className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
-												onClick={() => setIsDropdownOpen(false)}
-											>
-												<Ticket className='mr-2' size={16} /> My Discounts
-											</Link>
+											{/* Dashboard Links */}
 											{isAdmin && (
 												<Link
 													className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
@@ -183,18 +159,68 @@ const Navbar = () => {
 													onClick={() => setIsDropdownOpen(false)}
 												>
 													<Lock className='mr-2' size={16} />
-													Dashboard
+													Admin Dashboard
 												</Link>
 											)}
-											<button
-												onClick={() => {
-													handleNotImplemented();
-													setIsDropdownOpen(false);
-												}}
+											{isDriver && (
+												<Link
+													className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
+													to={"/driver/dashboard"}
+													onClick={() => setIsDropdownOpen(false)}
+												>
+													<Lock className='mr-2' size={16} />
+													Driver Panel
+												</Link>
+											)}
+
+											<Link
+												to={isAdmin ? "/profile/admin" : isDriver ? "/profile/driver" : "/profile/customer"}
+												className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
+												onClick={() => setIsDropdownOpen(false)}
+											>
+												<User className='mr-2' size={16} /> Profile
+											</Link>
+
+											{/* Customer Only Links */}
+											{isCustomer && (
+												<>
+													<Link
+														to='/my-reviews'
+														className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
+														onClick={() => setIsDropdownOpen(false)}
+													>
+														<MessageSquare className='mr-2' size={16} /> My Reviews
+													</Link>
+													<Link
+														to='/favorites'
+														className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
+														onClick={() => setIsDropdownOpen(false)}
+													>
+														<Heart className='mr-2' size={16} /> Favorites
+													</Link>
+													<Link
+														to='/my-discounts'
+														className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
+														onClick={() => setIsDropdownOpen(false)}
+													>
+														<Ticket className='mr-2' size={16} /> My Discounts
+													</Link>
+													<Link
+														to='/my-rewards'
+														className='flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
+														onClick={() => setIsDropdownOpen(false)}
+													>
+														<Gift className='mr-2' size={16} /> My Rewards
+													</Link>
+												</>
+											)}
+											<Link
+												to={isAdmin ? "/admin/settings" : "/settings"}
 												className='flex items-center w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'
+												onClick={() => setIsDropdownOpen(false)}
 											>
 												<Settings className='mr-2' size={16} /> Settings
-											</button>
+											</Link>
 											<button
 												onClick={() => {
 													logout();

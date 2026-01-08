@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import axios from "../lib/axios";
 import { toast } from "sonner";
+import { useUserStore } from "./useUserStore";
 
 export const useCartStore = create((set, get) => ({
 	cart: [],
@@ -52,6 +53,11 @@ export const useCartStore = create((set, get) => ({
 		}
 	},
 	addToCart: async (product) => {
+		const user = useUserStore.getState().user;
+		if (user && user.role !== "customer") {
+			toast.error("Only customers can place orders.");
+			return;
+		}
 		try {
 			const res = await axios.post("/cart", { productId: product._id });
 			set({ cart: res.data });

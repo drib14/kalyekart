@@ -7,6 +7,17 @@ const orderSchema = new mongoose.Schema(
 			ref: "User",
 			required: true,
 		},
+		driver: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User",
+		},
+		driverLocationHistory: [
+			{
+				lat: Number,
+				lng: Number,
+				timestamp: { type: Date, default: Date.now },
+			},
+		],
 		products: [
 			{
 				product: {
@@ -67,6 +78,10 @@ const orderSchema = new mongoose.Schema(
 			province: { type: String, required: true },
 			postalCode: { type: String, required: true },
 		},
+		deliveryCoordinates: {
+			lat: Number,
+			lng: Number,
+		},
 		contactNumber: {
 			type: String,
 			required: true,
@@ -86,7 +101,7 @@ const orderSchema = new mongoose.Schema(
 		status: {
 			type: String,
 			required: true,
-			enum: ["Pending", "Preparing", "Out for Delivery", "Delivered", "Cancelled"],
+			enum: ["Pending", "Preparing", "Ready", "Picked Up", "Out for Delivery", "Delivered", "Cancelled"],
 			default: "Pending",
 		},
 		statusETA: {

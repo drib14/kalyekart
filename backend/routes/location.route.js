@@ -6,6 +6,7 @@ import {
     calculateHaversineDistance,
     reverseGeocode
 } from "../services/location.service.js";
+import Settings from "../models/settings.model.js";
 
 const router = express.Router();
 
@@ -56,8 +57,9 @@ router.post("/calculate-fee", async (req, res) => {
         );
 
         // Updated fee model
-        const baseFee = 20; // Base fare
-        const feePerKm = 5;  // Per-km charge
+        const settings = await Settings.findOne();
+        const baseFee = settings?.delivery?.baseFee || 20;
+        const feePerKm = settings?.delivery?.feePerKm || 5;
         const deliveryFee = Math.round(baseFee + (distance * feePerKm));
 
         res.json({ deliveryFee, distance: distance.toFixed(2) });

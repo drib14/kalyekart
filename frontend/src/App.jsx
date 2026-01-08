@@ -39,6 +39,12 @@ import Footer from "./components/Footer";
 import LegalPage from "./pages/LegalPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import MyDiscountsPage from "./pages/MyDiscountsPage";
+import AdminSettingsPage from "./pages/AdminSettingsPage";
+import AdminRewardsPage from "./pages/AdminRewardsPage";
+import MyRewardsPage from "./pages/MyRewardsPage";
+import UserSettingsPage from "./pages/UserSettingsPage";
+import DriverDashboard from "./pages/DriverDashboard";
+import DriverProfilePage from "./pages/DriverProfilePage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -153,6 +159,14 @@ function App() {
 						path='/secret-dashboard'
 						element={user?.role === "admin" ? <AdminPage /> : <Navigate to='/login' />}
 					/>
+					<Route
+						path='/admin/settings'
+						element={user?.role === "admin" ? <AdminSettingsPage /> : <Navigate to='/login' />}
+					/>
+					<Route
+						path='/admin/rewards'
+						element={user?.role === "admin" ? <AdminRewardsPage /> : <Navigate to='/login' />}
+					/>
 					<Route path='/category/:category' element={<CategoryPage />} />
 					<Route path='/search' element={<SearchPage />} />
 					<Route path='/cart' element={user ? <CartPage /> : <Navigate to='/login' />} />
@@ -178,11 +192,21 @@ function App() {
 						path='/profile/customer'
 						element={user?.role === "customer" ? <CustomerProfilePage /> : <Navigate to='/login' />}
 					/>
+					<Route
+						path='/profile/driver'
+						element={user?.role === "driver" ? <DriverProfilePage /> : <Navigate to='/login' />}
+					/>
+					<Route
+						path='/driver/dashboard'
+						element={user?.role === "driver" ? <DriverDashboard /> : <Navigate to='/login' />}
+					/>
 					<Route path='/order/:orderId' element={user ? <OrderDetailPage /> : <Navigate to='/login' />} />
 					<Route path='/product/:productId' element={<ProductDetailPage />} />
 					<Route path='/legal' element={<LegalPage />} />
 					<Route path='/favorites' element={user ? <FavoritesPage /> : <Navigate to='/login' />} />
 					<Route path='/my-discounts' element={user ? <MyDiscountsPage /> : <Navigate to='/login' />} />
+					<Route path='/my-rewards' element={user ? <MyRewardsPage /> : <Navigate to='/login' />} />
+					<Route path='/settings' element={user ? <UserSettingsPage /> : <Navigate to='/login' />} />
 					<Route path='*' element={<NotFoundPage />} />
 				</Routes>
 			</main>

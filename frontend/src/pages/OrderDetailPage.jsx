@@ -1,15 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../lib/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { CheckCircle, Clock, Package, ShoppingCart, User, Home, CreditCard, RefreshCw } from "lucide-react";
+import { CheckCircle, Clock, Package, ShoppingCart, User, Home, CreditCard, RefreshCw, MessageSquare } from "lucide-react";
 import CountdownTimer from "../components/CountdownTimer";
 import ProgressBar from "../components/ProgressBar";
 import RefundModal from "../components/RefundModal";
+import ChatModal from "../components/ChatModal";
 import { useCartStore } from "../stores/useCartStore";
 import { useUserStore } from "../stores/useUserStore";
 import { toast } from "sonner";
+import useSocket from "../hooks/useSocket";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Fix Leaflet icons
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+	iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+	iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+	shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
+
+const driverIcon = new L.Icon({
+	iconUrl: "https://cdn-icons-png.flaticon.com/512/171/171250.png",
+	iconSize: [32, 32],
+	iconAnchor: [16, 32],
+	popupAnchor: [0, -32],
+});
 
 const OrderDetailPage = () => {
 	const { orderId } = useParams();
@@ -17,6 +37,9 @@ const OrderDetailPage = () => {
 	const { addToCart } = useCartStore();
 	const { user } = useUserStore();
 	const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+	const [isChatOpen, setIsChatOpen] = useState(false);
+	const socket = useSocket();
+	const [driverLocation, setDriverLocation] = useState(null);
 
 	const {
 		data: order,
@@ -59,6 +82,20 @@ const OrderDetailPage = () => {
 			console.error("Reorder failed:", err);
 		}
 	};
+
+	useEffect(() => {
+		if (socket && orderId) {
+			socket.emit("join_order", orderId);
+
+			socket.on("receive_location", (data) => {
+				setDriverLocation(data);
+			});
+
+			return () => {
+				socket.off("receive_location");
+			};
+		}
+	}, [socket, orderId]);
 
 	if (isLoading) return <LoadingSpinner />;
 	if (isError) return <div className='text-center py-10 text-red-500'>Error: {error.response.data.message}</div>;
@@ -106,6 +143,12 @@ const OrderDetailPage = () => {
 									<RefreshCw className='mr-2 h-4 w-4' /> Reorder
 								</button>
 							)}
+							<button
+								className='px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 flex items-center'
+								onClick={() => setIsChatOpen(true)}
+							>
+								<MessageSquare className='mr-2 h-4 w-4' /> Chat with Driver
+							</button>
 							<button
 								className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-500'
 								disabled={order.status !== "Delivered" || order.refundRequest}
@@ -178,6 +221,31 @@ const OrderDetailPage = () => {
 					</section>
 
 					<div className='grid md:grid-cols-3 gap-8'>
+						{(order.status === "Out for Delivery" || order.status === "Picked Up") && (
+							<section className="md:col-span-3 mb-8">
+								<h3 className='text-xl font-semibold mb-4 flex items-center text-emerald-400'>
+									<Package className='mr-2' /> Live Driver Tracking
+								</h3>
+								<div className="h-64 bg-gray-900 rounded-lg overflow-hidden relative">
+									{driverLocation ? (
+										<MapContainer center={[driverLocation.lat, driverLocation.lng]} zoom={15} style={{ height: "100%", width: "100%" }}>
+											<TileLayer
+												url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+												attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+											/>
+											<Marker position={[driverLocation.lat, driverLocation.lng]} icon={driverIcon}>
+												<Popup>Driver is here</Popup>
+											</Marker>
+										</MapContainer>
+									) : (
+										<div className="absolute inset-0 flex items-center justify-center text-gray-500 bg-gray-800">
+											Waiting for driver location...
+										</div>
+									)}
+								</div>
+							</section>
+						)}
+
 						<section>
 							<h3 className='text-xl font-semibold mb-4 flex items-center'>
 								<Home className='mr-2' /> Shipping Information
@@ -239,6 +307,7 @@ const OrderDetailPage = () => {
 				</main>
 			</div>
 			{isRefundModalOpen && <RefundModal orderId={order._id} onClose={() => setIsRefundModalOpen(false)} />}
+			<ChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} orderId={order._id} />
 		</div>
 	);
 };
