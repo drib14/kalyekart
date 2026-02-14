@@ -7,7 +7,7 @@ import { useUserStore } from "../stores/useUserStore";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, CreditCard, Truck } from "lucide-react";
+import { MapPin, CreditCard, Truck, Clock, Zap, Coins } from "lucide-react";
 import DiscountCodeInput from "../components/DiscountCodeInput";
 import AvailableDiscounts from "../components/AvailableDiscounts";
 
@@ -41,6 +41,15 @@ const CheckoutPage = () => {
 	const [locations, setLocations] = useState([]);
 	const [barangays, setBarangays] = useState([]);
 	const [isLocating, setIsLocating] = useState(false);
+
+	const [deliveryOption, setDeliveryOption] = useState("standard");
+	const [tipAmount, setTipAmount] = useState(0);
+
+	const DELIVERY_OPTIONS = {
+		saver: { name: "Saver", baseFee: 15, time: 45, desc: "Usually takes 45-60 mins" },
+		standard: { name: "Standard", baseFee: 20, time: 30, desc: "Usually takes 30-45 mins" },
+		rush: { name: "Rush", baseFee: 30, time: 15, desc: "Priority delivery, ~15 mins" },
+	};
 
 	const { data: savedAddresses, isLoading: isLoadingAddresses } = useQuery({
 		queryKey: ["deliveryAddresses"],
@@ -88,7 +97,11 @@ const CheckoutPage = () => {
 					const response = await axios.post("/locations/calculate-fee", {
 						shippingAddress: { city: deliveryInfo.city, barangay: deliveryInfo.barangay },
 					});
-					setDeliveryFee(response.data.deliveryFee);
+					// Note: Backend calculates standard fee by default. We will override base fee locally for display.
+					// We only need the distance from the backend response.
+					// If backend returns deliveryFee, it's likely (Base + Distance * Rate).
+					// We can reverse engineer or just recalculate locally since we have distance.
+					// Let's rely on distance.
 					setDistance(response.data.distance || 0);
 				} catch {
 					toast.error("Could not calculate delivery fee.");
@@ -102,8 +115,16 @@ const CheckoutPage = () => {
 	}, [deliveryInfo.city, deliveryInfo.barangay]);
 
 	useEffect(() => {
-		setFinalTotal(total + deliveryFee);
-	}, [total, deliveryFee]);
+		// Calculate delivery fee dynamically
+		const option = DELIVERY_OPTIONS[deliveryOption];
+		const feePerKm = 5; // Fixed per km, matching backend default
+		const calculatedFee = Math.round(option.baseFee + (distance * feePerKm));
+		setDeliveryFee(calculatedFee);
+	}, [distance, deliveryOption]);
+
+	useEffect(() => {
+		setFinalTotal(total + deliveryFee + tipAmount);
+	}, [total, deliveryFee, tipAmount]);
 
 	const handleSelectSavedAddress = (address) => {
 		setDeliveryInfo({
@@ -219,6 +240,8 @@ const CheckoutPage = () => {
 			discountCode: appliedDiscount?.code,
 			distance: distance,
 			deliveryFee: deliveryFee,
+			deliveryOption: deliveryOption,
+			tipAmount: tipAmount,
 			subtotal: subtotal,
 		};
 
