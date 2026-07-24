@@ -1,4 +1,3 @@
-import admin from "firebase-admin";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 
@@ -25,40 +24,7 @@ const NotificationService = {
 	},
 
 	async sendPushNotification(userId, title, body, link) {
-		try {
-			// Check if Firebase is initialized
-			if (!admin.apps.length) {
-				console.log("Firebase Admin not initialized. Skipping push notification.");
-				return;
-			}
-
-			const user = await User.findById(userId);
-			if (!user || !user.fcmToken) {
-				return;
-			}
-
-			const message = {
-				notification: {
-					title,
-					body,
-				},
-				webpush: {
-					fcm_options: {
-						link: link,
-					},
-				},
-				token: user.fcmToken,
-			};
-
-			await admin.messaging().send(message);
-			console.log("Successfully sent push notification to user:", userId);
-		} catch (error) {
-			console.error("Error sending push notification:", error);
-			if (error.code === "messaging/registration-token-not-registered") {
-				await User.findByIdAndUpdate(userId, { $unset: { fcmToken: 1 } });
-				console.log(`Removed invalid FCM token for user ${userId}`);
-			}
-		}
+		// Firebase push notifications removed
 	},
 
 	async createNotification(type, data) {

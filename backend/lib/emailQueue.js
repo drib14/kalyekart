@@ -1,6 +1,1 @@
-import { Queue } from "bullmq";
-import { redis } from "./redis.js";
-
-export const emailQueue = new Queue("email-queue", {
-	connection: redis,
-});
+// Email queue and worker logic removed

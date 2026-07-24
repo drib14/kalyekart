@@ -52,7 +52,7 @@ const userSchema = new mongoose.Schema(
 		phoneNumber: {
 			type: String,
 		},
-		// Admin/Restaurant/Driver fields
+		// Admin/Restaurant fields
 		storeName: {
 			type: String,
 		},
@@ -76,7 +76,7 @@ const userSchema = new mongoose.Schema(
 		],
 		role: {
 			type: String,
-			enum: ["customer", "admin", "restaurant_owner", "driver"],
+			enum: ["customer", "admin", "restaurant_owner"],
 			default: "customer",
 		},
 		status: {
@@ -100,9 +100,6 @@ const userSchema = new mongoose.Schema(
 			type: String,
 		},
 		deliveryAddresses: [addressSchema],
-		fcmToken: {
-			type: String,
-		},
 		favorites: [
 			{
 				type: mongoose.Schema.Types.ObjectId,

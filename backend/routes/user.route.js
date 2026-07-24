@@ -7,7 +7,6 @@ import {
 	updateDeliveryAddress,
 	deleteDeliveryAddress,
 	setDefaultDeliveryAddress,
-	saveFcmToken,
 } from "../controllers/user.controller.js";
 import upload from "../middleware/multer.middleware.js";
 
@@ -22,7 +21,5 @@ router.put("/addresses/:addressId", protectRoute, updateDeliveryAddress);
 router.delete("/addresses/:addressId", protectRoute, deleteDeliveryAddress);
 router.patch("/addresses/:addressId/set-default", protectRoute, setDefaultDeliveryAddress);
 
-// Route for saving FCM token
-router.post("/save-fcm-token", protectRoute, saveFcmToken);
 
 export default router;
